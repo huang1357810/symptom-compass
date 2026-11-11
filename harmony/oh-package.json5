@@ -1,0 +1,11 @@
+﻿{
+  "modelVersion": "5.0.0",
+  "name": "symptom-checker",
+  "version": "1.0.0",
+  "description": "症状自查助手 HarmonyOS 版",
+  "main": "",
+  "author": "",
+  "license": "",
+  "dependencies": {},
+  "devDependencies": {}
+}

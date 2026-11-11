@@ -1,0 +1,9 @@
+﻿{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "症状自查助手入口模块",
+  "main": "",
+  "author": "",
+  "license": "",
+  "dependencies": {}
+}
