@@ -459,6 +459,42 @@ const PRESETS = {
   head:['headache','dizziness','nausea','insomnia']
 };
 
+/* 分诊问卷：三个问题，score 越高越需要尽快就医 */
+const QUESTIONS = [
+  {
+    id: 'duration',
+    title: '症状持续多久了？',
+    hint: '从第一个症状出现算起',
+    options: [
+      { label: '今天刚开始', score: 0, reason: '' },
+      { label: '1–3 天', score: 0, reason: '' },
+      { label: '4–7 天', score: 1, reason: '症状已持续 4–7 天' },
+      { label: '超过 1 周', score: 2, reason: '症状持续超过 1 周' }
+    ]
+  },
+  {
+    id: 'fever',
+    title: '有没有发热？最高多少度？',
+    hint: '按测量到的最高温度选',
+    options: [
+      { label: '没有发热', score: 0, reason: '' },
+      { label: '37.3–38℃', score: 1, reason: '低热 37.3–38℃' },
+      { label: '38.1–39℃', score: 2, reason: '中度发热 38.1–39℃' },
+      { label: '超过 39℃', score: 3, reason: '高热超过 39℃' }
+    ]
+  },
+  {
+    id: 'activity',
+    title: '目前的状态怎么样？',
+    hint: '按最难受的时候判断',
+    options: [
+      { label: '活动正常', score: 0, reason: '' },
+      { label: '影响工作，但能自理', score: 1, reason: '已影响日常活动' },
+      { label: '卧床，需要人照顾', score: 3, reason: '需要卧床、无法自理' }
+    ]
+  }
+];
+
 /* =========================================================
    逻辑层（纯函数，便于校验）
    ========================================================= */
@@ -521,6 +557,130 @@ async function detectCloud(){
   } catch (e) {
     /* 没有云端 API，保持本地分析 */
   }
+}
+
+/* 问卷答案：{ 问题id: 选项下标 } */
+const answers = {};
+
+function showTriage(){
+  if (!selected.size) return;
+  /* 命中危险信号时跳过问卷，直接给出急诊提示——不能让人先答三个问题才看到警告 */
+  if (flagsFor(selected).length > 0){
+    showResults();
+    return;
+  }
+  renderQuestions();
+  document.getElementById('intake').classList.add('hidden');
+  document.getElementById('notice').classList.add('hidden');
+  document.getElementById('results').classList.add('hidden');
+  document.getElementById('triage').classList.remove('hidden');
+  updateTriageProgress();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function renderQuestions(){
+  const box = document.getElementById('questions');
+  box.innerHTML = QUESTIONS.map((q, qi) =>
+    '<div class="qcard">' +
+      '<div class="qtitle">' + (qi + 1) + '. ' + q.title + (q.hint ? '<i>' + q.hint + '</i>' : '') + '</div>' +
+      '<div class="qopts">' +
+        q.options.map((o, oi) =>
+          '<button type="button" class="opt' + (answers[q.id] === oi ? ' on' : '') + '" data-q="' + q.id + '" data-i="' + oi + '">' + o.label + '</button>'
+        ).join('') +
+      '</div>' +
+    '</div>'
+  ).join('');
+
+  box.querySelectorAll('.opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const qid = btn.dataset.q;
+      answers[qid] = Number(btn.dataset.i);
+      box.querySelectorAll('.opt[data-q="' + qid + '"]').forEach(b => b.classList.toggle('on', b === btn));
+      updateTriageProgress();
+    });
+  });
+}
+
+function updateTriageProgress(){
+  const n = Object.keys(answers).length;
+  document.getElementById('triageProgress').textContent = n + ' / 3';
+  document.getElementById('toResults').disabled = n < 3;
+}
+
+/* 问卷加权：0–8 分 */
+function triageScore(){
+  let score = 0;
+  const reasons = [];
+  QUESTIONS.forEach(q => {
+    const idx = answers[q.id];
+    if (idx === undefined) return;
+    const opt = q.options[idx];
+    score += opt.score;
+    if (opt.reason) reasons.push(opt.reason);
+  });
+  return { score, reasons };
+}
+
+/* 红 / 黄 / 绿 三级分诊 */
+function computeTriage(results, flags){
+  if (flags.length){
+    return {
+      level: 'red',
+      title: '建议立即就医',
+      advice: '你选择的症状里有需要紧急处理的情况，不适合自我观察或自行用药。请立即前往医院急诊，紧急时拨打 120。',
+      reasons: flags.map(f => f.title),
+      flags: flags
+    };
+  }
+
+  const t = triageScore();
+  if (!results.length){
+    return {
+      level: 'yellow',
+      title: '信息不足，建议面诊',
+      advice: '没有匹配到足够接近的情况，症状组合可能不典型。建议补充症状，或直接到医院让医生面诊。',
+      reasons: t.reasons,
+      flags: []
+    };
+  }
+
+  const top = results[0];
+  const urgentDept = top.dept.indexOf('急诊') >= 0 || top.tag === '需就医';
+
+  if (t.score >= 7){
+    return {
+      level: 'red',
+      title: '建议今天内就医',
+      advice: '结合病程、体温和活动能力，整体情况偏重，建议今天内前往医院就诊，不要继续自行观察。',
+      reasons: t.reasons,
+      flags: []
+    };
+  }
+  if (urgentDept){
+    return {
+      level: 'yellow',
+      title: '建议 24 小时内就诊',
+      advice: '最可能的情况需要医生评估，不宜长期自行处理。建议尽快到 ' + top.dept + ' 就诊。',
+      reasons: t.reasons,
+      flags: []
+    };
+  }
+  if (t.score >= 3){
+    return {
+      level: 'yellow',
+      title: '建议尽快就诊',
+      advice: '症状已经持续或影响到日常活动，建议这两天到 ' + top.dept + ' 检查一下。',
+      reasons: t.reasons,
+      flags: []
+    };
+  }
+  return {
+    level: 'green',
+    title: '可以先观察',
+    advice: '目前整体偏轻，可以先按下方建议自我照护。若 3 天内没有好转，或症状加重，请及时就医。',
+    reasons: t.reasons,
+    flags: []
+  };
 }
 
 function init(){
@@ -619,14 +779,28 @@ function clearAll(){
 }
 
 function bindEvents(){
-  document.getElementById('go').addEventListener('click', showResults);
+  document.getElementById('go').addEventListener('click', showTriage);
   document.getElementById('clear').addEventListener('click', clearAll);
   document.getElementById('back').addEventListener('click', () => {
     document.getElementById('results').classList.add('hidden');
+    document.getElementById('triage').classList.add('hidden');
     document.getElementById('intake').classList.remove('hidden');
     document.getElementById('notice').classList.remove('hidden');
     try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
     window.scrollTo({top: 0, behavior: 'smooth'});
+  });
+
+  document.getElementById('triageBack').addEventListener('click', () => {
+    document.getElementById('triage').classList.add('hidden');
+    document.getElementById('intake').classList.remove('hidden');
+    document.getElementById('notice').classList.remove('hidden');
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  });
+
+  document.getElementById('toResults').addEventListener('click', showResults);
+
+  document.getElementById('skipTriage').addEventListener('click', () => {
+    showResults();
   });
 
   const search = document.getElementById('search');
@@ -655,7 +829,7 @@ function bindEvents(){
         ch.setAttribute('aria-pressed', String(on));
       });
       updateCount();
-      showResults();
+      showTriage();
     });
   });
 }
@@ -699,18 +873,22 @@ async function showResults(){
     badge.classList.toggle('cloud', mode === '云端分析');
   }
 
-  /* 危险信号 */
-  const urgent = document.getElementById('urgent');
-  if (flags.length){
-    urgent.innerHTML =
-      '<div class="urgent fade">' +
-        '<h3>⚠ 你选择了需要警惕的症状</h3>' +
-        '<ul>' + flags.map(f => '<li><b>' + f.title + '</b>：' + f.msg + '</li>').join('') + '</ul>' +
-        '<p class="tip">这些情况不适合自我观察或自行用药，请优先就医；紧急情况直接拨打 120。</p>' +
-      '</div>';
-  } else {
-    urgent.innerHTML = '';
-  }
+  /* 三色分诊 */
+  const triage = computeTriage(results, flags);
+  const levelLabel = { red: '高风险 · 需急诊', yellow: '中风险 · 需就医', green: '低风险 · 可观察' };
+  document.getElementById('urgent').innerHTML =
+    '<div class="triage ' + triage.level + ' fade">' +
+      '<span class="lv">' + (levelLabel[triage.level] || '分诊结果') + '</span>' +
+      '<h3>' + triage.title + '</h3>' +
+      '<p>' + triage.advice + '</p>' +
+      (triage.reasons.length
+        ? '<div class="reasons">' + triage.reasons.map(r => '<span>' + r + '</span>').join('') + '</div>'
+        : '') +
+      (triage.level === 'red' && flags.length
+        ? '<ul>' + flags.map(f => '<li><b>' + f.title + '</b>：' + f.msg + '</li>').join('') + '</ul>' +
+          '<a class="call" href="tel:120">📞 立即拨打 120</a>'
+        : '') +
+    '</div>';
 
   /* 已选症状 */
   document.getElementById('selrow').innerHTML = [...selected]
@@ -731,21 +909,23 @@ async function showResults(){
         '</div>' +
       '</details>';
   } else if (!results.length){
-    const big = flags.length ? '这些症状需要优先排除急症' : '没有匹配到足够接近的情况';
-    const msg = flags.length
-      ? '你选择的是需要警惕的症状，不适合自我判断。请直接前往医院急诊，由医生进行检查和处理。'
-      : '你选择的症状组合比较复杂或不够典型。建议补充更多症状后重试，或直接到医院让医生面诊。';
-    list.innerHTML =
-      '<div class="empty card fade">' +
-        '<div class="big">' + big + '</div>' +
-        '<p>' + msg + '</p>' +
-      '</div>';
+    if (flags.length){
+      /* 急诊横幅已经说明一切，不再重复一张空状态卡 */
+      list.innerHTML = '';
+    } else {
+      list.innerHTML =
+        '<div class="empty card fade">' +
+          '<div class="big">没有匹配到足够接近的情况</div>' +
+          '<p>你选择的症状组合比较复杂或不够典型。建议补充更多症状后重试，或直接到医院让医生面诊。</p>' +
+        '</div>';
+    }
   } else {
     list.innerHTML = hintHtml + results.map((c, i) => renderCondition(c, i)).join('');
   }
 
   document.getElementById('intake').classList.add('hidden');
   document.getElementById('notice').classList.add('hidden');
+  document.getElementById('triage').classList.add('hidden');
   document.getElementById('results').classList.remove('hidden');
 
   let shareable = false;
