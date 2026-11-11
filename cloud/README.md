@@ -1,4 +1,4 @@
-# 华为云部署（FunctionGraph 版）
+﻿# 华为云部署（FunctionGraph 版）
 
 把「症状自查助手」完整部署到华为云：**云函数同时托管页面和分诊 API**，一个链接搞定，不需要服务器、不需要备案域名。
 
@@ -97,7 +97,7 @@ curl https://<你的地址>/api/triage/health
 应返回：
 
 ```json
-{"ok":true,"service":"symptom-triage","version":"1.0.0","conditions":28,"symptoms":73}
+{"ok":true,"service":"symptom-triage","version":"1.0.0","conditions":34,"symptoms":78}
 ```
 
 如果这里不通，后面一定不通，先排查这一步（见文末「常见问题」）。
@@ -119,7 +119,7 @@ curl -X POST https://<你的地址>/api/triage \
 ## 验收清单（对着比赛要求逐条勾）
 
 - [ ] 公网地址可访问，HTTPS 正常
-- [ ] 页面能加载，73 个症状正常显示
+- [ ] 页面能加载，78 个症状正常显示
 - [ ] 勾选症状 → 出结果 → 右上角显示「云端分析」
 - [ ] 浏览器 F12 → Network 里能看到 `POST /api/triage` 请求，状态 200
 - [ ] 胸痛 + 气短 → 红色拦截 + 「立即拨打 120」

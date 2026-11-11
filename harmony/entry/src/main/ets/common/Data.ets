@@ -110,7 +110,12 @@ export const SYMPTOMS: Record<string, SymptomDef> = {
   "speech_diff": { label: "言语不清", group: "神经与情绪" },
   "seizure": { label: "抽搐", group: "神经与情绪" },
   "confusion": { label: "意识模糊", group: "神经与情绪" },
-  "stiff_neck": { label: "颈部僵硬", group: "神经与情绪" }
+  "stiff_neck": { label: "颈部僵硬", group: "神经与情绪" },
+  "purulent_discharge": { label: "脓涕/黄绿鼻涕", group: "头面" },
+  "oral_ulcer": { label: "口腔溃疡/疱疹", group: "头面" },
+  "epigastric_pain": { label: "上腹痛/胃部不适", group: "消化" },
+  "hand_foot_rash": { label: "手足皮疹", group: "皮肤" },
+  "heat_exposure": { label: "高温环境暴露", group: "全身" }
 };
 
 export const CONDITIONS: ConditionDef[] = [
@@ -449,6 +454,78 @@ export const CONDITIONS: ConditionDef[] = [
     care: ["温水坐浴 10–15 分钟，每日 1–2 次", "增加膳食纤维和水分，避免用力排便", "避免久坐久蹲，如厕不玩手机", "保持肛周清洁干燥"],
     meds: [{ n: "痔疮膏 / 栓剂", note: "含局麻或激素成分，短期使用，孕妇慎用" }, { n: "乳果糖", note: "软化粪便，减少排便对创面的刺激" }],
     see: "便血持续或量大、贫血、体重下降、40 岁以上新发便血，需排查结直肠疾病。"
+  },
+  {
+    id: "sinusitis",
+    name: "急性鼻窦炎",
+    dept: "耳鼻喉科",
+    tag: "",
+    summary: "鼻塞、脓涕超过 10 天，伴面部胀痛或压痛，多为鼻窦的细菌感染。",
+    symptoms: { "purulent_discharge": 1, "facial_pain": 1, "congestion": 0.9, "headache": 0.6, "smell_loss": 0.5, "fever": 0.3, "toothache": 0.2, "dry_cough": 0.2 },
+    core: ["purulent_discharge", "facial_pain"],
+    care: ["生理盐水冲洗鼻腔，每日 1–2 次", "多饮水，保持室内湿度", "可做蒸汽吸入缓解鼻塞", "不要用力擤鼻，避免炎症扩散"],
+    meds: [{ n: "生理性海水鼻腔喷雾", note: "冲洗鼻腔，稀释分泌物，可长期使用" }, { n: "布洛芬", note: "缓解面部胀痛和头痛，饭后服" }, { n: "抗生素", note: "仅细菌性鼻窦炎需要，必须由医生判断后处方，不要自行服用" }],
+    see: "高热、面部肿胀、视力改变或剧烈头痛，需警惕眶内/颅内并发症，立即就医；症状超过 10 天不缓解也需耳鼻喉科评估。"
+  },
+  {
+    id: "aphthous",
+    name: "口腔溃疡",
+    dept: "口腔科",
+    tag: "",
+    summary: "口腔黏膜出现单个或多个疼痛性溃疡，进食、说话时加重，常与疲劳、压力有关。",
+    symptoms: { "oral_ulcer": 1, "sore_throat": 0.4, "poor_appetite": 0.4, "dysphagia": 0.3, "fever": 0.2 },
+    core: ["oral_ulcer"],
+    care: ["避免辛辣、过烫和酸性食物", "用软毛牙刷，动作轻柔", "饭后漱口，保持口腔清洁", "保证睡眠，减少熬夜和压力"],
+    meds: [{ n: "口腔溃疡贴 / 凝胶", note: "覆盖创面、减轻疼痛，睡前使用效果更好" }, { n: "氯己定含漱液", note: "抗菌，短期使用，长期用可能染色牙齿" }, { n: "维生素 B 族", note: "辅助修复，对反复发作者有一定帮助" }],
+    see: "溃疡超过 2 周不愈合、反复发作、伴发热或皮疹，需口腔科排查白塞病等其他疾病。"
+  },
+  {
+    id: "tinea_pedis",
+    name: "足癣 / 皮肤真菌感染",
+    dept: "皮肤科",
+    tag: "",
+    summary: "趾间或足底脱屑、瘙痒、水疱，潮湿闷热环境易发，具有传染性。",
+    symptoms: { "itch": 1, "dry_skin": 0.8, "rash": 0.7, "blister": 0.3 },
+    core: ["itch", "dry_skin"],
+    care: ["保持足部干燥，洗脚后擦干趾缝", "穿透气鞋袜，袜子每天更换", "不与他人共用拖鞋、毛巾、指甲刀", "症状消失后继续用药 1 周，防止复发"],
+    meds: [{ n: "抗真菌软膏（特比萘芬 / 酮康唑）", note: "需坚持 2–4 周，症状好转不要立即停药" }],
+    see: "局部红肿热痛、流脓（可能继发细菌感染），或糖尿病患者出现足部问题，需尽快就诊；规范用药 2 周无改善也应就医。"
+  },
+  {
+    id: "gastritis",
+    name: "急性胃炎 / 消化性溃疡",
+    dept: "消化内科",
+    tag: "",
+    summary: "上腹隐痛或烧灼感，常与进食相关，可能为胃炎或消化性溃疡。",
+    symptoms: { "epigastric_pain": 1, "heartburn": 0.6, "nausea": 0.6, "bloating": 0.6, "poor_appetite": 0.5, "gi_bleed": 0.2 },
+    core: ["epigastric_pain"],
+    care: ["规律进食，少食多餐", "避免酒、浓茶、咖啡和辛辣刺激", "戒烟", "不要空腹长期服用止痛药（如布洛芬、阿司匹林）"],
+    meds: [{ n: "铝碳酸镁", note: "中和胃酸、保护黏膜，餐后或睡前嚼服" }, { n: "质子泵抑制剂（奥美拉唑等）", note: "抑制胃酸，饭前服用；长期使用需医生评估" }],
+    see: "黑便、呕血、体重下降、吞咽困难，或疼痛剧烈、持续加重，需尽快胃镜检查；幽门螺杆菌检测需到医院完成。"
+  },
+  {
+    id: "hfmd",
+    name: "手足口病",
+    dept: "儿科 / 感染科",
+    tag: "儿童多见",
+    summary: "儿童多见，发热伴口腔疱疹和手足皮疹，多数为自限性，少数可发展为重症。",
+    symptoms: { "hand_foot_rash": 1, "oral_ulcer": 0.9, "fever": 0.8, "sore_throat": 0.5, "poor_appetite": 0.5, "fatigue": 0.3 },
+    core: ["hand_foot_rash", "oral_ulcer"],
+    care: ["居家隔离至症状消失后 1 周，避免传染其他儿童", "清淡流质饮食，避免过烫", "勤洗手，玩具和餐具消毒", "密切观察精神状态和体温"],
+    meds: [{ n: "对乙酰氨基酚 / 布洛芬", note: "退热止痛，儿童按体重计算剂量，不要用阿司匹林" }],
+    see: "持续高热、精神差、嗜睡、抽搐、肢体抖动、呼吸心率明显增快，是重症信号，需立即就医。"
+  },
+  {
+    id: "heat_illness",
+    name: "中暑",
+    dept: "急诊科",
+    tag: "夏季高发",
+    summary: "高温高湿环境下出现头晕、乏力、恶心，严重时可出现高热和意识障碍。",
+    symptoms: { "heat_exposure": 1, "dizziness": 0.9, "nausea": 0.7, "headache": 0.6, "fatigue": 0.6, "vomiting": 0.4, "palpitation": 0.4 },
+    core: ["heat_exposure"],
+    care: ["立即转移到阴凉通风处", "解开衣物，用冷水擦拭身体降温", "少量多次补充含盐饮料", "意识不清时不要强行喂水"],
+    meds: [{ n: "口服补液盐", note: "补充水分和电解质，按说明冲配" }, { n: "藿香正气类中成药", note: "仅辅助缓解轻度不适，不能替代降温和补液" }],
+    see: "体温超过 40℃、意识模糊、抽搐、无汗或皮肤湿冷，可能是热射病，立即拨打 120。"
   }
 ];
 
@@ -466,7 +543,8 @@ export const RED_FLAGS: RedFlagDef[] = [
   { ids: ["dehydration"], mode: 'any', title: "明显脱水", msg: "口干、少尿、头晕、站起时眼前发黑，需尽快补液并就医。" },
   { ids: ["pregnancy_bleed"], mode: 'any', title: "孕期出血 / 腹痛", msg: "孕期出现阴道出血或腹痛，请立即到产科急诊。" },
   { ids: ["eye_pain", "vision_blur"], mode: "all", title: "眼痛 + 视力下降", msg: "可能为急性青光眼等眼科急症，需立即就诊。" },
-  { ids: ["high_fever", "rash"], mode: "all", title: "高热 + 皮疹", msg: "需急诊排查严重感染或药物反应。" }
+  { ids: ["high_fever", "rash"], mode: "all", title: "高热 + 皮疹", msg: "需急诊排查严重感染或药物反应。" },
+  { ids: ["heat_exposure", "confusion"], mode: "all", title: "高温暴露 + 意识改变", msg: "可能是热射病，致死率高，请立即拨打 120 并开始物理降温。" }
 ];
 
 export const PRESETS: Record<string, string[]> = {

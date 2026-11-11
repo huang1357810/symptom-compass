@@ -21,6 +21,32 @@ function page() {
   return PAGE;
 }
 
+/* PWA 静态资源：让函数托管的站点也能"添加到主屏幕 + 离线" */
+const STATIC_FILES = {
+  '/manifest.webmanifest': { file: 'manifest.webmanifest', type: 'application/manifest+json; charset=utf-8' },
+  '/sw.js': { file: 'sw.js', type: 'text/javascript; charset=utf-8' },
+  '/icon-192.png': { file: 'icon-192.png', type: 'image/png' },
+  '/icon-512.png': { file: 'icon-512.png', type: 'image/png' }
+};
+
+function serveStatic(p) {
+  for (const suffix of Object.keys(STATIC_FILES)) {
+    if (p.endsWith(suffix)) {
+      const meta = STATIC_FILES[suffix];
+      const full = path.join(__dirname, meta.file);
+      if (!fs.existsSync(full)) return null;
+      const buf = fs.readFileSync(full);
+      return {
+        statusCode: 200,
+        headers: Object.assign({ 'Content-Type': meta.type, 'Cache-Control': 'public, max-age=3600' }, CORS),
+        body: buf.toString('base64'),
+        isBase64Encoded: true
+      };
+    }
+  }
+  return null;
+}
+
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -109,6 +135,10 @@ exports.handler = async function (event, context) {
       results: results
     });
   }
+
+  // PWA 资源
+  const staticResp = serveStatic(p);
+  if (staticResp) return staticResp;
 
   // 页面
   if (method === 'GET' || method === 'HEAD') {

@@ -1,4 +1,4 @@
-# 症状自查助手 · HarmonyOS 版
+﻿# 症状自查助手 · HarmonyOS 版
 
 这是网页版的鸿蒙原生移植：同一套数据、同一套分诊算法，界面用 ArkTS + ArkUI 重写。
 
@@ -56,7 +56,7 @@ harmony/
 │   ├── src/main/
 │   │   ├── ets/
 │   │   │   ├── common/
-│   │   │   │   ├── Data.ets         ⚠️ 自动生成：28 种疾病 / 73 个症状 / 14 组危险信号
+│   │   │   │   ├── Data.ets         ⚠️ 自动生成：34 种疾病 / 78 个症状 / 15 组危险信号
 │   │   │   │   └── Triage.ets       分诊逻辑：打分、危险信号、红黄绿判定
 │   │   │   ├── entryability/
 │   │   │   │   └── EntryAbility.ets 入口 Ability
@@ -96,7 +96,7 @@ npx tsc Data.ts Triage.ts --outDir ../out --target ES2017 --module commonjs --st
 
 **已实现**
 
-- 症状多选（8 大系统 / 73 个症状）+ 关键字搜索
+- 症状多选（8 大系统 / 78 个症状）+ 关键字搜索
 - 快速开始预设（感冒样、吃坏肚子、头痛头晕）
 - 加权匹配排序（与 Web 版同一套算法）
 - 红 / 黄 / 绿 三级分诊结论

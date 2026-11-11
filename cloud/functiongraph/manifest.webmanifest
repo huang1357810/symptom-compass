@@ -1,0 +1,33 @@
+{
+  "name": "症状自查助手 · 分诊指引",
+  "short_name": "症状自查",
+  "description": "选择症状，查看可能的方向、自我照护与就医时机。危险信号一票拦截。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F8F8",
+  "theme_color": "#0E8F86",
+  "categories": ["health", "medical"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
