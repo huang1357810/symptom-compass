@@ -1,12 +1,12 @@
 ﻿/**
  * 症状自查助手 · HarmonyOS 版首页
  *
- * 单页两态：input（选症状）→ result（分诊结果）
+ * 单页三态：input（选症状）→ triage（三个追问）→ result（分诊结果）
  * 数据与逻辑分别在 common/Data.ets（自动生成）和 common/Triage.ets
  */
 import { common, Want } from '@kit.AbilityKit';
 import { GROUPS, SYMPTOMS, PRESETS, MedInfo, RedFlagDef } from '../common/Data';
-import { ConditionResult, flagsFor, scoreConditions, triageOf, labelsOf } from '../common/Triage';
+import { ConditionResult, flagsFor, scoreConditions, triageOf, labelsOf, QUESTIONS, Question, QuestionOption, AnswerScore, answersScore } from '../common/Triage';
 
 const TEAL: string = '#0E8F86';
 const TEAL_DARK: string = '#0B6F68';
@@ -27,7 +27,13 @@ struct Index {
   @State triageLevel: string = '';
   @State triageTitle: string = '';
   @State triageAdvice: string = '';
+  @State triageReasons: string[] = [];
   @State openIndex: number = 0;
+
+  /* 三个追问的答案下标，-1 表示未答 */
+  @State q1: number = -1;
+  @State q2: number = -1;
+  @State q3: number = -1;
 
   /* ---------- 逻辑 ---------- */
 
@@ -67,16 +73,79 @@ struct Index {
     this.selected = ids.slice();
   }
 
+  /** 进入追问；命中危险信号时直接出结果 */
   private analyze(): void {
     if (this.selected.length === 0) {
       return;
     }
     this.flags = flagsFor(this.selected);
+    if (this.flags.length > 0) {
+      this.runAnalysis();
+      return;
+    }
+    this.phase = 'triage';
+  }
+
+  private answers(): Record<string, number> {
+    const map: Record<string, number> = {};
+    if (this.q1 >= 0) {
+      map['duration'] = this.q1;
+    }
+    if (this.q2 >= 0) {
+      map['fever'] = this.q2;
+    }
+    if (this.q3 >= 0) {
+      map['activity'] = this.q3;
+    }
+    return map;
+  }
+
+  private answeredCount(): number {
+    let n: number = 0;
+    if (this.q1 >= 0) {
+      n += 1;
+    }
+    if (this.q2 >= 0) {
+      n += 1;
+    }
+    if (this.q3 >= 0) {
+      n += 1;
+    }
+    return n;
+  }
+
+  private pick(qid: string, index: number): void {
+    if (qid === 'duration') {
+      this.q1 = index;
+    } else if (qid === 'fever') {
+      this.q2 = index;
+    } else if (qid === 'activity') {
+      this.q3 = index;
+    }
+  }
+
+  private selectedOf(qid: string): number {
+    if (qid === 'duration') {
+      return this.q1;
+    }
+    if (qid === 'fever') {
+      return this.q2;
+    }
+    if (qid === 'activity') {
+      return this.q3;
+    }
+    return -1;
+  }
+
+  /** 真正计算并切到结果页 */
+  private runAnalysis(): void {
+    this.flags = flagsFor(this.selected);
     this.results = scoreConditions(this.selected);
-    const t = triageOf(this.results, this.flags);
+    const t = triageOf(this.results, this.flags, this.answers());
     this.triageLevel = t.level;
     this.triageTitle = t.title;
     this.triageAdvice = t.advice;
+    this.triageReasons = t.reasons;
     this.openIndex = this.results.length > 0 ? 0 : -1;
     this.phase = 'result';
   }
@@ -128,6 +197,8 @@ struct Index {
       this.HeaderBar()
       if (this.phase === 'input') {
         this.InputPanel()
+      } else if (this.phase === 'triage') {
+        this.TriagePanel()
       } else {
         this.ResultPanel()
       }
@@ -288,6 +359,118 @@ struct Index {
   }
 
   @Builder
+  TriagePanel() {
+    Scroll() {
+      Column() {
+        Row() {
+          Text('2. 补充三个问题')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(INK)
+          Blank()
+          Text(this.answeredCount().toString() + ' / 3')
+            .fontSize(12)
+            .fontColor(TEAL_DARK)
+            .padding({ left: 10, right: 10, top: 3, bottom: 3 })
+            .backgroundColor('#E9F7F4')
+            .borderRadius(12)
+        }
+        .width('100%')
+        .margin({ bottom: 8 })
+
+        Text('这三个问题会明显影响分诊结论，请按实际情况选择。')
+          .fontSize(12)
+          .fontColor('#84A09D')
+          .width('100%')
+          .margin({ bottom: 12 })
+
+        ForEach(QUESTIONS, (q: Question, qi: number) => {
+          Column() {
+            Text((qi + 1).toString() + '. ' + q.title)
+              .fontSize(14.5)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(INK)
+              .width('100%')
+            Text(q.hint)
+              .fontSize(11)
+              .fontColor('#8FA9A6')
+              .width('100%')
+              .margin({ top: 3, bottom: 10 })
+
+            Flex({ wrap: FlexWrap.Wrap }) {
+              ForEach(q.options, (opt: QuestionOption, oi: number) => {
+                Text(opt.label)
+                  .fontSize(13)
+                  .fontColor(this.selectedOf(q.id) === oi ? Color.White : '#25514F')
+                  .padding({ left: 13, right: 13, top: 8, bottom: 8 })
+                  .margin({ right: 8, bottom: 8 })
+                  .borderRadius(18)
+                  .backgroundColor(this.selectedOf(q.id) === oi ? TEAL : CARD)
+                  .border({ width: 1, color: this.selectedOf(q.id) === oi ? TEAL : LINE })
+                  .onClick(() => {
+                    this.pick(q.id, oi);
+                  })
+              }, (opt: QuestionOption) => opt.label)
+            }
+            .width('100%')
+          }
+          .width('100%')
+          .padding(14)
+          .backgroundColor(CARD)
+          .borderRadius(14)
+          .margin({ bottom: 10 })
+          .alignItems(HorizontalAlign.Start)
+        }, (q: Question) => q.id)
+
+        Row() {
+          Button('返回')
+            .fontSize(14)
+            .fontColor('#41615F')
+            .backgroundColor(CARD)
+            .borderRadius(12)
+            .border({ width: 1, color: LINE })
+            .height(42)
+            .layoutWeight(1)
+            .onClick(() => {
+              this.phase = 'input';
+            })
+          Button('跳过')
+            .fontSize(14)
+            .fontColor('#41615F')
+            .backgroundColor(CARD)
+            .borderRadius(12)
+            .border({ width: 1, color: LINE })
+            .height(42)
+            .layoutWeight(1)
+            .margin({ left: 10 })
+            .onClick(() => {
+              this.runAnalysis();
+            })
+          Button('查看分诊结果')
+            .fontSize(14)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(Color.White)
+            .backgroundColor(this.answeredCount() === 3 ? TEAL : '#A8D5D0')
+            .borderRadius(12)
+            .height(42)
+            .layoutWeight(2)
+            .margin({ left: 10 })
+            .enabled(this.answeredCount() === 3)
+            .onClick(() => {
+              this.runAnalysis();
+            })
+        }
+        .width('100%')
+        .margin({ top: 8, bottom: 24 })
+      }
+      .padding({ left: 16, right: 16, top: 14 })
+      .width('100%')
+    }
+    .layoutWeight(1)
+    .scrollBar(BarState.Off)
+  }
+
+  @Builder
   ResultPanel() {
     Scroll() {
       Column() {
@@ -319,6 +502,21 @@ struct Index {
             .lineHeight(19)
             .margin({ top: 6 })
             .width('100%')
+
+          if (this.triageReasons.length > 0) {
+            Flex({ wrap: FlexWrap.Wrap }) {
+              ForEach(this.triageReasons, (reason: string) => {
+                Text(reason)
+                  .fontSize(11)
+                  .fontColor('#5D7B78')
+                  .padding({ left: 9, right: 9, top: 3, bottom: 3 })
+                  .margin({ right: 6, top: 8 })
+                  .backgroundColor('#00000010')
+                  .borderRadius(10)
+              }, (reason: string) => reason)
+            }
+            .width('100%')
+          }
 
           if (this.flags.length > 0) {
             ForEach(this.flags, (flag: RedFlagDef) => {
