@@ -799,6 +799,10 @@ function bindEvents(){
 
   document.getElementById('toResults').addEventListener('click', showResults);
 
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    window.print();
+  });
+
   document.getElementById('skipTriage').addEventListener('click', () => {
     showResults();
   });
@@ -889,6 +893,12 @@ async function showResults(){
           '<a class="call" href="tel:120">📞 立即拨打 120</a>'
         : '') +
     '</div>';
+
+  const meta = document.getElementById('printMeta');
+  if (meta){
+    meta.textContent = new Date().toLocaleString('zh-CN') + ' · 已选症状：' +
+      [...selected].map(id => SYMPTOMS[id].label).join('、');
+  }
 
   /* 已选症状 */
   document.getElementById('selrow').innerHTML = [...selected]
