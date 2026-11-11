@@ -1,0 +1,17 @@
+﻿# 依赖与构建产物
+node_modules/
+oh_modules/
+.hvigor/
+build/
+.cxx/
+
+# 编辑器与系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+
+# 本地临时文件
+*.local
+.env
