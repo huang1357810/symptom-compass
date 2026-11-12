@@ -1,4 +1,4 @@
-/* 症状自查助手 · Service Worker
+﻿/* 明辨康途 · Service Worker
  * 策略：应用外壳缓存优先，API 请求永不缓存，离线时回退到缓存的首页。
  */
 const CACHE = 'symptom-checker-v1';

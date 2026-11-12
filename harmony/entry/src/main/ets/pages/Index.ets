@@ -1,12 +1,12 @@
 ﻿/**
- * 症状自查助手 · HarmonyOS 版首页
+ * 明辨康途 · HarmonyOS 版首页
  *
  * 单页三态：input（选症状）→ triage（三个追问）→ result（分诊结果）
  * 数据与逻辑分别在 common/Data.ets（自动生成）和 common/Triage.ets
  */
 import { common, Want } from '@kit.AbilityKit';
 import { GROUPS, SYMPTOMS, PRESETS, MedInfo, RedFlagDef } from '../common/Data';
-import { ConditionResult, flagsFor, scoreConditions, triageOf, labelsOf, QUESTIONS, Question, QuestionOption, AnswerScore, answersScore } from '../common/Triage';
+import { ConditionResult, flagsFor, scoreConditions, triageOf, labelsOf, QUESTIONS, Question, QuestionOption } from '../common/Triage';
 
 const TEAL: string = '#0E8F86';
 const TEAL_DARK: string = '#0B6F68';
@@ -220,7 +220,7 @@ struct Index {
         .backgroundColor(TEAL)
         .borderRadius(14)
       Column() {
-        Text('症状自查助手')
+        Text('明辨康途')
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
           .fontColor(Color.White)

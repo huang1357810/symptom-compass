@@ -1,7 +1,7 @@
 ﻿{
   "string": [
-    { "name": "module_desc", "value": "症状自查助手主模块" },
-    { "name": "EntryAbility_desc", "value": "症状自查助手" },
-    { "name": "EntryAbility_label", "value": "症状自查" }
+    { "name": "module_desc", "value": "明辨康途主模块" },
+    { "name": "EntryAbility_desc", "value": "明辨康途" },
+    { "name": "EntryAbility_label", "value": "明辨康途" }
   ]
 }
