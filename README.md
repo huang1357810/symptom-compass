@@ -36,7 +36,8 @@ symptom-checker/
 │   └── deploy.sh            ECS 上的部署脚本（备份 + 解包 + 重载）
 ├── tools/
 │   ├── gen-harmony-data.js  Web 数据 → Data.ets 生成器（含校验）
-│   └── gen-cloud-logic.js   Web 数据 → 云函数 logic.js 生成器
+│   ├── gen-cloud-logic.js   Web 数据 → 云函数 logic.js 生成器
+│   └── test-nlu.js          自然语言识别自测（node tools/test-nlu.js）
 ├── serve-site.js            本地静态服务器（预览用，Node 自带模块，无依赖）
 └── 启动公网地址.ps1          备用：临时公网隧道（Windows）
 ```
@@ -87,8 +88,9 @@ node serve-site.js
 <body>       骨架：hero / 说明 / 症状选择 / 结果页 / 页脚
 <script>
   ├─ 数据层    GROUPS、SYMPTOMS、CONDITIONS、RED_FLAGS、PRESETS
+  ├─ 自然语言  SYMPTOM_ALIASES、parseSymptoms()
   ├─ 逻辑层    flagsFor()、scoreConditions()、gradeOf()
-  └─ 视图层    init()、renderGroups()、toggle()、showResults()、renderCondition()
+  └─ 视图层    init()、renderGroups()、toggle()、applyParsed()、showResults()、renderCondition()
 ```
 
 逻辑层是纯函数，不碰 DOM，方便单测（例如用 Node 直接 `require` 抽取出的脚本）。
@@ -155,6 +157,19 @@ const SYMPTOMS = {
 
 调整建议：想让某疾病更容易出现，提高其典型症状权重并加进 `core`；想让它更少见，降低权重或去掉 `core`。
 
+## 自然语言输入
+
+症状区顶部有一个输入框，可以直接描述，例如「昨天开始发烧 38 度，嗓子疼还流鼻涕」。停笔约 0.5 秒后自动识别并勾选对应症状，也可以点「识别」或按 `Ctrl+Enter` 立即触发。
+
+- **完全本地**：只在浏览器内做词典匹配，描述文字不会离开设备
+- **词典**：每个症状在 `SYMPTOM_ALIASES` 里列出口语说法，`label` 本身也参与匹配；新增症状时记得补别名
+- **匹配顺序**：长词组优先、互不重叠；命中位置前出现「没有 / 不 / 未 / 无」等否定词时跳过（「不发烧」不会勾上发热）
+- **体温**：文字里出现「38 度」「39℃」时按数值补判发热或高热
+- **归并**：高热自动带上发热，剧烈腹痛带上腹痛，关节红肿带上关节痛；有痰时不再算干咳
+- **增量**：识别是在已勾选的基础上合并；自动勾选的项在描述改动后会撤回，手动点过的项不会被自动清除
+
+识别不全时仍可手动勾选或用搜索框过滤。自测：`node tools/test-nlu.js`（检查词表覆盖与 19 条常见说法）。该功能目前只在 Web 版，鸿蒙端尚未同步。
+
 ## 如何新增一种疾病
 
 1. 在 `CONDITIONS` 数组里加一个对象（照抄任意一条改）
@@ -186,7 +201,7 @@ const SYMPTOMS = {
 ## 已知限制
 
 - 匹配是**启发式**的，基于人工设定的症状权重，不是临床预测模型
-- 症状是预设列表，不支持自由文本的自然语言解析
+- 自然语言输入是本地词典匹配，常见口语说法可以识别；非常规表述可能漏识别，需要手动补充
 - 内容以常见病为主，覆盖 34 种情况、78 个症状，不能覆盖复杂或罕见病
 - 不做随访、不记录历史（每次打开都是新的，分享靠 URL hash）
 - 药物只给通用名与注意事项，**刻意不写剂量**——剂量必须由医生/药师按个体情况决定

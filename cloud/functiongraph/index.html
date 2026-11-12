@@ -127,6 +127,36 @@
   }
   .preset:hover{background:#eaf8f5; border-color:#8ecfc6}
 
+  /* ---------- natural language input ---------- */
+  .nlu{margin:16px 0 4px}
+  .nlu-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; margin-bottom:7px}
+  .nlu-label{font-size:13.5px; font-weight:600; color:#0b6f68}
+  .nlu-tip{font-size:12.5px; color:#87a3a1}
+  .nlu-row{display:flex; gap:10px; align-items:stretch}
+  .nlu textarea{
+    flex:1; resize:vertical; min-height:54px; max-height:150px; font-family:inherit;
+    padding:12px 14px; font-size:15px; line-height:1.55; color:inherit;
+    border:1.5px solid #dbe9e7; background:#f7fbfb; border-radius:14px; outline:none;
+    transition:border-color .15s, box-shadow .15s, background .15s;
+  }
+  .nlu textarea::placeholder{color:#9db6b4}
+  .nlu textarea:focus{border-color:var(--teal); background:#fff; box-shadow:0 0 0 4px rgba(14,143,134,.10)}
+  .nlu-row .btn{white-space:nowrap; padding:12px 20px; font-size:14px; align-self:stretch}
+  .nlu-note{font-size:12px; color:#93aeab; margin-top:7px}
+  .nlu-result{
+    margin-top:10px; padding:11px 14px; font-size:13.5px; line-height:1.65;
+    background:#f0faf8; border:1px solid #cdeae5; border-radius:12px; color:#1f5d58;
+  }
+  .nlu-result b{color:#0b6f68}
+  .nlu-result .miss{color:#8a5a12}
+  .nlu-result.warn{background:#fff8ec; border-color:#f2ddb7; color:#8a5a12}
+  @keyframes chipFlash{
+    0%{box-shadow:0 0 0 0 rgba(14,143,134,.5)}
+    70%{box-shadow:0 0 0 10px rgba(14,143,134,0)}
+    100%{box-shadow:0 0 0 0 rgba(14,143,134,0)}
+  }
+  .chip.flash{animation:chipFlash .9s ease}
+
   /* ---------- actions ---------- */
   .actions{
     display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;
@@ -333,6 +363,8 @@
     .cbody{padding:14px}
     .qtitle{flex-wrap:wrap}
     .qtitle i{width:100%; margin-top:3px}
+    .nlu-row{flex-direction:column}
+    .nlu-row .btn{align-self:stretch}
   }
 </style>
 </head>
@@ -366,6 +398,19 @@
       <h2>1. 你有哪些不适？</h2>
       <span class="spacer"></span>
       <span class="pill" id="count">已选 0 项</span>
+    </div>
+
+    <div class="nlu">
+      <div class="nlu-head">
+        <span class="nlu-label">一句话描述</span>
+        <span class="nlu-tip">例如：昨天开始发烧 38 度，嗓子疼还流鼻涕</span>
+      </div>
+      <div class="nlu-row">
+        <textarea id="nluInput" rows="2" placeholder="说说哪里不舒服，停笔后会自动识别并勾选下方症状"></textarea>
+        <button class="btn primary" id="nluBtn" type="button">识别</button>
+      </div>
+      <p class="nlu-note">只在本机匹配，不会上传任何文字；识别不全时可以再手动勾选或搜索。</p>
+      <div class="nlu-result hidden" id="nluResult" role="status" aria-live="polite"></div>
     </div>
 
     <div class="search">
@@ -1026,6 +1071,224 @@ const QUESTIONS = [
 const SYMPTOM_IDS = Object.keys(SYMPTOMS);
 const RED_SET = new Set(RED_FLAGS.flatMap(f => f.ids));
 
+/* =========================================================
+   自然语言解析（纯本地、零依赖）
+   一句话 → 症状 id：最长匹配 + 否定词过滤 + 体温数值识别
+   ========================================================= */
+const SYMPTOM_ALIASES = {
+  /* 全身 */
+  fever: ['发烧', '低烧', '有点烧', '体温高', '体温升高'],
+  high_fever: ['高烧', '高热', '烧得很厉害', '体温很高', '持续高烧'],
+  chills: ['怕冷', '发冷', '畏寒', '寒战', '打寒战', '浑身发冷'],
+  fatigue: ['乏力', '没力气', '没有力气', '浑身无力', '疲劳', '疲惫', '很累', '没精神', '浑身没劲'],
+  night_sweat: ['盗汗', '夜间出汗', '晚上出汗', '睡着出汗', '半夜出汗'],
+  weight_loss: ['体重下降', '体重减轻', '瘦了', '消瘦', '掉秤'],
+  poor_appetite: ['食欲不振', '没胃口', '没有胃口', '不想吃饭', '吃不下', '胃口差', '食欲差', '没有食欲'],
+  pallor: ['面色苍白', '脸色白', '脸发白', '嘴唇发白', '面色发白'],
+  dehydration: ['口干', '口渴', '少尿', '尿少', '脱水', '嘴唇干', '尿量少'],
+
+  /* 头面 */
+  headache: ['头痛', '头疼', '脑袋疼', '头胀', '偏头痛', '头很痛'],
+  dizziness: ['头晕', '眩晕', '头昏', '天旋地转', '晕得厉害', '站不稳'],
+  sore_throat: ['咽痛', '嗓子疼', '嗓子痛', '喉咙痛', '咽喉痛', '嗓子不舒服', '喉咙疼'],
+  congestion: ['鼻塞', '鼻子不通', '鼻子堵', '鼻子塞'],
+  runny_nose: ['流涕', '流鼻涕', '鼻涕', '清鼻涕', '流清鼻'],
+  sneeze: ['打喷嚏', '喷嚏', '老打喷嚏'],
+  smell_loss: ['嗅觉减退', '闻不到', '闻不出', '味觉减退', '尝不出', '没有嗅觉', '失去嗅觉'],
+  facial_pain: ['面部压痛', '脸疼', '面部胀痛', '眼眶胀痛', '颧骨疼', '脸胀', '脸一按就疼', '一按就疼', '脸上按着疼', '脸颊疼'],
+  toothache: ['牙痛', '牙疼', '牙齿疼', '牙齿痛'],
+  ear_pain: ['耳痛', '耳朵疼', '耳朵痛'],
+  tinnitus: ['耳鸣', '耳朵嗡嗡', '耳朵响'],
+  hearing_loss: ['听力下降', '听不清', '听不见', '耳朵聋'],
+  eye_itch: ['眼痒', '眼睛痒', '眼睛发痒', '眼发痒'],
+  eye_red: ['眼红', '眼睛红', '红眼', '眼睛充血', '眼睛里有血丝'],
+  eye_discharge: ['眼屎', '眼屎多', '眼睛分泌物', '眼分泌物', '分泌物多'],
+  eye_pain: ['眼痛', '眼睛疼', '眼睛痛'],
+  vision_blur: ['视物模糊', '看不清', '视力模糊', '看东西模糊', '眼花', '视力下降'],
+  photophobia: ['畏光', '怕光', '见光难受', '见光就疼'],
+
+  /* 呼吸 */
+  dry_cough: ['干咳', '咳嗽', '咳', '咳得厉害', '老咳嗽'],
+  sputum: ['咳痰', '有痰', '痰多', '黄痰', '咳黄痰', '白痰'],
+  chest_tight: ['胸闷', '胸口闷', '胸口发闷', '胸发闷'],
+  dyspnea: ['气短', '呼吸困难', '喘不上气', '呼吸费劲', '憋气', '喘不过气'],
+  hemoptysis: ['咯血', '咳血', '痰中带血', '咳出血'],
+  wheeze: ['喘息', '喘鸣', '喘', '拉风箱', '嗓子有哨音'],
+  chest_pain: ['胸痛', '胸口疼', '胸口痛', '心口疼', '心口痛'],
+
+  /* 消化 */
+  nausea: ['恶心', '想吐', '反胃', '干呕'],
+  vomiting: ['呕吐', '吐了', '吐'],
+  abdominal_pain: ['腹痛', '肚子疼', '肚子痛', '腹部疼痛', '小肚子疼'],
+  severe_abd: ['剧烈腹痛', '肚子剧痛', '腹痛难忍', '疼得受不了', '肚子疼得厉害'],
+  diarrhea: ['腹泻', '拉肚子', '拉稀', '水样便', '拉水'],
+  constipation: ['便秘', '大便干', '排便困难', '拉不出来', '好几天没大便'],
+  heartburn: ['反酸', '烧心', '胃烧', '泛酸', '打嗝反酸'],
+  bloating: ['腹胀', '肚子胀', '胀气', '肚子胀气'],
+  gi_bleed: ['呕血', '黑便', '大便发黑', '吐血', '拉黑便', '大便黑'],
+  dysphagia: ['吞咽困难', '咽东西费劲', '吞咽痛', '吃东西噎'],
+  rectal_bleeding: ['便血', '大便带血', '拉血', '大便有血'],
+  anal_pain: ['肛门痛', '肛门疼', '痔疮', '肛门肿物', '肛门肿'],
+
+  /* 泌尿生殖 */
+  urinary_freq: ['尿频', '尿急', '总想尿', '老想上厕所', '老跑厕所'],
+  dysuria: ['尿痛', '小便疼', '排尿痛', '尿尿疼', '小便痛'],
+  hematuria: ['血尿', '尿血', '小便带血', '尿液发红'],
+  flank_pain: ['腰侧痛', '侧腰痛', '腰两边疼', '肾区痛'],
+  dysmenorrhea: ['痛经', '经期腹痛', '月经痛', '来大姨妈疼', '例假疼'],
+  vaginal_discharge: ['白带异常', '白带多', '白带发黄', '白带异味', '白带有味'],
+  pregnancy_bleed: ['孕期出血', '怀孕出血', '孕期腹痛', '怀孕见红', '孕早期出血'],
+
+  /* 皮肤 */
+  rash: ['皮疹', '起疹子', '出疹子', '红疹', '身上起红点'],
+  itch: ['瘙痒', '皮肤痒', '身上痒', '发痒', '痒得厉害'],
+  hives: ['风团', '荨麻疹', '风疙瘩', '起风包'],
+  dry_skin: ['皮肤干燥', '脱皮', '脱屑', '皮肤干'],
+  blister: ['水疱', '水泡', '起泡', '小水泡', '疱疹'],
+
+  /* 骨骼肌肉 */
+  joint_pain: ['关节痛', '关节疼', '关节酸痛', '关节不舒服'],
+  joint_swelling: ['关节红肿', '关节肿', '关节发热', '关节又红又肿'],
+  back_pain: ['腰背痛', '后背疼', '背痛', '腰疼', '腰痛', '腰酸'],
+  neck_pain: ['颈肩痛', '脖子疼', '脖子痛', '肩颈痛', '肩膀酸', '脖子酸'],
+  myalgia: ['肌肉酸痛', '浑身酸痛', '全身酸痛', '肌肉疼', '肌肉痛'],
+
+  /* 神经与情绪 */
+  insomnia: ['失眠', '睡不着', '入睡困难', '睡眠不好', '老是醒', '早醒'],
+  anxious: ['焦虑', '紧张', '心烦', '烦躁', '心里不安'],
+  low_mood: ['情绪低落', '心情不好', '抑郁', '没兴趣', '高兴不起来', '情绪差'],
+  palpitation: ['心悸', '心慌', '心跳快', '心跳厉害', '心脏砰砰跳'],
+  numbness: ['手脚麻木', '麻木', '手麻', '脚麻', '手脚发麻'],
+  weakness_one_side: ['一侧无力', '单侧无力', '半边身子没劲', '半身不遂', '一侧手脚没劲', '一边手脚没劲', '半边不能动', '半边身子发麻'],
+  speech_diff: ['言语不清', '说话不清', '说话含糊', '大舌头', '吐字不清', '说不清楚话'],
+  seizure: ['抽搐', '抽风', '抽过去', '翻白眼抽'],
+  confusion: ['意识模糊', '神志不清', '迷迷糊糊', '叫不醒', '胡言乱语', '反应迟钝'],
+  stiff_neck: ['颈部僵硬', '脖子硬', '脖子僵硬', '低头困难', '脖子发挺'],
+
+  /* 补充症状 */
+  purulent_discharge: ['脓涕', '黄鼻涕', '绿鼻涕', '黄绿鼻涕', '鼻涕发黄'],
+  oral_ulcer: ['口腔溃疡', '嘴里溃疡', '嘴里有溃疡', '嘴里起溃疡', '口腔疱疹', '嘴角起泡', '嘴里起泡'],
+  epigastric_pain: ['上腹痛', '胃疼', '胃痛', '胃不舒服', '胃胀', '上腹部疼'],
+  hand_foot_rash: ['手足皮疹', '手脚起疹', '手脚起疹子', '手上脚上起疹', '手上起疹', '脚上起疹', '手心脚心起疹', '手上有疹子', '脚上有疹子'],
+  heat_exposure: ['高温暴露', '中暑', '热到了', '晒太久', '在太阳下暴晒']
+};
+
+/* 否定词：出现在症状词之前时，表示「没有这个症状」 */
+const NEGATION = /(没有|没|无|未|不|否认|并非|不是)/;
+const NEGATION_EXCEPT = /(不但|不仅|不得不|不停|不断)/;
+const NLP_PUNCT = '，,。；;！!？?、';
+
+/* 口语填充词：去掉不影响症状判断的虚词，让「小便还疼」「心情也不好」也能对上 */
+const NL_FILLERS = /(也|都|还|总是|一直|非常|特别|比较|稍微|了)/g;
+
+/* 整理文本：全角数字转半角、去空白与填充词、统一小写 */
+function normalizeText(text){
+  return String(text || '')
+    .replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+    .replace(/[\s\u3000]+/g, '')
+    .replace(NL_FILLERS, '')
+    .toLowerCase();
+}
+
+/* 词表：label 与别名一起建索引，同一短语只保留先出现者；长词优先 */
+const ALIAS_INDEX = (() => {
+  const seen = new Set();
+  const list = [];
+  SYMPTOM_IDS.forEach(id => {
+    const words = [SYMPTOMS[id].label].concat(SYMPTOM_ALIASES[id] || []);
+    words.forEach(raw => {
+      const word = normalizeText(raw);
+      if (!word || seen.has(word)) return;
+      seen.add(word);
+      list.push({ id, word });
+    });
+  });
+  return list.sort((a, b) => b.word.length - a.word.length);
+})();
+
+/* 语气/否定作用域：回溯到最近的标点或「但」，只看前 8 个字 */
+function isNegated(text, start){
+  let i = start - 1;
+  let scope = '';
+  while (i >= 0 && scope.length < 8){
+    const ch = text[i];
+    if (NLP_PUNCT.indexOf(ch) !== -1 || ch === '但') break;
+    scope = ch + scope;
+    i--;
+  }
+  if (!scope) return false;
+  if (NEGATION_EXCEPT.test(scope)) return false;
+  return NEGATION.test(scope);
+}
+
+/* 体温数值：37.3–38.9 → 发热；≥39 → 高热；与「度/℃」一起出现才认 */
+const TEMP_RE = /(3[6-9](?:\.\d)?|4[0-2](?:\.\d)?)\s*(?:度|℃|°c)/g;
+
+function rangeOverlap(a, b){
+  return a.start < b.end && b.start < a.end;
+}
+
+function parseSymptoms(text){
+  const norm = normalizeText(text);
+  const out = { ids: [], words: [], coverage: 0, text: String(text || '') };
+  if (!norm) return out;
+
+  const candidates = [];
+  ALIAS_INDEX.forEach(entry => {
+    let from = 0;
+    let idx;
+    while ((idx = norm.indexOf(entry.word, from)) !== -1){
+      candidates.push({ id: entry.id, word: entry.word, start: idx, end: idx + entry.word.length });
+      from = idx + 1;
+    }
+  });
+
+  /* 体温数值也算候选，避免「烧到 39 度」只识别出发热 */
+  const tempHits = [];
+  let m;
+  TEMP_RE.lastIndex = 0;
+  while ((m = TEMP_RE.exec(norm)) !== null){
+    const value = parseFloat(m[1]);
+    if (value < 37.3) continue;
+    tempHits.push({
+      id: value >= 39 ? 'high_fever' : 'fever',
+      word: m[0],
+      start: m.index,
+      end: m.index + m[0].length
+    });
+  }
+
+  /* 长词优先的贪心匹配，互不重叠 */
+  const all = candidates.concat(tempHits).sort(
+    (a, b) => (b.end - b.start) - (a.end - a.start) || a.start - b.start
+  );
+  const taken = [];
+  const picked = [];
+  all.forEach(c => {
+    if (taken.some(t => rangeOverlap(t, c))) return;
+    taken.push(c);
+    picked.push(c);
+  });
+
+  const kept = picked.filter(c => !isNegated(norm, c.start));
+  const ids = new Set();
+  let covered = 0;
+  /* 覆盖率按「提到过」算，被否定的症状也算已理解 */
+  picked.forEach(c => { covered += c.word.length; });
+  kept.forEach(c => { ids.add(c.id); });
+
+  /* 语义归并：明确高热必然包含发热；剧烈腹痛必然包含腹痛；有痰就不再算干咳 */
+  if (ids.has('high_fever')) ids.add('fever');
+  if (ids.has('severe_abd')) ids.add('abdominal_pain');
+  if (ids.has('joint_swelling')) ids.add('joint_pain');
+  if (ids.has('sputum')) ids.delete('dry_cough');
+
+  out.ids = SYMPTOM_IDS.filter(id => ids.has(id));
+  out.words = kept.map(c => c.word);
+  out.coverage = norm.length ? Math.min(1, covered / norm.length) : 0;
+  return out;
+}
+
 function flagsFor(selected){
   return RED_FLAGS.filter(f => {
     const mode = f.mode || 'any';
@@ -1067,6 +1330,11 @@ function gradeOf(score){
    ========================================================= */
 const selected = new Set();
 let chipMap = {};
+/* 自然语言识别自动勾选的症状；用户手动点击后即「接管」，不再被自动清除 */
+let autoIds = new Set();
+/* 用户手动操作过的症状：一旦手动勾选或取消，就不再被自动识别改动 */
+let manualIds = new Set();
+let nluTimer = null;
 
 /* 云端分诊 API（部署在华为云 FunctionGraph 时自动启用，否则本地计算） */
 const CLOUD = { enabled: false, endpoint: '/api/triage' };
@@ -1275,6 +1543,8 @@ function renderGroups(){
 }
 
 function toggle(id){
+  autoIds.delete(id);
+  manualIds.add(id);
   if (selected.has(id)){
     selected.delete(id);
   } else {
@@ -1296,11 +1566,91 @@ function updateCount(){
 
 function clearAll(){
   selected.clear();
+  autoIds.clear();
+  manualIds.clear();
+  const nluBox = document.getElementById('nluResult');
+  if (nluBox) nluBox.classList.add('hidden');
   Object.values(chipMap).forEach(c => {
     c.classList.remove('on');
     c.setAttribute('aria-pressed', 'false');
   });
   updateCount();
+}
+
+/* 自然语言识别结果：合并勾选 + 结果提示 */
+function highlightChips(ids){
+  ids.forEach(id => {
+    const chip = chipMap[id];
+    if (!chip) return;
+    chip.classList.remove('flash');
+    void chip.offsetWidth; /* 重置动画 */
+    chip.classList.add('flash');
+  });
+}
+
+function syncChips(){
+  Object.entries(chipMap).forEach(([id, ch]) => {
+    const on = selected.has(id);
+    ch.classList.toggle('on', on);
+    ch.setAttribute('aria-pressed', String(on));
+  });
+  updateCount();
+}
+
+function applyParsed(parsed, scroll){
+  const box = document.getElementById('nluResult');
+  if (!box) return;
+
+  const ids = parsed.ids || [];
+  const plain = String(parsed.text || '').trim();
+  const prevAuto = autoIds;
+  const fresh = [];
+
+  ids.forEach(id => {
+    if (!SYMPTOMS[id]) return;
+    if (manualIds.has(id)) return;
+    if (!selected.has(id)) fresh.push(id);
+    selected.add(id);
+  });
+
+  /* 上一轮自动勾选、这一轮没识别到的，撤回（用户手动点过的已在 toggle 中移除） */
+  autoIds = new Set();
+  prevAuto.forEach(id => {
+    if (ids.indexOf(id) !== -1){
+      autoIds.add(id);
+    } else if (selected.has(id)){
+      selected.delete(id);
+    }
+  });
+  fresh.forEach(id => autoIds.add(id));
+
+  syncChips();
+  box.classList.remove('hidden');
+
+  if (!plain){
+    box.classList.add('hidden');
+    return;
+  }
+
+  if (!ids.length){
+    box.classList.add('warn');
+    box.textContent = '没识别到明确的症状，换个更直接的说法，或直接勾选下方症状。';
+    return;
+  }
+
+  highlightChips(fresh.length ? fresh : ids);
+
+  const names = ids.map(id => SYMPTOMS[id].label).join('、');
+  const low = parsed.coverage < 0.35 && plain.length >= 8;
+  box.classList.toggle('warn', low);
+  box.innerHTML = '已识别并勾选 <b>' + names + '</b>' +
+    (fresh.length ? '（新增 ' + fresh.length + ' 项）' : '（原本就已选中）') +
+    (low ? '<br><span class="miss">描述里还有内容没对上，建议再手动补充。</span>' : '');
+
+  if (scroll && fresh.length){
+    const first = chipMap[fresh[0]];
+    if (first && first.scrollIntoView) first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
 }
 
 function bindEvents(){
@@ -1345,6 +1695,28 @@ function bindEvents(){
       sec.style.display = any ? '' : 'none';
     });
   });
+
+  const nluInput = document.getElementById('nluInput');
+  const nluBtn = document.getElementById('nluBtn');
+  if (nluInput && nluBtn){
+    const run = scroll => {
+      clearTimeout(nluTimer);
+      applyParsed(parseSymptoms(nluInput.value), scroll);
+    };
+
+    /* 停笔 450ms 自动识别并勾选；点按钮或 Ctrl+Enter 立即识别 */
+    nluInput.addEventListener('input', () => {
+      clearTimeout(nluTimer);
+      nluTimer = setTimeout(() => run(false), 450);
+    });
+    nluInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)){
+        e.preventDefault();
+        run(true);
+      }
+    });
+    nluBtn.addEventListener('click', () => run(true));
+  }
 
   document.querySelectorAll('.preset').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1516,7 +1888,7 @@ if (typeof document !== 'undefined'){
   document.addEventListener('DOMContentLoaded', init);
 }
 if (typeof module !== 'undefined' && module.exports){
-  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, flagsFor, scoreConditions, gradeOf };
+  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf };
 }
 </script>
 <script>
