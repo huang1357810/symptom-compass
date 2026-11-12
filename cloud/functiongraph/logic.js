@@ -939,6 +939,117 @@ function gradeOf(score){
 }
 
 /* =========================================================
+   用户档案（只存在本机 localStorage）与关心提醒
+   ========================================================= */
+const PROFILE_KEY = 'mingbian.profile.v1';
+const PROFILE_RULES = {
+  days: 3,            /* 就医提醒的观察窗口 */
+  times: 3,           /* 同一方向在窗口内出现几次 */
+  careDays: 7,        /* 多久没再查就关心是否康复 */
+  dedupeMs: 10 * 60 * 1000,
+  maxEntries: 200
+};
+
+function emptyProfile(){
+  return { entries: [], muted: {}, ignore: {}, resolved: {}, notify: false };
+}
+
+function loadProfile(){
+  try {
+    const raw = window.localStorage.getItem(PROFILE_KEY);
+    if (!raw) return emptyProfile();
+    const data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.entries)) return emptyProfile();
+    return {
+      entries: data.entries.slice(-PROFILE_RULES.maxEntries),
+      muted: data.muted || {},
+      ignore: data.ignore || {},
+      resolved: data.resolved || {},
+      notify: !!data.notify
+    };
+  } catch (e){
+    return emptyProfile();
+  }
+}
+
+function saveProfile(p){
+  try { window.localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch (e) {}
+}
+
+function clearProfileData(){
+  try { window.localStorage.removeItem(PROFILE_KEY); } catch (e) {}
+}
+
+/* 记录一次查看；十分钟内同一组症状只记一次，避免反复点「查看结果」刷屏 */
+function recordVisit(sym, dir, dirName, level, now){
+  const t = now || Date.now();
+  const p = loadProfile();
+  const sig = (sym || []).slice().sort().join(',');
+  const last = p.entries[p.entries.length - 1];
+  if (last && last.sig === sig && t - last.t < PROFILE_RULES.dedupeMs) return p;
+
+  p.entries.push({
+    t,
+    sig,
+    sym: (sym || []).slice(),
+    dir: dir || '',
+    dirName: dirName || '',
+    level: level || ''
+  });
+  if (p.entries.length > PROFILE_RULES.maxEntries){
+    p.entries = p.entries.slice(-PROFILE_RULES.maxEntries);
+  }
+  saveProfile(p);
+  return p;
+}
+
+/* 纯函数：算出该提醒就医的方向，以及该关心康复的方向 */
+function summarizeProfile(p, now){
+  const time = now || Date.now();
+  const DAY = 86400000;
+  const since = time - PROFILE_RULES.days * DAY;
+  const entries = (p && p.entries) || [];
+  const muted = (p && p.muted) || {};
+  const ignore = (p && p.ignore) || {};
+  const groups = {};
+  const advise = [];
+  const care = [];
+
+  entries.forEach(e => {
+    if (!e.dir) return;
+    (groups[e.dir] = groups[e.dir] || []).push(e);
+  });
+
+  Object.keys(groups).forEach(dir => {
+    const list = groups[dir];
+    const last = list[list.length - 1];
+    const name = last.dirName || '这个情况';
+    const recent = list.filter(e => e.t >= since);
+
+    if (!ignore['advise:' + dir] && recent.length >= PROFILE_RULES.times && (muted['advise:' + dir] || 0) < since){
+      advise.push({ dir, name, count: recent.length, last: last.t });
+      return;
+    }
+    if (ignore['care:' + dir]) return;
+    if (time - last.t >= PROFILE_RULES.careDays * DAY && (muted['care:' + dir] || 0) < last.t){
+      care.push({ dir, name, days: Math.floor((time - last.t) / DAY), last: last.t });
+    }
+  });
+
+  advise.sort((a, b) => b.count - a.count || b.last - a.last);
+  care.sort((a, b) => b.days - a.days);
+  return { advise, care };
+}
+
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/* =========================================================
    视图层
    ========================================================= */
 const selected = new Set();
@@ -948,6 +1059,9 @@ let autoIds = new Set();
 /* 用户手动操作过的症状：一旦手动勾选或取消，就不再被自动识别改动 */
 let manualIds = new Set();
 let nluTimer = null;
+/* 本机档案：搜索历史 + 提醒状态 */
+let profile = null;
+let notifiedThisSession = {};
 
 /* 云端分诊 API（部署在华为云 FunctionGraph 时自动启用，否则本地计算） */
 const CLOUD = { enabled: false, endpoint: '/api/triage' };
@@ -1097,6 +1211,10 @@ function init(){
   bindEvents();
   updateCount();
   detectCloud();
+
+  /* 读取本机档案，判断是否需要就医提醒或康复关心 */
+  profile = loadProfile();
+  renderCareBanner();
 
   /* 支持通过 #s=症状id,症状id 直接打开结果，方便把当前选择分享给家人或医生 */
   try {
@@ -1266,6 +1384,168 @@ function applyParsed(parsed, scroll){
   }
 }
 
+/* ---------------- 提醒横幅与档案面板 ---------------- */
+function renderCareBanner(now){
+  const box = document.getElementById('careBanner');
+  if (!box) return;
+  if (!profile) profile = loadProfile();
+
+  const sum = summarizeProfile(profile, now || Date.now());
+  const advise = sum.advise[0];
+  const care = sum.care[0];
+
+  if (!advise && !care){
+    box.className = 'care-banner hidden';
+    box.innerHTML = '';
+    return;
+  }
+
+  if (advise){
+    box.className = 'care-banner advise fade';
+    box.innerHTML =
+      '<h3>「' + esc(advise.name) + '」在 ' + PROFILE_RULES.days + ' 天内被查看了 ' + advise.count + ' 次</h3>' +
+      '<p>同一个方向反复出现，线上判断只能作参考。<b>建议去医院让医生当面看一下</b>，也可以把最近一次结果导出给医生。</p>' +
+      '<div class="care-actions">' +
+        '<button class="btn ghost" type="button" data-care="advise-ok">知道了</button>' +
+        '<button class="btn ghost" type="button" data-care="advise-never">这个方向不再提醒</button>' +
+      '</div>';
+  } else {
+    box.className = 'care-banner fade';
+    box.innerHTML =
+      '<h3>距上次查看「' + esc(care.name) + '」已经 ' + care.days + ' 天</h3>' +
+      '<p>这段时间没再查，希望已经在好转。如果症状还在，建议去医院复诊确认一下。</p>' +
+      '<div class="care-actions">' +
+        '<button class="btn ghost" type="button" data-care="care-ok">好多了</button>' +
+        '<button class="btn ghost" type="button" data-care="care-bad">还没好</button>' +
+      '</div>';
+  }
+
+  maybeNotify(advise, care);
+}
+
+/* 浏览器通知只在本页面打开时发；关闭页面后不会主动推送 */
+function maybeNotify(advise, care){
+  if (!profile || !profile.notify) return;
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+
+  const item = advise || care;
+  if (!item) return;
+  const key = advise ? 'advise:' + item.dir : 'care:' + item.dir;
+  if (notifiedThisSession[key]) return;
+  notifiedThisSession[key] = true;
+
+  try {
+    new Notification('明辨康途', {
+      body: advise
+        ? '你最近 ' + PROFILE_RULES.days + ' 天内查看了「' + item.name + '」' + item.count + ' 次，建议去医院面诊。'
+        : '「' + item.name + '」已经 ' + item.days + ' 天没再查看，现在好些了吗？',
+      icon: 'icon-192.png',
+      tag: 'mbkt-' + key
+    });
+  } catch (e) {
+    /* file:// 等环境不允许构造通知 */
+  }
+}
+
+function handleCare(action){
+  const now = Date.now();
+  const sum = summarizeProfile(profile, now);
+  const target = sum.advise[0] || sum.care[0];
+  if (!target) return;
+
+  if (action === 'advise-ok'){
+    profile.muted['advise:' + target.dir] = now;
+  } else if (action === 'advise-never'){
+    profile.ignore['advise:' + target.dir] = true;
+  } else if (action === 'care-ok'){
+    profile.muted['care:' + target.dir] = now;
+    profile.resolved[target.dir] = now;
+  } else if (action === 'care-bad'){
+    profile.muted['care:' + target.dir] = now;
+  }
+  saveProfile(profile);
+  renderCareBanner(now);
+}
+
+function openProfile(){
+  profile = loadProfile();
+  renderProfilePanel();
+  const modal = document.getElementById('profileModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function renderProfilePanel(){
+  const stats = document.getElementById('profileStats');
+  const list = document.getElementById('profileList');
+  const btn = document.getElementById('notifyBtn');
+  const entries = (profile && profile.entries) || [];
+
+  if (stats){
+    stats.textContent = entries.length
+      ? '本机共记录 ' + entries.length + ' 次查看，最近一次是 ' +
+        new Date(entries[entries.length - 1].t).toLocaleString('zh-CN') + '。'
+      : '还没有记录。查看一次结果后，这里会保存历史。';
+  }
+
+  if (list){
+    list.innerHTML = entries.length
+      ? '<ul class="profile-list">' + entries.slice(-10).reverse().map(e => {
+          const labels = (e.sym || []).map(id => SYMPTOMS[id] ? SYMPTOMS[id].label : id).join('、');
+          return '<li><span class="pt">' + new Date(e.t).toLocaleString('zh-CN') + '</span>' +
+                 '<span class="pn">' + esc(e.dirName || '未匹配到明确方向') + '</span>' +
+                 '<span class="psym">' + esc(labels) + '</span></li>';
+        }).join('') + '</ul>'
+      : '';
+  }
+
+  if (btn){
+    if (typeof Notification === 'undefined'){
+      btn.disabled = true;
+      btn.textContent = '此浏览器不支持通知';
+    } else if (Notification.permission === 'denied'){
+      btn.disabled = true;
+      btn.textContent = '通知已被浏览器拦截';
+    } else if (profile.notify && Notification.permission === 'granted'){
+      btn.disabled = false;
+      btn.textContent = '浏览器通知：已开启';
+    } else {
+      btn.disabled = false;
+      btn.textContent = '开启浏览器通知';
+    }
+  }
+}
+
+function enableNotify(){
+  if (typeof Notification === 'undefined') return;
+
+  const apply = permission => {
+    if (!profile) profile = loadProfile();
+    profile.notify = permission === 'granted';
+    saveProfile(profile);
+    renderProfilePanel();
+    if (permission === 'granted'){
+      try {
+        new Notification('明辨康途', { body: '提醒已开启：打开本页面时会检查是否需要提醒。', icon: 'icon-192.png' });
+      } catch (e) {}
+    }
+  };
+
+  if (Notification.permission === 'granted' || Notification.permission === 'denied'){
+    apply(Notification.permission);
+    return;
+  }
+  const ret = Notification.requestPermission(apply);
+  if (ret && typeof ret.then === 'function') ret.then(apply);
+}
+
+function clearAllProfile(){
+  if (!window.confirm('清除后，历史记录和提醒状态都会删除，无法恢复。确定清除吗？')) return;
+  clearProfileData();
+  profile = emptyProfile();
+  renderProfilePanel();
+  renderCareBanner();
+}
+
 function bindEvents(){
   document.getElementById('go').addEventListener('click', showTriage);
   document.getElementById('clear').addEventListener('click', clearAll);
@@ -1275,6 +1555,7 @@ function bindEvents(){
     document.getElementById('intake').classList.remove('hidden');
     document.getElementById('notice').classList.remove('hidden');
     try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    renderCareBanner();
     window.scrollTo({top: 0, behavior: 'smooth'});
   });
 
@@ -1329,6 +1610,39 @@ function bindEvents(){
       }
     });
     nluBtn.addEventListener('click', () => run(true));
+  }
+
+  /* 档案、提醒横幅与通知 */
+  const profileBtn = document.getElementById('profileBtn');
+  if (profileBtn) profileBtn.addEventListener('click', openProfile);
+
+  const profileModal = document.getElementById('profileModal');
+  if (profileModal){
+    profileModal.addEventListener('click', e => {
+      if (e.target === profileModal) profileModal.classList.add('hidden');
+    });
+  }
+
+  const profileClose = document.getElementById('profileClose');
+  if (profileClose){
+    profileClose.addEventListener('click', () => {
+      const modal = document.getElementById('profileModal');
+      if (modal) modal.classList.add('hidden');
+    });
+  }
+
+  const notifyBtn = document.getElementById('notifyBtn');
+  if (notifyBtn) notifyBtn.addEventListener('click', enableNotify);
+
+  const clearProfileBtn = document.getElementById('clearProfile');
+  if (clearProfileBtn) clearProfileBtn.addEventListener('click', clearAllProfile);
+
+  const careBanner = document.getElementById('careBanner');
+  if (careBanner){
+    careBanner.addEventListener('click', e => {
+      const target = e.target && e.target.closest ? e.target.closest('[data-care]') : null;
+      if (target) handleCare(target.dataset.care);
+    });
   }
 
   document.querySelectorAll('.preset').forEach(btn => {
@@ -1389,6 +1703,16 @@ async function showResults(){
 
   /* 三色分诊 */
   const triage = computeTriage(results, flags);
+
+  /* 记到本机档案，用于就医提醒与康复关心（不会上传）；回到首页时再展示横幅 */
+  const topResult = results[0];
+  profile = recordVisit(
+    [...selected],
+    topResult ? topResult.id : '',
+    topResult ? topResult.name : '',
+    triage.level
+  );
+
   const levelLabel = { red: '高风险 · 需急诊', yellow: '中风险 · 需就医', green: '低风险 · 可观察' };
   document.getElementById('urgent').innerHTML =
     '<div class="triage ' + triage.level + ' fade">' +
@@ -1501,5 +1825,5 @@ if (typeof document !== 'undefined'){
   document.addEventListener('DOMContentLoaded', init);
 }
 if (typeof module !== 'undefined' && module.exports){
-  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf };
+  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit };
 }
