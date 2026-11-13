@@ -164,6 +164,17 @@
   .body-tab{font-size:12px; padding:4px 13px; border-radius:999px; color:#5d7b78; background:transparent; border:none; cursor:pointer; transition:.15s}
   .body-tab.on{background:var(--teal); color:#fff}
   .body-svg{width:100%; height:auto; display:block; filter:drop-shadow(0 10px 18px rgba(12,74,72,.10))}
+  .body-layer{transition:opacity .3s ease}
+  .body-layer.off{opacity:0; pointer-events:none}
+  .body-layer.dim{opacity:.42}
+  .organ{cursor:pointer}
+  .organ .organ-shape{transition:filter .15s ease, stroke-width .15s ease}
+  .organ:hover .organ-shape,.organ.on .organ-shape{filter:brightness(1.1); stroke-width:2}
+  .organ .organ-label{font-size:7px; fill:#5d7b78; text-anchor:middle; pointer-events:none; opacity:.9}
+  .layer-toggles{display:flex; flex-wrap:wrap; justify-content:center; gap:5px; margin-top:9px}
+  .layer-toggle{font-size:11.5px; padding:4px 10px; border-radius:999px; border:1px solid #dbe9e7; background:#fff; color:#5d7b78; cursor:pointer; transition:.15s}
+  .layer-toggle:hover{border-color:#9dd4cd; background:#f6fdfc}
+  .layer-toggle.on{background:#e7f5f2; border-color:#a7d5cf; color:#0b6f68; font-weight:600}
   .body-figure path,.body-figure rect,.body-figure ellipse{fill:url(#bodyGrad); stroke:#a7d5cf; stroke-width:1.2}
   .body-shadow{fill:#cfe7e3; opacity:.5}
   .body-hot{cursor:pointer}
@@ -559,7 +570,7 @@
           <button type="button" class="body-tab on" data-view="front">正面</button>
           <button type="button" class="body-tab" data-view="back">背面</button>
         </div>
-        <svg class="body-svg" viewBox="0 0 220 450" role="group" aria-label="人体部位选择图">
+        <svg class="body-svg" viewBox="0 0 220 450" role="group" aria-label="人体分层示意图">
           <defs>
             <linearGradient id="bodyGrad" x1="0" y1="0" x2="0.9" y2="1">
               <stop offset="0" stop-color="#eef9f7"/>
@@ -568,50 +579,138 @@
             </linearGradient>
           </defs>
 
-          <ellipse class="body-shadow" cx="110" cy="428" rx="64" ry="9"/>
+          <!-- 皮肤层：体表轮廓与部位点位 -->
+          <g class="body-layer" data-layer="skin">
+            <ellipse class="body-shadow" cx="110" cy="428" rx="64" ry="9"/>
+            <g class="body-figure">
+              <ellipse cx="110" cy="44" rx="23" ry="28"/>
+              <rect x="102" y="68" width="16" height="18" rx="7"/>
+              <path d="M70 88 C74 105 76 130 78 158 L76 208 L144 208 L142 158 C144 130 146 105 150 88 C136 82 84 82 70 88 Z"/>
+              <path d="M74 94 C78 122 80 160 78 204" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="4" stroke-linecap="round"/>
+              <rect x="52" y="92" width="16" height="72" rx="8"/>
+              <rect x="46" y="158" width="14" height="66" rx="7"/>
+              <ellipse cx="53" cy="232" rx="8" ry="11"/>
+              <rect x="152" y="92" width="16" height="72" rx="8"/>
+              <rect x="160" y="158" width="14" height="66" rx="7"/>
+              <ellipse cx="167" cy="232" rx="8" ry="11"/>
+              <rect x="80" y="206" width="24" height="104" rx="11"/>
+              <rect x="116" y="206" width="24" height="104" rx="11"/>
+              <rect x="83" y="306" width="20" height="100" rx="10"/>
+              <rect x="117" y="306" width="20" height="100" rx="10"/>
+              <ellipse cx="92" cy="414" rx="14" ry="8"/>
+              <ellipse cx="128" cy="414" rx="14" ry="8"/>
+            </g>
 
-          <g class="body-figure">
-            <ellipse cx="110" cy="44" rx="23" ry="28"/>
-            <rect x="102" y="68" width="16" height="18" rx="7"/>
-            <path d="M70 88 C74 105 76 130 78 158 L76 208 L144 208 L142 158 C144 130 146 105 150 88 C136 82 84 82 70 88 Z"/>
-            <path d="M74 94 C78 122 80 160 78 204" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="4" stroke-linecap="round"/>
-            <rect x="52" y="92" width="16" height="72" rx="8"/>
-            <rect x="46" y="158" width="14" height="66" rx="7"/>
-            <ellipse cx="53" cy="232" rx="8" ry="11"/>
-            <rect x="152" y="92" width="16" height="72" rx="8"/>
-            <rect x="160" y="158" width="14" height="66" rx="7"/>
-            <ellipse cx="167" cy="232" rx="8" ry="11"/>
-            <rect x="80" y="206" width="24" height="104" rx="11"/>
-            <rect x="116" y="206" width="24" height="104" rx="11"/>
-            <rect x="83" y="306" width="20" height="100" rx="10"/>
-            <rect x="117" y="306" width="20" height="100" rx="10"/>
-            <ellipse cx="92" cy="414" rx="14" ry="8"/>
-            <ellipse cx="128" cy="414" rx="14" ry="8"/>
+            <g class="body-view" data-view="front">
+              <g class="body-hot" data-part="head"><ellipse class="hit" cx="110" cy="46" rx="26" ry="31"/><circle class="dot" cx="110" cy="46" r="6"/><title>头部</title></g>
+              <g class="body-hot" data-part="neck"><ellipse class="hit" cx="110" cy="78" rx="15" ry="12"/><circle class="dot" cx="110" cy="78" r="5"/><title>颈部</title></g>
+              <g class="body-hot" data-part="chest"><ellipse class="hit" cx="110" cy="118" rx="34" ry="29"/><circle class="dot" cx="110" cy="118" r="6"/><title>胸部</title></g>
+              <g class="body-hot" data-part="upper_abd"><ellipse class="hit" cx="110" cy="162" rx="30" ry="22"/><circle class="dot" cx="110" cy="162" r="6"/><title>上腹</title></g>
+              <g class="body-hot" data-part="lower_abd"><ellipse class="hit" cx="110" cy="197" rx="28" ry="19"/><circle class="dot" cx="110" cy="197" r="6"/><title>下腹</title></g>
+              <g class="body-hot" data-part="arm"><ellipse class="hit" cx="60" cy="140" rx="14" ry="46"/><circle class="dot" cx="60" cy="140" r="5"/><title>肩臂</title></g>
+              <g class="body-hot" data-part="arm"><ellipse class="hit" cx="160" cy="140" rx="14" ry="46"/><circle class="dot" cx="160" cy="140" r="5"/><title>肩臂</title></g>
+              <g class="body-hot" data-part="hand"><ellipse class="hit" cx="53" cy="234" rx="10" ry="14"/><circle class="dot" cx="53" cy="234" r="5"/><title>手</title></g>
+              <g class="body-hot" data-part="hand"><ellipse class="hit" cx="167" cy="234" rx="10" ry="14"/><circle class="dot" cx="167" cy="234" r="5"/><title>手</title></g>
+              <g class="body-hot" data-part="leg"><ellipse class="hit" cx="92" cy="258" rx="14" ry="50"/><circle class="dot" cx="92" cy="258" r="5"/><title>腿、膝</title></g>
+              <g class="body-hot" data-part="leg"><ellipse class="hit" cx="128" cy="258" rx="14" ry="50"/><circle class="dot" cx="128" cy="258" r="5"/><title>腿、膝</title></g>
+              <g class="body-hot" data-part="foot"><ellipse class="hit" cx="92" cy="354" rx="12" ry="58"/><circle class="dot" cx="92" cy="354" r="5"/><title>小腿、足</title></g>
+              <g class="body-hot" data-part="foot"><ellipse class="hit" cx="128" cy="354" rx="12" ry="58"/><circle class="dot" cx="128" cy="354" r="5"/><title>小腿、足</title></g>
+            </g>
+
+            <g class="body-view hidden" data-view="back">
+              <g class="body-hot" data-part="neck"><ellipse class="hit" cx="110" cy="78" rx="15" ry="12"/><circle class="dot" cx="110" cy="78" r="5"/><title>后颈</title></g>
+              <g class="body-hot" data-part="back"><ellipse class="hit" cx="110" cy="128" rx="34" ry="34"/><circle class="dot" cx="110" cy="128" r="6"/><title>上背</title></g>
+              <g class="body-hot" data-part="lowback"><ellipse class="hit" cx="110" cy="182" rx="30" ry="22"/><circle class="dot" cx="110" cy="182" r="6"/><title>腰部、肾区</title></g>
+              <g class="body-hot" data-part="glute"><ellipse class="hit" cx="110" cy="214" rx="26" ry="17"/><circle class="dot" cx="110" cy="214" r="5"/><title>臀部、肛周</title></g>
+            </g>
           </g>
 
-          <g class="body-view" data-view="front">
-            <g class="body-hot" data-part="head"><ellipse class="hit" cx="110" cy="46" rx="26" ry="31"/><circle class="dot" cx="110" cy="46" r="6"/><title>头部</title></g>
-            <g class="body-hot" data-part="neck"><ellipse class="hit" cx="110" cy="78" rx="15" ry="12"/><circle class="dot" cx="110" cy="78" r="5"/><title>颈部</title></g>
-            <g class="body-hot" data-part="chest"><ellipse class="hit" cx="110" cy="118" rx="34" ry="29"/><circle class="dot" cx="110" cy="118" r="6"/><title>胸部</title></g>
-            <g class="body-hot" data-part="upper_abd"><ellipse class="hit" cx="110" cy="162" rx="30" ry="22"/><circle class="dot" cx="110" cy="162" r="6"/><title>上腹</title></g>
-            <g class="body-hot" data-part="lower_abd"><ellipse class="hit" cx="110" cy="197" rx="28" ry="19"/><circle class="dot" cx="110" cy="197" r="6"/><title>下腹</title></g>
-            <g class="body-hot" data-part="arm"><ellipse class="hit" cx="60" cy="140" rx="14" ry="46"/><circle class="dot" cx="60" cy="140" r="5"/><title>肩臂</title></g>
-            <g class="body-hot" data-part="arm"><ellipse class="hit" cx="160" cy="140" rx="14" ry="46"/><circle class="dot" cx="160" cy="140" r="5"/><title>肩臂</title></g>
-            <g class="body-hot" data-part="hand"><ellipse class="hit" cx="53" cy="234" rx="10" ry="14"/><circle class="dot" cx="53" cy="234" r="5"/><title>手</title></g>
-            <g class="body-hot" data-part="hand"><ellipse class="hit" cx="167" cy="234" rx="10" ry="14"/><circle class="dot" cx="167" cy="234" r="5"/><title>手</title></g>
-            <g class="body-hot" data-part="leg"><ellipse class="hit" cx="92" cy="258" rx="14" ry="50"/><circle class="dot" cx="92" cy="258" r="5"/><title>腿、膝</title></g>
-            <g class="body-hot" data-part="leg"><ellipse class="hit" cx="128" cy="258" rx="14" ry="50"/><circle class="dot" cx="128" cy="258" r="5"/><title>腿、膝</title></g>
-            <g class="body-hot" data-part="foot"><ellipse class="hit" cx="92" cy="354" rx="12" ry="58"/><circle class="dot" cx="92" cy="354" r="5"/><title>小腿、足</title></g>
-            <g class="body-hot" data-part="foot"><ellipse class="hit" cx="128" cy="354" rx="12" ry="58"/><circle class="dot" cx="128" cy="354" r="5"/><title>小腿、足</title></g>
+          <!-- 肌肉层 -->
+          <g class="body-layer off" data-layer="muscle">
+            <g fill="#e6a9a3" stroke="#d98f88" stroke-width=".8" opacity=".55">
+              <path d="M78 98 C88 93 102 95 108 104 C102 114 88 117 80 110 Z"/>
+              <path d="M142 98 C132 93 118 95 112 104 C118 114 132 117 140 110 Z"/>
+              <rect x="96" y="144" width="28" height="56" rx="9"/>
+              <path d="M96 160 H124 M96 176 H124" stroke="#d98f88" stroke-width="1" fill="none"/>
+              <ellipse cx="66" cy="102" rx="12" ry="10"/>
+              <ellipse cx="154" cy="102" rx="12" ry="10"/>
+              <rect x="55" y="118" width="11" height="34" rx="5"/>
+              <rect x="154" y="118" width="11" height="34" rx="5"/>
+              <rect x="48" y="168" width="10" height="42" rx="5"/>
+              <rect x="162" y="168" width="10" height="42" rx="5"/>
+              <rect x="82" y="214" width="20" height="62" rx="10"/>
+              <rect x="118" y="214" width="20" height="62" rx="10"/>
+              <rect x="85" y="318" width="16" height="58" rx="8"/>
+              <rect x="119" y="318" width="16" height="58" rx="8"/>
+            </g>
           </g>
 
-          <g class="body-view hidden" data-view="back">
-            <g class="body-hot" data-part="neck"><ellipse class="hit" cx="110" cy="78" rx="15" ry="12"/><circle class="dot" cx="110" cy="78" r="5"/><title>后颈</title></g>
-            <g class="body-hot" data-part="back"><ellipse class="hit" cx="110" cy="128" rx="34" ry="34"/><circle class="dot" cx="110" cy="128" r="6"/><title>上背</title></g>
-            <g class="body-hot" data-part="lowback"><ellipse class="hit" cx="110" cy="182" rx="30" ry="22"/><circle class="dot" cx="110" cy="182" r="6"/><title>腰部、肾区</title></g>
-            <g class="body-hot" data-part="glute"><ellipse class="hit" cx="110" cy="214" rx="26" ry="17"/><circle class="dot" cx="110" cy="214" r="5"/><title>臀部、肛周</title></g>
+          <!-- 骨骼层 -->
+          <g class="body-layer off" data-layer="bone" fill="none" stroke="#d8cfba" stroke-width="2.4" stroke-linecap="round">
+            <ellipse cx="110" cy="44" rx="18" ry="22"/>
+            <path d="M100 63 C104 70 116 70 120 63"/>
+            <path d="M110 82 V204" stroke-width="4.5"/>
+            <path d="M105 92 h10 M105 104 h10 M105 116 h10 M105 128 h10 M105 140 h10 M105 152 h10 M105 164 h10 M105 176 h10 M105 188 h10 M105 200 h10" stroke-width="1.4" stroke="#cfc5ad"/>
+            <path d="M92 94 C100 89 106 88 110 88 C114 88 120 89 128 94"/>
+            <path d="M110 104 C98 101 86 106 82 116 M110 112 C96 109 84 116 80 128 M110 120 C96 117 84 126 81 138 M110 128 C98 125 87 134 84 146 M110 136 C100 133 90 142 88 152 M110 144 C102 142 94 150 92 158"/>
+            <path d="M110 104 C122 101 134 106 138 116 M110 112 C124 109 136 116 140 128 M110 120 C124 117 136 126 139 138 M110 128 C122 125 133 134 136 146 M110 136 C120 133 130 142 132 152 M110 144 C118 142 126 150 128 158"/>
+            <rect x="107" y="104" width="6" height="50" rx="3" fill="#e6dfcf"/>
+            <path d="M86 194 C84 208 92 220 110 224 C128 220 136 208 134 194 L126 194 C125 206 118 212 110 212 C102 212 95 206 94 194 Z" fill="#e6dfcf"/>
+            <circle cx="88" cy="214" r="6"/>
+            <circle cx="132" cy="214" r="6"/>
+            <path d="M92 226 V296 M128 226 V296 M92 304 V350 M128 304 V350" stroke-width="3.2"/>
+            <g class="body-hot" data-part="ribs"><ellipse class="hit" cx="110" cy="128" rx="31" ry="27"/><circle class="dot" cx="110" cy="128" r="6"/><title>肋骨 / 肋间</title></g>
+          </g>
+
+          <!-- 内脏层 -->
+          <g class="body-layer off" data-layer="organ">
+            <g class="body-hot organ" data-part="lung">
+              <path class="organ-shape" d="M88 100 C76 104 72 124 76 142 C78 152 88 156 92 148 C96 138 96 118 94 106 C93 101 91 99 88 100 Z" fill="#e5a3b4" stroke="#cf8399" stroke-width="1.3" opacity=".85"/>
+              <path class="organ-shape" d="M132 100 C144 104 148 124 144 142 C142 152 132 156 128 148 C124 138 124 118 126 106 C127 101 129 99 132 100 Z" fill="#e5a3b4" stroke="#cf8399" stroke-width="1.3" opacity=".85"/>
+              <circle class="dot" cx="82" cy="126" r="5"/>
+              <title>肺</title>
+            </g>
+
+            <g class="body-hot organ" data-part="heart">
+              <path class="organ-shape" d="M110 112 C104 106 96 108 94 117 C92 128 102 138 110 146 C118 138 128 128 126 117 C124 108 116 106 110 112 Z" fill="#e26d63" stroke="#c34f45" stroke-width="1.4"/>
+              <circle class="dot" cx="110" cy="122" r="5"/>
+              <title>心脏</title>
+            </g>
+
+            <g class="body-hot organ" data-part="liver">
+              <path class="organ-shape" d="M78 150 C92 146 106 148 108 156 C110 166 100 172 88 172 C80 172 74 164 76 156 Z" fill="#b9785a" stroke="#9a5c42" stroke-width="1.3" opacity=".9"/>
+              <circle class="dot" cx="92" cy="160" r="5"/>
+              <title>肝</title>
+            </g>
+
+            <g class="body-hot organ" data-part="stomach">
+              <path class="organ-shape" d="M118 152 C128 152 134 158 132 168 C130 178 120 182 112 178 C106 175 104 168 108 162 C110 156 114 152 118 152 Z" fill="#f0b98a" stroke="#d19a6a" stroke-width="1.3" opacity=".9"/>
+              <circle class="dot" cx="119" cy="166" r="5"/>
+              <title>胃</title>
+            </g>
+
+            <g class="body-hot organ" data-part="kidney">
+              <path class="organ-shape" d="M84 178 C78 178 76 184 80 190 C84 196 90 194 90 188 C90 182 88 178 84 178 Z" fill="#b58bd0" stroke="#9970b4" stroke-width="1.3" opacity=".9"/>
+              <path class="organ-shape" d="M136 178 C142 178 144 184 140 190 C136 196 130 194 130 188 C130 182 132 178 136 178 Z" fill="#b58bd0" stroke="#9970b4" stroke-width="1.3" opacity=".9"/>
+              <circle class="dot" cx="84" cy="186" r="4.5"/>
+              <circle class="dot" cx="136" cy="186" r="4.5"/>
+              <title>肾</title>
+            </g>
+
+            <g class="body-hot organ" data-part="intestine">
+              <path class="organ-shape" d="M92 182 C88 194 92 204 102 206 H118 C128 204 132 194 128 182" fill="none" stroke="#d99a4e" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+              <path class="organ-shape" d="M100 188 C110 184 118 192 108 198 C98 204 112 208 120 202" fill="none" stroke="#e8b06a" stroke-width="4" stroke-linecap="round" opacity=".95"/>
+              <circle class="dot" cx="110" cy="196" r="5"/>
+              <title>肠</title>
+            </g>
           </g>
         </svg>
+        <div class="layer-toggles">
+          <button type="button" class="layer-toggle on" data-layer="skin" aria-pressed="true">皮肤</button>
+          <button type="button" class="layer-toggle" data-layer="muscle" aria-pressed="false">肌肉</button>
+          <button type="button" class="layer-toggle" data-layer="bone" aria-pressed="false">骨骼</button>
+          <button type="button" class="layer-toggle" data-layer="organ" aria-pressed="false">内脏</button>
+        </div>
         <div class="body-tools">
           <button type="button" class="body-jump" data-part="skin">全身 / 皮肤不适</button>
         </div>
@@ -623,7 +722,7 @@
           <button type="button" class="bp-close hidden" id="bodyClose">收起</button>
         </div>
         <div class="bp-chips" id="bodyPanelChips">
-          <p class="bp-hint">人体上的圆点都可以点。选大致位置后，右侧会列出这里常见的不适，可以多选；也可以直接用下面的搜索或快速开始。</p>
+          <p class="bp-hint">圆点是体表部位。打开下面的「骨骼 / 内脏」图层后，还能直接点肋骨、心、肺、胃、肝、肾、肠，右侧会列出对应的不适。</p>
         </div>
       </div>
     </div>
@@ -1357,6 +1456,36 @@ const BODY_PARTS = [
       { name: '全身', ids: ['fever', 'high_fever', 'chills', 'fatigue', 'night_sweat', 'weight_loss', 'poor_appetite', 'pallor', 'dehydration', 'heat_exposure'] },
       { name: '情绪与睡眠', ids: ['insomnia', 'anxious', 'low_mood'] }
     ]
+  },
+
+  /* 内脏器官：打开「内脏」图层后可点 */
+  {
+    id: 'ribs', label: '肋骨 / 肋间', layer: 'bone',
+    groups: [{ name: '胸壁与肋骨', ids: ['rib_pain', 'chest_wall_pain', 'chest_pain'] }]
+  },
+  {
+    id: 'heart', label: '心脏', layer: 'organ',
+    groups: [{ name: '心脏相关不适', ids: ['palpitation', 'chest_pain', 'chest_tight', 'dyspnea'] }]
+  },
+  {
+    id: 'lung', label: '肺', layer: 'organ',
+    groups: [{ name: '肺部相关不适', ids: ['dry_cough', 'sputum', 'dyspnea', 'wheeze', 'hemoptysis', 'chest_pain'] }]
+  },
+  {
+    id: 'stomach', label: '胃', layer: 'organ',
+    groups: [{ name: '胃部相关不适', ids: ['epigastric_pain', 'heartburn', 'nausea', 'vomiting', 'bloating'] }]
+  },
+  {
+    id: 'liver', label: '肝 / 右上腹', layer: 'organ',
+    groups: [{ name: '肝区相关不适', ids: ['epigastric_pain', 'abdominal_pain', 'poor_appetite', 'fatigue', 'pallor'] }]
+  },
+  {
+    id: 'kidney', label: '肾 / 腰侧', layer: 'organ',
+    groups: [{ name: '肾与泌尿道相关不适', ids: ['flank_pain', 'back_pain', 'urinary_freq', 'dysuria', 'hematuria', 'fever'] }]
+  },
+  {
+    id: 'intestine', label: '肠', layer: 'organ',
+    groups: [{ name: '肠道相关不适', ids: ['abdominal_pain', 'diarrhea', 'constipation', 'bloating', 'gi_bleed', 'severe_abd'] }]
   }
 ];
 
@@ -2178,6 +2307,7 @@ function init(){
   renderGroups();
   bindEvents();
   bindBodyMap();
+  applyBodyLayers();
   updateCount();
   detectCloud();
 
@@ -2519,6 +2649,35 @@ function clearAllProfile(){
 /* ---------------- 人体部位图 ---------------- */
 let currentBodyPart = '';
 
+/* 2.5D 图层：皮肤 / 肌肉 / 骨骼 / 内脏，可叠加 */
+const BODY_LAYERS = ['skin', 'muscle', 'bone', 'organ'];
+let activeLayers = { skin: true, muscle: false, bone: false, organ: false };
+
+function applyBodyLayers(){
+  document.querySelectorAll('.body-layer').forEach(g => {
+    const layer = g.dataset.layer;
+    const on = !!activeLayers[layer];
+    g.classList.toggle('off', !on);
+    if (layer === 'skin'){
+      const inner = activeLayers.muscle || activeLayers.bone || activeLayers.organ;
+      g.classList.toggle('dim', on && inner);
+    }
+  });
+
+  document.querySelectorAll('.layer-toggle').forEach(btn => {
+    const on = !!activeLayers[btn.dataset.layer];
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-pressed', String(on));
+  });
+}
+
+function toggleLayer(layer){
+  if (BODY_LAYERS.indexOf(layer) === -1) return;
+  activeLayers[layer] = !activeLayers[layer];
+  applyBodyLayers();
+  closeBodyPart();
+}
+
 function openBodyPart(id){
   const part = BODY_MAP[id];
   const title = document.getElementById('bodyPanelTitle');
@@ -2559,7 +2718,7 @@ function closeBodyPart(){
   if (title) title.textContent = '点一下不舒服的位置';
   if (close) close.classList.add('hidden');
   if (box){
-    box.innerHTML = '<p class="bp-hint">人体上的圆点都可以点。选大致位置后，右侧会列出这里常见的不适，可以多选；也可以直接用下面的搜索或快速开始。</p>';
+    box.innerHTML = '<p class="bp-hint">圆点是体表部位。打开下面的「骨骼 / 内脏」图层后，还能直接点肋骨、心、肺、胃、肝、肾、肠，右侧会列出对应的不适。</p>';
   }
 }
 
@@ -2592,6 +2751,9 @@ function bindBodyMap(){
   });
   document.querySelectorAll('.body-tab').forEach(btn => {
     btn.addEventListener('click', () => switchBodyView(btn.dataset.view));
+  });
+  document.querySelectorAll('.layer-toggle').forEach(btn => {
+    btn.addEventListener('click', () => toggleLayer(btn.dataset.layer));
   });
   const close = document.getElementById('bodyClose');
   if (close) close.addEventListener('click', closeBodyPart);

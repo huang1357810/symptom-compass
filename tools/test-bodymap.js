@@ -62,6 +62,24 @@ BODY_PARTS.forEach(p => {
   if (hotspots.indexOf(p.id) === -1) errors.push('部位 ' + p.id + ' 没有对应的可点热点');
 });
 
+/* 2.5D 图层与器官点位 */
+const layerNames = ['skin', 'muscle', 'bone', 'organ'];
+layerNames.forEach(name => {
+  if (html.indexOf('data-layer="' + name + '"') === -1) errors.push('缺少图层 ' + name);
+});
+
+const organIds = ['heart', 'lung', 'stomach', 'liver', 'kidney', 'intestine'];
+organIds.forEach(id => {
+  const p = BODY_PARTS.find(x => x.id === id);
+  if (!p) { errors.push('缺少器官点位 ' + id); return; }
+  if (p.layer !== 'organ') errors.push(id + ' 的 layer 应为 organ');
+});
+
+BODY_PARTS.forEach(p => {
+  const ALLOWED_LAYERS = ['organ', 'bone', 'muscle', 'skin'];
+  if (p.layer && ALLOWED_LAYERS.indexOf(p.layer) === -1) errors.push(p.id + ' 的 layer 值不合法：' + p.layer);
+});
+
 /* 关键部位必须有，避免以后误删 */
 const need = ['head', 'neck', 'chest', 'upper_abd', 'lower_abd', 'back', 'lowback', 'skin'];
 need.forEach(id => {

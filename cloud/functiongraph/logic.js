@@ -621,6 +621,36 @@ const BODY_PARTS = [
       { name: '全身', ids: ['fever', 'high_fever', 'chills', 'fatigue', 'night_sweat', 'weight_loss', 'poor_appetite', 'pallor', 'dehydration', 'heat_exposure'] },
       { name: '情绪与睡眠', ids: ['insomnia', 'anxious', 'low_mood'] }
     ]
+  },
+
+  /* 内脏器官：打开「内脏」图层后可点 */
+  {
+    id: 'ribs', label: '肋骨 / 肋间', layer: 'bone',
+    groups: [{ name: '胸壁与肋骨', ids: ['rib_pain', 'chest_wall_pain', 'chest_pain'] }]
+  },
+  {
+    id: 'heart', label: '心脏', layer: 'organ',
+    groups: [{ name: '心脏相关不适', ids: ['palpitation', 'chest_pain', 'chest_tight', 'dyspnea'] }]
+  },
+  {
+    id: 'lung', label: '肺', layer: 'organ',
+    groups: [{ name: '肺部相关不适', ids: ['dry_cough', 'sputum', 'dyspnea', 'wheeze', 'hemoptysis', 'chest_pain'] }]
+  },
+  {
+    id: 'stomach', label: '胃', layer: 'organ',
+    groups: [{ name: '胃部相关不适', ids: ['epigastric_pain', 'heartburn', 'nausea', 'vomiting', 'bloating'] }]
+  },
+  {
+    id: 'liver', label: '肝 / 右上腹', layer: 'organ',
+    groups: [{ name: '肝区相关不适', ids: ['epigastric_pain', 'abdominal_pain', 'poor_appetite', 'fatigue', 'pallor'] }]
+  },
+  {
+    id: 'kidney', label: '肾 / 腰侧', layer: 'organ',
+    groups: [{ name: '肾与泌尿道相关不适', ids: ['flank_pain', 'back_pain', 'urinary_freq', 'dysuria', 'hematuria', 'fever'] }]
+  },
+  {
+    id: 'intestine', label: '肠', layer: 'organ',
+    groups: [{ name: '肠道相关不适', ids: ['abdominal_pain', 'diarrhea', 'constipation', 'bloating', 'gi_bleed', 'severe_abd'] }]
   }
 ];
 
@@ -1442,6 +1472,7 @@ function init(){
   renderGroups();
   bindEvents();
   bindBodyMap();
+  applyBodyLayers();
   updateCount();
   detectCloud();
 
@@ -1783,6 +1814,35 @@ function clearAllProfile(){
 /* ---------------- 人体部位图 ---------------- */
 let currentBodyPart = '';
 
+/* 2.5D 图层：皮肤 / 肌肉 / 骨骼 / 内脏，可叠加 */
+const BODY_LAYERS = ['skin', 'muscle', 'bone', 'organ'];
+let activeLayers = { skin: true, muscle: false, bone: false, organ: false };
+
+function applyBodyLayers(){
+  document.querySelectorAll('.body-layer').forEach(g => {
+    const layer = g.dataset.layer;
+    const on = !!activeLayers[layer];
+    g.classList.toggle('off', !on);
+    if (layer === 'skin'){
+      const inner = activeLayers.muscle || activeLayers.bone || activeLayers.organ;
+      g.classList.toggle('dim', on && inner);
+    }
+  });
+
+  document.querySelectorAll('.layer-toggle').forEach(btn => {
+    const on = !!activeLayers[btn.dataset.layer];
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-pressed', String(on));
+  });
+}
+
+function toggleLayer(layer){
+  if (BODY_LAYERS.indexOf(layer) === -1) return;
+  activeLayers[layer] = !activeLayers[layer];
+  applyBodyLayers();
+  closeBodyPart();
+}
+
 function openBodyPart(id){
   const part = BODY_MAP[id];
   const title = document.getElementById('bodyPanelTitle');
@@ -1823,7 +1883,7 @@ function closeBodyPart(){
   if (title) title.textContent = '点一下不舒服的位置';
   if (close) close.classList.add('hidden');
   if (box){
-    box.innerHTML = '<p class="bp-hint">人体上的圆点都可以点。选大致位置后，右侧会列出这里常见的不适，可以多选；也可以直接用下面的搜索或快速开始。</p>';
+    box.innerHTML = '<p class="bp-hint">圆点是体表部位。打开下面的「骨骼 / 内脏」图层后，还能直接点肋骨、心、肺、胃、肝、肾、肠，右侧会列出对应的不适。</p>';
   }
 }
 
@@ -1856,6 +1916,9 @@ function bindBodyMap(){
   });
   document.querySelectorAll('.body-tab').forEach(btn => {
     btn.addEventListener('click', () => switchBodyView(btn.dataset.view));
+  });
+  document.querySelectorAll('.layer-toggle').forEach(btn => {
+    btn.addEventListener('click', () => toggleLayer(btn.dataset.layer));
   });
   const close = document.getElementById('bodyClose');
   if (close) close.addEventListener('click', closeBodyPart);
