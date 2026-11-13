@@ -115,7 +115,10 @@ export const SYMPTOMS: Record<string, SymptomDef> = {
   "oral_ulcer": { label: "口腔溃疡/疱疹", group: "头面" },
   "epigastric_pain": { label: "上腹痛/胃部不适", group: "消化" },
   "hand_foot_rash": { label: "手足皮疹", group: "皮肤" },
-  "heat_exposure": { label: "高温环境暴露", group: "全身" }
+  "heat_exposure": { label: "高温环境暴露", group: "全身" },
+  "rib_pain": { label: "肋部疼痛", group: "骨骼肌肉" },
+  "chest_wall_pain": { label: "胸壁按压痛", group: "骨骼肌肉" },
+  "belching": { label: "嗳气/打嗝", group: "消化" }
 };
 
 export const CONDITIONS: ConditionDef[] = [
@@ -233,7 +236,7 @@ export const CONDITIONS: ConditionDef[] = [
     dept: "消化内科",
     tag: "",
     summary: "餐后饱胀、早饱、上腹不适，检查常无明显器质性病变，与饮食和压力相关。",
-    symptoms: { "bloating": 0.9, "poor_appetite": 0.7, "nausea": 0.6, "abdominal_pain": 0.6, "heartburn": 0.5, "constipation": 0.2 },
+    symptoms: { "bloating": 0.9, "belching": 0.7, "poor_appetite": 0.7, "nausea": 0.6, "abdominal_pain": 0.6, "heartburn": 0.5, "constipation": 0.2 },
     core: ["bloating"],
     care: ["规律进食、细嚼慢咽", "减少油腻、产气和过冷食物", "适度运动，管理压力", "避免餐后立即躺下"],
     meds: [{ n: "多潘立酮", note: "促动力药，短期使用；心脏病患者及孕妇慎用，需咨询医生" }, { n: "复方消化酶", note: "辅助消化，餐中或餐后服用" }],
@@ -497,7 +500,7 @@ export const CONDITIONS: ConditionDef[] = [
     dept: "消化内科",
     tag: "",
     summary: "上腹隐痛或烧灼感，常与进食相关，可能为胃炎或消化性溃疡。",
-    symptoms: { "epigastric_pain": 1, "heartburn": 0.6, "nausea": 0.6, "bloating": 0.6, "poor_appetite": 0.5, "gi_bleed": 0.2 },
+    symptoms: { "epigastric_pain": 1, "heartburn": 0.6, "nausea": 0.6, "bloating": 0.6, "belching": 0.5, "poor_appetite": 0.5, "gi_bleed": 0.2 },
     core: ["epigastric_pain"],
     care: ["规律进食，少食多餐", "避免酒、浓茶、咖啡和辛辣刺激", "戒烟", "不要空腹长期服用止痛药（如布洛芬、阿司匹林）"],
     meds: [{ n: "铝碳酸镁", note: "中和胃酸、保护黏膜，餐后或睡前嚼服" }, { n: "质子泵抑制剂（奥美拉唑等）", note: "抑制胃酸，饭前服用；长期使用需医生评估" }],
@@ -526,6 +529,18 @@ export const CONDITIONS: ConditionDef[] = [
     care: ["立即转移到阴凉通风处", "解开衣物，用冷水擦拭身体降温", "少量多次补充含盐饮料", "意识不清时不要强行喂水"],
     meds: [{ n: "口服补液盐", note: "补充水分和电解质，按说明冲配" }, { n: "藿香正气类中成药", note: "仅辅助缓解轻度不适，不能替代降温和补液" }],
     see: "体温超过 40℃、意识模糊、抽搐、无汗或皮肤湿冷，可能是热射病，立即拨打 120。"
+  },
+  {
+    id: "costochondritis",
+    name: "肋软骨炎 / 胸壁疼痛",
+    dept: "骨科 / 胸外科",
+    tag: "需排除心脏问题",
+    summary: "胸壁局部按压痛，深呼吸、咳嗽或转身时加重，多为肋软骨或胸壁肌肉的良性炎症。",
+    symptoms: { "rib_pain": 1, "chest_wall_pain": 1, "chest_pain": 0.4, "dyspnea": 0.2, "myalgia": 0.2 },
+    core: ["rib_pain", "chest_wall_pain"],
+    care: ["避免剧烈转体、提重物和扩胸动作", "局部热敷，每次 15 分钟", "疼痛明显时短期使用止痛药", "注意与心脏来源的胸痛区分"],
+    meds: [{ n: "布洛芬", note: "短期止痛，饭后服，不超过 3–5 天" }, { n: "双氯芬酸二乙胺凝胶", note: "外用，局部刺激小，皮肤破损处禁用" }],
+    see: "若疼痛为压榨感、放射至左臂或下颌、伴大汗或气促，请立即按心梗处理并拨打 120；发热、呼吸困难、疼痛持续加重或超过 2 周需就医排查。"
   }
 ];
 
