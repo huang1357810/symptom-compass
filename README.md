@@ -38,7 +38,8 @@ symptom-checker/
 │   ├── gen-harmony-data.js  Web 数据 → Data.ets 生成器（含校验）
 │   ├── gen-cloud-logic.js   Web 数据 → 云函数 logic.js 生成器
 │   ├── test-nlu.js          自然语言识别自测（node tools/test-nlu.js）
-│   └── test-profile.js      用户档案提醒规则自测（node tools/test-profile.js）
+│   ├── test-profile.js      用户档案提醒规则自测（node tools/test-profile.js）
+│   └── test-bodymap.js      人体部位图自测（node tools/test-bodymap.js）
 ├── serve-site.js            本地静态服务器（预览用，Node 自带模块，无依赖）
 └── 启动公网地址.ps1          备用：临时公网隧道（Windows）
 ```
@@ -173,6 +174,18 @@ const SYMPTOMS = {
 
 识别不全时仍可手动勾选或用搜索框过滤。自测：`node tools/test-nlu.js`（检查词表覆盖与 19 条常见说法）。该功能目前只在 Web 版，鸿蒙端尚未同步。
 
+## 人体部位图
+
+症状区里有一张内联 SVG 人体图（正面 / 背面可切换），在容易出问题的部位打了可点圆点，用来弥补「描述不出位置」的情况。
+
+- 点部位后，右侧列出该处常见的不适，可以直接多选，和下方分组选择完全同步
+- 圆点本身也会高亮：该部位只要有一个症状被选中，点位就变成实心
+- 头顶、左右手臂、腿等同一部位有多个点位，点哪个效果一样
+- 「全身 / 皮肤不适」按钮覆盖皮疹、发热、乏力等不好定位的表现
+- 纯 SVG + CSS 实现，不引入任何 3D 库或模型文件，离线可用
+
+数据在 `BODY_PARTS` 中维护：每组写明 `id`、`label`、`view`（front / back / all）和 `groups`（分组名 + 症状 id）。新增点位时，同时在该部位对应的 SVG 里加 `data-part="部位id"`。自测：`node tools/test-bodymap.js`。
+
 ## 用户档案与提醒
 
 右上角「我的档案」会把每次查看结果记在本机 `localStorage`（键名 `mingbian.profile.v1`），不联网、不上传。
@@ -219,6 +232,7 @@ const SYMPTOMS = {
 - 自然语言输入是本地词典匹配，常见口语说法可以识别；非常规表述可能漏识别，需要手动补充
 - 内容以常见病为主，覆盖 34 种情况、78 个症状，不能覆盖复杂或罕见病
 - 提醒依赖本机记录，只在下次打开页面时检查；换设备或清除浏览器数据后记录会丢失，纯前端也做不到后台定时推送
+- 人体图是示意图，点位只能帮助定位大致区域，不能替代查体；同一部位可能对应多种情况
 - 药物只给通用名与注意事项，**刻意不写剂量**——剂量必须由医生/药师按个体情况决定
 
 ## 内容免责

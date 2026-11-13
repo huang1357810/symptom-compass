@@ -539,6 +539,76 @@ const PRESETS = {
   head:['headache','dizziness','nausea','insomnia']
 };
 
+/* =========================================================
+   人体部位图：点位 → 该部位常见症状
+   只做“提词”用，不替患者判断；数据改动后跑 tools/test-bodymap.js
+   ========================================================= */
+const BODY_PARTS = [
+  {
+    id: 'head', label: '头部', view: 'front',
+    groups: [
+      { name: '头面', ids: ['headache', 'dizziness', 'facial_pain', 'photophobia', 'vision_blur'] },
+      { name: '眼', ids: ['eye_pain', 'eye_red', 'eye_itch', 'eye_discharge'] },
+      { name: '耳鼻', ids: ['ear_pain', 'tinnitus', 'hearing_loss', 'congestion', 'runny_nose', 'sneeze', 'smell_loss', 'purulent_discharge'] },
+      { name: '口腔咽喉', ids: ['sore_throat', 'toothache', 'oral_ulcer', 'dysphagia'] }
+    ]
+  },
+  {
+    id: 'neck', label: '颈部', view: 'front',
+    groups: [{ name: '颈部', ids: ['neck_pain', 'stiff_neck'] }]
+  },
+  {
+    id: 'chest', label: '胸部', view: 'front',
+    groups: [{ name: '胸部', ids: ['chest_pain', 'chest_tight', 'dyspnea', 'dry_cough', 'sputum', 'wheeze', 'hemoptysis', 'palpitation'] }]
+  },
+  {
+    id: 'upper_abd', label: '上腹', view: 'front',
+    groups: [{ name: '上腹', ids: ['epigastric_pain', 'heartburn', 'nausea', 'vomiting', 'bloating', 'abdominal_pain', 'gi_bleed'] }]
+  },
+  {
+    id: 'lower_abd', label: '下腹', view: 'front',
+    groups: [{ name: '下腹与泌尿生殖', ids: ['abdominal_pain', 'severe_abd', 'diarrhea', 'constipation', 'dysmenorrhea', 'vaginal_discharge', 'urinary_freq', 'dysuria', 'hematuria', 'pregnancy_bleed'] }]
+  },
+  {
+    id: 'arm', label: '肩臂', view: 'front',
+    groups: [{ name: '肩臂', ids: ['joint_pain', 'joint_swelling', 'myalgia', 'numbness', 'weakness_one_side'] }]
+  },
+  {
+    id: 'hand', label: '手', view: 'front',
+    groups: [{ name: '手', ids: ['joint_pain', 'joint_swelling', 'numbness', 'hand_foot_rash'] }]
+  },
+  {
+    id: 'leg', label: '腿、膝', view: 'front',
+    groups: [{ name: '腿、膝', ids: ['joint_pain', 'joint_swelling', 'myalgia', 'numbness', 'weakness_one_side'] }]
+  },
+  {
+    id: 'foot', label: '小腿、足', view: 'front',
+    groups: [{ name: '小腿、足', ids: ['joint_pain', 'numbness', 'hand_foot_rash', 'myalgia'] }]
+  },
+  {
+    id: 'back', label: '上背', view: 'back',
+    groups: [{ name: '上背', ids: ['back_pain', 'neck_pain', 'myalgia', 'numbness'] }]
+  },
+  {
+    id: 'lowback', label: '腰部、肾区', view: 'back',
+    groups: [{ name: '腰部、肾区', ids: ['back_pain', 'flank_pain', 'urinary_freq', 'dysuria', 'hematuria'] }]
+  },
+  {
+    id: 'glute', label: '臀部、肛周', view: 'back',
+    groups: [{ name: '臀部、肛周', ids: ['anal_pain', 'rectal_bleeding', 'back_pain'] }]
+  },
+  {
+    id: 'skin', label: '全身 / 皮肤', view: 'all',
+    groups: [
+      { name: '皮肤', ids: ['rash', 'itch', 'hives', 'blister', 'dry_skin'] },
+      { name: '全身', ids: ['fever', 'high_fever', 'chills', 'fatigue', 'night_sweat', 'weight_loss', 'poor_appetite', 'pallor', 'dehydration', 'heat_exposure'] },
+      { name: '情绪与睡眠', ids: ['insomnia', 'anxious', 'low_mood'] }
+    ]
+  }
+];
+
+const BODY_MAP = BODY_PARTS.reduce((map, p) => { map[p.id] = p; return map; }, {});
+
 /* 分诊问卷：三个问题，score 越高越需要尽快就医 */
 const QUESTIONS = [
   {
@@ -1349,6 +1419,7 @@ function init(){
 
   renderGroups();
   bindEvents();
+  bindBodyMap();
   updateCount();
   detectCloud();
 
@@ -1433,6 +1504,7 @@ function updateCount(){
   const n = selected.size;
   document.getElementById('count').textContent = '已选 ' + n + ' 项';
   document.getElementById('go').disabled = n === 0;
+  updateBodySelection();
 }
 
 function clearAll(){
@@ -1684,6 +1756,87 @@ function clearAllProfile(){
   profile = emptyProfile();
   renderProfilePanel();
   renderCareBanner();
+}
+
+/* ---------------- 人体部位图 ---------------- */
+let currentBodyPart = '';
+
+function openBodyPart(id){
+  const part = BODY_MAP[id];
+  const title = document.getElementById('bodyPanelTitle');
+  const box = document.getElementById('bodyPanelChips');
+  const close = document.getElementById('bodyClose');
+  if (!part || !title || !box) return;
+
+  currentBodyPart = id;
+  title.textContent = part.label;
+  if (close) close.classList.remove('hidden');
+
+  box.innerHTML = part.groups.map(g =>
+    '<div class="bp-group">' +
+      '<div class="bp-gname">' + g.name + '</div>' +
+      '<div class="bp-row">' +
+        g.ids.map(sid =>
+          '<button type="button" class="chip' + (selected.has(sid) ? ' on' : '') + '" data-sym="' + sid + '">' +
+            SYMPTOMS[sid].label +
+          '</button>'
+        ).join('') +
+      '</div>' +
+    '</div>'
+  ).join('');
+
+  box.querySelectorAll('.chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      toggle(btn.dataset.sym);
+      btn.classList.toggle('on', selected.has(btn.dataset.sym));
+    });
+  });
+}
+
+function closeBodyPart(){
+  currentBodyPart = '';
+  const title = document.getElementById('bodyPanelTitle');
+  const box = document.getElementById('bodyPanelChips');
+  const close = document.getElementById('bodyClose');
+  if (title) title.textContent = '点一下不舒服的位置';
+  if (close) close.classList.add('hidden');
+  if (box){
+    box.innerHTML = '<p class="bp-hint">人体上的圆点都可以点。选大致位置后，右侧会列出这里常见的不适，可以多选；也可以直接用下面的搜索或快速开始。</p>';
+  }
+}
+
+function switchBodyView(view){
+  document.querySelectorAll('.body-tab').forEach(b => b.classList.toggle('on', b.dataset.view === view));
+  document.querySelectorAll('.body-view').forEach(g => g.classList.toggle('hidden', g.dataset.view !== view));
+  closeBodyPart();
+}
+
+function updateBodySelection(){
+  document.querySelectorAll('.body-hot').forEach(g => {
+    const part = BODY_MAP[g.dataset.part];
+    const on = !!part && part.groups.some(gr => gr.ids.some(id => selected.has(id)));
+    g.classList.toggle('on', on);
+  });
+
+  /* 面板里的 chip 状态跟随下方分组选择 */
+  if (currentBodyPart){
+    const box = document.getElementById('bodyPanelChips');
+    if (box) box.querySelectorAll('.chip').forEach(btn => btn.classList.toggle('on', selected.has(btn.dataset.sym)));
+  }
+}
+
+function bindBodyMap(){
+  document.querySelectorAll('.body-hot').forEach(g => {
+    g.addEventListener('click', () => openBodyPart(g.dataset.part));
+  });
+  document.querySelectorAll('.body-jump').forEach(btn => {
+    btn.addEventListener('click', () => openBodyPart(btn.dataset.part));
+  });
+  document.querySelectorAll('.body-tab').forEach(btn => {
+    btn.addEventListener('click', () => switchBodyView(btn.dataset.view));
+  });
+  const close = document.getElementById('bodyClose');
+  if (close) close.addEventListener('click', closeBodyPart);
 }
 
 function bindEvents(){
@@ -2016,5 +2169,5 @@ if (typeof document !== 'undefined'){
   document.addEventListener('DOMContentLoaded', init);
 }
 if (typeof module !== 'undefined' && module.exports){
-  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit };
+  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit };
 }

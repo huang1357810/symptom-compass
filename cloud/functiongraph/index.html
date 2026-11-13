@@ -157,6 +157,33 @@
   }
   .chip.flash{animation:chipFlash .9s ease}
 
+  /* ---------- body map ---------- */
+  .body-map{display:flex; gap:18px; align-items:flex-start; margin:16px 0 18px}
+  .body-stage{flex:0 0 190px; text-align:center}
+  .body-tabs{display:inline-flex; gap:2px; background:#f1f8f7; border:1px solid #dbe9e7; border-radius:999px; padding:3px; margin-bottom:8px}
+  .body-tab{font-size:12px; padding:4px 13px; border-radius:999px; color:#5d7b78; background:transparent; border:none; cursor:pointer; transition:.15s}
+  .body-tab.on{background:var(--teal); color:#fff}
+  .body-svg{width:100%; height:auto; display:block; filter:drop-shadow(0 10px 18px rgba(12,74,72,.10))}
+  .body-figure path,.body-figure rect,.body-figure ellipse{fill:url(#bodyGrad); stroke:#a7d5cf; stroke-width:1.2}
+  .body-shadow{fill:#cfe7e3; opacity:.5}
+  .body-hot{cursor:pointer}
+  .body-hot .hit{fill:#0e8f86; fill-opacity:0; transition:fill-opacity .15s}
+  .body-hot:hover .hit,.body-hot.on .hit{fill-opacity:.15}
+  .body-hot .dot{fill:#fff; stroke:#0e8f86; stroke-width:2; transition:.15s}
+  .body-hot:hover .dot,.body-hot.on .dot{fill:#0e8f86}
+  .body-tools{margin-top:8px; font-size:12px; color:#87a3a1}
+  .body-jump{font-size:12px; color:#0e7a72; background:#f6fcfb; border:1px dashed #c9e3df; border-radius:999px; padding:4px 10px; cursor:pointer}
+  .body-jump:hover{background:#eaf8f5; border-color:#8ecfc6}
+  .body-panel{flex:1; min-width:0; border:1px solid #e2eeec; background:#fbfefd; border-radius:14px; padding:14px}
+  .bp-head{display:flex; align-items:center; gap:10px; margin-bottom:10px}
+  .bp-head b{font-size:14px; color:#0b6f68}
+  .bp-close{font-size:12px; color:#87a3a1; background:none; border:none; cursor:pointer; margin-left:auto}
+  .bp-hint{font-size:12.5px; color:#84a09d; line-height:1.75}
+  .bp-group + .bp-group{margin-top:10px}
+  .bp-gname{font-size:12px; color:#87a3a1; margin-bottom:6px}
+  .bp-row{display:flex; flex-wrap:wrap; gap:6px}
+  .bp-row .chip{padding:6px 11px; font-size:13px}
+
   /* ---------- 年龄与长期用药 ---------- */
   .agebox{margin:14px 0 16px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fbfefd}
   .age-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -443,6 +470,8 @@
     .nlu-row{flex-direction:column}
     .nlu-row .btn{align-self:stretch}
     .profile-btn{padding:7px 11px; font-size:11.5px}
+    .body-map{flex-direction:column}
+    .body-stage{flex:none; width:168px; margin:0 auto}
     /* 结果页头部：让两个按钮换行后各占一半，避免错位 */
     #results .sec-head .spacer{flex-basis:100%; height:0}
     #results .sec-head #exportBtn,
@@ -513,6 +542,81 @@
       </div>
       <button type="button" class="chronic-toggle" id="chronicToggle">正在长期吃药？点这里添加（可跳过）</button>
       <div class="chronic-list hidden" id="chronicList"></div>
+    </div>
+
+    <div class="body-map">
+      <div class="body-stage">
+        <div class="body-tabs">
+          <button type="button" class="body-tab on" data-view="front">正面</button>
+          <button type="button" class="body-tab" data-view="back">背面</button>
+        </div>
+        <svg class="body-svg" viewBox="0 0 220 450" role="group" aria-label="人体部位选择图">
+          <defs>
+            <linearGradient id="bodyGrad" x1="0" y1="0" x2="0.9" y2="1">
+              <stop offset="0" stop-color="#eef9f7"/>
+              <stop offset="0.55" stop-color="#d3ece7"/>
+              <stop offset="1" stop-color="#b6ded8"/>
+            </linearGradient>
+          </defs>
+
+          <ellipse class="body-shadow" cx="110" cy="428" rx="64" ry="9"/>
+
+          <g class="body-figure">
+            <ellipse cx="110" cy="44" rx="23" ry="28"/>
+            <rect x="102" y="68" width="16" height="18" rx="7"/>
+            <path d="M70 88 C74 105 76 130 78 158 L76 208 L144 208 L142 158 C144 130 146 105 150 88 C136 82 84 82 70 88 Z"/>
+            <path d="M74 94 C78 122 80 160 78 204" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="4" stroke-linecap="round"/>
+            <rect x="52" y="92" width="16" height="72" rx="8"/>
+            <rect x="46" y="158" width="14" height="66" rx="7"/>
+            <ellipse cx="53" cy="232" rx="8" ry="11"/>
+            <rect x="152" y="92" width="16" height="72" rx="8"/>
+            <rect x="160" y="158" width="14" height="66" rx="7"/>
+            <ellipse cx="167" cy="232" rx="8" ry="11"/>
+            <rect x="80" y="206" width="24" height="104" rx="11"/>
+            <rect x="116" y="206" width="24" height="104" rx="11"/>
+            <rect x="83" y="306" width="20" height="100" rx="10"/>
+            <rect x="117" y="306" width="20" height="100" rx="10"/>
+            <ellipse cx="92" cy="414" rx="14" ry="8"/>
+            <ellipse cx="128" cy="414" rx="14" ry="8"/>
+          </g>
+
+          <g class="body-view" data-view="front">
+            <g class="body-hot" data-part="head"><ellipse class="hit" cx="110" cy="46" rx="26" ry="31"/><circle class="dot" cx="110" cy="46" r="6"/><title>头部</title></g>
+            <g class="body-hot" data-part="neck"><ellipse class="hit" cx="110" cy="78" rx="15" ry="12"/><circle class="dot" cx="110" cy="78" r="5"/><title>颈部</title></g>
+            <g class="body-hot" data-part="chest"><ellipse class="hit" cx="110" cy="118" rx="34" ry="29"/><circle class="dot" cx="110" cy="118" r="6"/><title>胸部</title></g>
+            <g class="body-hot" data-part="upper_abd"><ellipse class="hit" cx="110" cy="162" rx="30" ry="22"/><circle class="dot" cx="110" cy="162" r="6"/><title>上腹</title></g>
+            <g class="body-hot" data-part="lower_abd"><ellipse class="hit" cx="110" cy="197" rx="28" ry="19"/><circle class="dot" cx="110" cy="197" r="6"/><title>下腹</title></g>
+            <g class="body-hot" data-part="arm"><ellipse class="hit" cx="60" cy="140" rx="14" ry="46"/><circle class="dot" cx="60" cy="140" r="5"/><title>肩臂</title></g>
+            <g class="body-hot" data-part="arm"><ellipse class="hit" cx="160" cy="140" rx="14" ry="46"/><circle class="dot" cx="160" cy="140" r="5"/><title>肩臂</title></g>
+            <g class="body-hot" data-part="hand"><ellipse class="hit" cx="53" cy="234" rx="10" ry="14"/><circle class="dot" cx="53" cy="234" r="5"/><title>手</title></g>
+            <g class="body-hot" data-part="hand"><ellipse class="hit" cx="167" cy="234" rx="10" ry="14"/><circle class="dot" cx="167" cy="234" r="5"/><title>手</title></g>
+            <g class="body-hot" data-part="leg"><ellipse class="hit" cx="92" cy="258" rx="14" ry="50"/><circle class="dot" cx="92" cy="258" r="5"/><title>腿、膝</title></g>
+            <g class="body-hot" data-part="leg"><ellipse class="hit" cx="128" cy="258" rx="14" ry="50"/><circle class="dot" cx="128" cy="258" r="5"/><title>腿、膝</title></g>
+            <g class="body-hot" data-part="foot"><ellipse class="hit" cx="92" cy="354" rx="12" ry="58"/><circle class="dot" cx="92" cy="354" r="5"/><title>小腿、足</title></g>
+            <g class="body-hot" data-part="foot"><ellipse class="hit" cx="128" cy="354" rx="12" ry="58"/><circle class="dot" cx="128" cy="354" r="5"/><title>小腿、足</title></g>
+          </g>
+
+          <g class="body-view hidden" data-view="back">
+            <g class="body-hot" data-part="neck"><ellipse class="hit" cx="110" cy="78" rx="15" ry="12"/><circle class="dot" cx="110" cy="78" r="5"/><title>后颈</title></g>
+            <g class="body-hot" data-part="back"><ellipse class="hit" cx="110" cy="128" rx="34" ry="34"/><circle class="dot" cx="110" cy="128" r="6"/><title>上背</title></g>
+            <g class="body-hot" data-part="lowback"><ellipse class="hit" cx="110" cy="182" rx="30" ry="22"/><circle class="dot" cx="110" cy="182" r="6"/><title>腰部、肾区</title></g>
+            <g class="body-hot" data-part="glute"><ellipse class="hit" cx="110" cy="214" rx="26" ry="17"/><circle class="dot" cx="110" cy="214" r="5"/><title>臀部、肛周</title></g>
+          </g>
+        </svg>
+        <div class="body-tools">
+          <button type="button" class="body-jump" data-part="skin">全身 / 皮肤不适</button>
+        </div>
+      </div>
+
+      <div class="body-panel">
+        <div class="bp-head">
+          <b id="bodyPanelTitle">点一下不舒服的位置</b>
+          <button type="button" class="bp-close hidden" id="bodyClose">收起</button>
+        </div>
+        <div class="bp-chips" id="bodyPanelChips">
+          <p class="bp-hint">人体上的圆点都可以点。选大致位置后，右侧会列出这里常见的不适，可以多选；也可以直接用下面的搜索或快速开始。</p>
+        </div>
+      </div>
     </div>
 
     <div class="search">
@@ -1148,6 +1252,76 @@ const PRESETS = {
   gut:['diarrhea','nausea','abdominal_pain','vomiting'],
   head:['headache','dizziness','nausea','insomnia']
 };
+
+/* =========================================================
+   人体部位图：点位 → 该部位常见症状
+   只做“提词”用，不替患者判断；数据改动后跑 tools/test-bodymap.js
+   ========================================================= */
+const BODY_PARTS = [
+  {
+    id: 'head', label: '头部', view: 'front',
+    groups: [
+      { name: '头面', ids: ['headache', 'dizziness', 'facial_pain', 'photophobia', 'vision_blur'] },
+      { name: '眼', ids: ['eye_pain', 'eye_red', 'eye_itch', 'eye_discharge'] },
+      { name: '耳鼻', ids: ['ear_pain', 'tinnitus', 'hearing_loss', 'congestion', 'runny_nose', 'sneeze', 'smell_loss', 'purulent_discharge'] },
+      { name: '口腔咽喉', ids: ['sore_throat', 'toothache', 'oral_ulcer', 'dysphagia'] }
+    ]
+  },
+  {
+    id: 'neck', label: '颈部', view: 'front',
+    groups: [{ name: '颈部', ids: ['neck_pain', 'stiff_neck'] }]
+  },
+  {
+    id: 'chest', label: '胸部', view: 'front',
+    groups: [{ name: '胸部', ids: ['chest_pain', 'chest_tight', 'dyspnea', 'dry_cough', 'sputum', 'wheeze', 'hemoptysis', 'palpitation'] }]
+  },
+  {
+    id: 'upper_abd', label: '上腹', view: 'front',
+    groups: [{ name: '上腹', ids: ['epigastric_pain', 'heartburn', 'nausea', 'vomiting', 'bloating', 'abdominal_pain', 'gi_bleed'] }]
+  },
+  {
+    id: 'lower_abd', label: '下腹', view: 'front',
+    groups: [{ name: '下腹与泌尿生殖', ids: ['abdominal_pain', 'severe_abd', 'diarrhea', 'constipation', 'dysmenorrhea', 'vaginal_discharge', 'urinary_freq', 'dysuria', 'hematuria', 'pregnancy_bleed'] }]
+  },
+  {
+    id: 'arm', label: '肩臂', view: 'front',
+    groups: [{ name: '肩臂', ids: ['joint_pain', 'joint_swelling', 'myalgia', 'numbness', 'weakness_one_side'] }]
+  },
+  {
+    id: 'hand', label: '手', view: 'front',
+    groups: [{ name: '手', ids: ['joint_pain', 'joint_swelling', 'numbness', 'hand_foot_rash'] }]
+  },
+  {
+    id: 'leg', label: '腿、膝', view: 'front',
+    groups: [{ name: '腿、膝', ids: ['joint_pain', 'joint_swelling', 'myalgia', 'numbness', 'weakness_one_side'] }]
+  },
+  {
+    id: 'foot', label: '小腿、足', view: 'front',
+    groups: [{ name: '小腿、足', ids: ['joint_pain', 'numbness', 'hand_foot_rash', 'myalgia'] }]
+  },
+  {
+    id: 'back', label: '上背', view: 'back',
+    groups: [{ name: '上背', ids: ['back_pain', 'neck_pain', 'myalgia', 'numbness'] }]
+  },
+  {
+    id: 'lowback', label: '腰部、肾区', view: 'back',
+    groups: [{ name: '腰部、肾区', ids: ['back_pain', 'flank_pain', 'urinary_freq', 'dysuria', 'hematuria'] }]
+  },
+  {
+    id: 'glute', label: '臀部、肛周', view: 'back',
+    groups: [{ name: '臀部、肛周', ids: ['anal_pain', 'rectal_bleeding', 'back_pain'] }]
+  },
+  {
+    id: 'skin', label: '全身 / 皮肤', view: 'all',
+    groups: [
+      { name: '皮肤', ids: ['rash', 'itch', 'hives', 'blister', 'dry_skin'] },
+      { name: '全身', ids: ['fever', 'high_fever', 'chills', 'fatigue', 'night_sweat', 'weight_loss', 'poor_appetite', 'pallor', 'dehydration', 'heat_exposure'] },
+      { name: '情绪与睡眠', ids: ['insomnia', 'anxious', 'low_mood'] }
+    ]
+  }
+];
+
+const BODY_MAP = BODY_PARTS.reduce((map, p) => { map[p.id] = p; return map; }, {});
 
 /* 分诊问卷：三个问题，score 越高越需要尽快就医 */
 const QUESTIONS = [
@@ -1959,6 +2133,7 @@ function init(){
 
   renderGroups();
   bindEvents();
+  bindBodyMap();
   updateCount();
   detectCloud();
 
@@ -2043,6 +2218,7 @@ function updateCount(){
   const n = selected.size;
   document.getElementById('count').textContent = '已选 ' + n + ' 项';
   document.getElementById('go').disabled = n === 0;
+  updateBodySelection();
 }
 
 function clearAll(){
@@ -2294,6 +2470,87 @@ function clearAllProfile(){
   profile = emptyProfile();
   renderProfilePanel();
   renderCareBanner();
+}
+
+/* ---------------- 人体部位图 ---------------- */
+let currentBodyPart = '';
+
+function openBodyPart(id){
+  const part = BODY_MAP[id];
+  const title = document.getElementById('bodyPanelTitle');
+  const box = document.getElementById('bodyPanelChips');
+  const close = document.getElementById('bodyClose');
+  if (!part || !title || !box) return;
+
+  currentBodyPart = id;
+  title.textContent = part.label;
+  if (close) close.classList.remove('hidden');
+
+  box.innerHTML = part.groups.map(g =>
+    '<div class="bp-group">' +
+      '<div class="bp-gname">' + g.name + '</div>' +
+      '<div class="bp-row">' +
+        g.ids.map(sid =>
+          '<button type="button" class="chip' + (selected.has(sid) ? ' on' : '') + '" data-sym="' + sid + '">' +
+            SYMPTOMS[sid].label +
+          '</button>'
+        ).join('') +
+      '</div>' +
+    '</div>'
+  ).join('');
+
+  box.querySelectorAll('.chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      toggle(btn.dataset.sym);
+      btn.classList.toggle('on', selected.has(btn.dataset.sym));
+    });
+  });
+}
+
+function closeBodyPart(){
+  currentBodyPart = '';
+  const title = document.getElementById('bodyPanelTitle');
+  const box = document.getElementById('bodyPanelChips');
+  const close = document.getElementById('bodyClose');
+  if (title) title.textContent = '点一下不舒服的位置';
+  if (close) close.classList.add('hidden');
+  if (box){
+    box.innerHTML = '<p class="bp-hint">人体上的圆点都可以点。选大致位置后，右侧会列出这里常见的不适，可以多选；也可以直接用下面的搜索或快速开始。</p>';
+  }
+}
+
+function switchBodyView(view){
+  document.querySelectorAll('.body-tab').forEach(b => b.classList.toggle('on', b.dataset.view === view));
+  document.querySelectorAll('.body-view').forEach(g => g.classList.toggle('hidden', g.dataset.view !== view));
+  closeBodyPart();
+}
+
+function updateBodySelection(){
+  document.querySelectorAll('.body-hot').forEach(g => {
+    const part = BODY_MAP[g.dataset.part];
+    const on = !!part && part.groups.some(gr => gr.ids.some(id => selected.has(id)));
+    g.classList.toggle('on', on);
+  });
+
+  /* 面板里的 chip 状态跟随下方分组选择 */
+  if (currentBodyPart){
+    const box = document.getElementById('bodyPanelChips');
+    if (box) box.querySelectorAll('.chip').forEach(btn => btn.classList.toggle('on', selected.has(btn.dataset.sym)));
+  }
+}
+
+function bindBodyMap(){
+  document.querySelectorAll('.body-hot').forEach(g => {
+    g.addEventListener('click', () => openBodyPart(g.dataset.part));
+  });
+  document.querySelectorAll('.body-jump').forEach(btn => {
+    btn.addEventListener('click', () => openBodyPart(btn.dataset.part));
+  });
+  document.querySelectorAll('.body-tab').forEach(btn => {
+    btn.addEventListener('click', () => switchBodyView(btn.dataset.view));
+  });
+  const close = document.getElementById('bodyClose');
+  if (close) close.addEventListener('click', closeBodyPart);
 }
 
 function bindEvents(){
@@ -2626,7 +2883,7 @@ if (typeof document !== 'undefined'){
   document.addEventListener('DOMContentLoaded', init);
 }
 if (typeof module !== 'undefined' && module.exports){
-  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit };
+  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit };
 }
 </script>
 <script>
