@@ -1414,6 +1414,8 @@ function computeTriage(results, flags){
 }
 
 function init(){
+  const summ = document.getElementById('allSymptomsSummary');
+  if (summ) summ.textContent = '查看全部 ' + SYMPTOM_IDS.length + ' 个症状（按系统分组）';
   document.getElementById('stat-cond').textContent = CONDITIONS.length;
   document.getElementById('stat-sym').textContent = SYMPTOM_IDS.length;
 
@@ -1872,6 +1874,8 @@ function bindEvents(){
   const search = document.getElementById('search');
   search.addEventListener('input', () => {
     const q = search.value.trim().toLowerCase();
+    const wrap = document.querySelector('.all-symptoms');
+    if (wrap && q) wrap.open = true;
     document.querySelectorAll('.group').forEach(sec => {
       let any = false;
       sec.querySelectorAll('.chip').forEach(ch => {

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -183,6 +183,23 @@
   .bp-gname{font-size:12px; color:#87a3a1; margin-bottom:6px}
   .bp-row{display:flex; flex-wrap:wrap; gap:6px}
   .bp-row .chip{padding:6px 11px; font-size:13px}
+
+  /* ---------- 引导与折叠 ---------- */
+  .intake-lead{font-size:13px; color:#5d7b78; margin:14px 0 4px; line-height:1.7}
+  .intake-lead b{color:#0b6f68; font-weight:600}
+  .all-symptoms{margin:16px 0 6px; border:1px solid var(--line); border-radius:14px; background:#fbfefd; overflow:hidden}
+  .all-symptoms > summary{
+    padding:13px 16px; cursor:pointer; font-size:13.5px; font-weight:600; color:#0b6f68;
+    list-style:none; display:flex; align-items:center; gap:8px;
+  }
+  .all-symptoms > summary::-webkit-details-marker{display:none}
+  .all-symptoms > summary::before{
+    content:""; width:7px; height:7px; border-right:2px solid #7fb3ad; border-bottom:2px solid #7fb3ad;
+    transform:rotate(-45deg); transition:transform .2s; margin-left:2px;
+  }
+  .all-symptoms[open] > summary::before{transform:rotate(45deg)}
+  .all-symptoms[open] > summary{border-bottom:1px solid #eef6f5; background:#f4fbf9}
+  .all-symptoms > #groups{padding:6px 16px 14px}
 
   /* ---------- 年龄与长期用药 ---------- */
   .agebox{margin:14px 0 16px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fbfefd}
@@ -514,7 +531,9 @@
       <span class="pill" id="count">已选 0 项</span>
     </div>
 
-    <div class="nlu">
+        <p class="intake-lead">三种方式任选：<b>说一句话</b> · <b>点身体部位</b> · <b>搜索或直接勾选</b></p>
+
+<div class="nlu">
       <div class="nlu-head">
         <span class="nlu-label">一句话描述</span>
         <span class="nlu-tip">例如：昨天开始发烧 38 度，嗓子疼还流鼻涕</span>
@@ -527,21 +546,11 @@
       <div class="nlu-result hidden" id="nluResult" role="status" aria-live="polite"></div>
     </div>
 
-    <div class="agebox">
-      <div class="age-row">
-        <span class="age-label">年龄</span>
-        <input id="ageInput" type="number" min="0" max="120" inputmode="numeric" placeholder="岁">
-        <span class="age-unit">岁</span>
-        <span class="age-hint" id="ageHint">填了才能检查儿童 / 老人用药禁忌</span>
-      </div>
-      <div class="age-chips">
-        <button type="button" class="age-chip" data-age="3">3 岁</button>
-        <button type="button" class="age-chip" data-age="8">8 岁</button>
-        <button type="button" class="age-chip" data-age="30">30 岁</button>
-        <button type="button" class="age-chip" data-age="70">70 岁</button>
-      </div>
-      <button type="button" class="chronic-toggle" id="chronicToggle">正在长期吃药？点这里添加（可跳过）</button>
-      <div class="chronic-list hidden" id="chronicList"></div>
+    <div class="presets">
+      <span class="lbl">快速开始：</span>
+      <button class="preset" data-preset="cold">感冒样症状</button>
+      <button class="preset" data-preset="gut">吃坏肚子</button>
+      <button class="preset" data-preset="head">头痛头晕</button>
     </div>
 
     <div class="body-map">
@@ -626,14 +635,27 @@
       <input id="search" type="text" autocomplete="off" placeholder="搜索症状，支持口语：闹肚子、心慌、嗓子疼">
     </div>
 
-    <div class="presets">
-      <span class="lbl">快速开始：</span>
-      <button class="preset" data-preset="cold">感冒样症状</button>
-      <button class="preset" data-preset="gut">吃坏肚子</button>
-      <button class="preset" data-preset="head">头痛头晕</button>
-    </div>
+        <details class="all-symptoms">
+      <summary id="allSymptomsSummary">查看全部症状（按系统分组）</summary>
+      <div id="groups"></div>
+    </details>
 
-    <div id="groups"></div>
+<div class="agebox">
+      <div class="age-row">
+        <span class="age-label">年龄</span>
+        <input id="ageInput" type="number" min="0" max="120" inputmode="numeric" placeholder="岁">
+        <span class="age-unit">岁</span>
+        <span class="age-hint" id="ageHint">填了才能检查儿童 / 老人用药禁忌</span>
+      </div>
+      <div class="age-chips">
+        <button type="button" class="age-chip" data-age="3">3 岁</button>
+        <button type="button" class="age-chip" data-age="8">8 岁</button>
+        <button type="button" class="age-chip" data-age="30">30 岁</button>
+        <button type="button" class="age-chip" data-age="70">70 岁</button>
+      </div>
+      <button type="button" class="chronic-toggle" id="chronicToggle">正在长期吃药？点这里添加（可跳过）</button>
+      <div class="chronic-list hidden" id="chronicList"></div>
+    </div>
 
     <div class="actions">
       <button class="btn ghost" id="clear">清空</button>
@@ -2128,6 +2150,8 @@ function computeTriage(results, flags){
 }
 
 function init(){
+  const summ = document.getElementById('allSymptomsSummary');
+  if (summ) summ.textContent = '查看全部 ' + SYMPTOM_IDS.length + ' 个症状（按系统分组）';
   document.getElementById('stat-cond').textContent = CONDITIONS.length;
   document.getElementById('stat-sym').textContent = SYMPTOM_IDS.length;
 
@@ -2586,6 +2610,8 @@ function bindEvents(){
   const search = document.getElementById('search');
   search.addEventListener('input', () => {
     const q = search.value.trim().toLowerCase();
+    const wrap = document.querySelector('.all-symptoms');
+    if (wrap && q) wrap.open = true;
     document.querySelectorAll('.group').forEach(sec => {
       let any = false;
       sec.querySelectorAll('.chip').forEach(ch => {
