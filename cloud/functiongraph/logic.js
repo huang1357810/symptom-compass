@@ -1905,6 +1905,90 @@ function updateBodySelection(){
     const box = document.getElementById('bodyPanelChips');
     if (box) box.querySelectorAll('.chip').forEach(btn => btn.classList.toggle('on', selected.has(btn.dataset.sym)));
   }
+
+  /* 3D 视图打开时，同步器官高亮 */
+  if (body3dViewer) body3dViewer.setSelection(selectedOrgans());
+}
+
+/* ---------------- 3D 躯干（懒加载，失败自动回退 2.5D） ---------------- */
+let body3dViewer = null;
+let body3dLoading = false;
+
+function canWebGL(){
+  try {
+    const c = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl')));
+  } catch (e){
+    return false;
+  }
+}
+
+function selectedOrgans(){
+  const out = new Set();
+  BODY_PARTS.forEach(p => {
+    if (p.layer === 'organ' && p.groups.some(g => g.ids.some(id => selected.has(id)))) out.add(p.id);
+  });
+  return out;
+}
+
+function set3DMode(on){
+  const box = document.getElementById('body3d');
+  const svg = document.querySelector('.body-svg');
+  const layers = document.querySelector('.layer-toggles');
+  const btn = document.getElementById('body3dBtn');
+  if (box) box.classList.toggle('hidden', !on);
+  if (svg) svg.classList.toggle('hidden', on);
+  if (layers) layers.classList.toggle('hidden', on);
+  if (btn) btn.classList.toggle('on', on);
+  document.querySelectorAll('.body-tab[data-view]').forEach(b => { b.disabled = on; });
+  if (body3dViewer && on) body3dViewer.resize();
+  if (on) closeBodyPart();
+}
+
+function showBody3dMessage(text){
+  const title = document.getElementById('bodyPanelTitle');
+  const box = document.getElementById('bodyPanelChips');
+  const close = document.getElementById('bodyClose');
+  if (title) title.textContent = '3D 视图';
+  if (close) close.classList.add('hidden');
+  if (box) box.innerHTML = '<p class="bp-hint">' + text + '</p>';
+}
+
+async function open3D(){
+  if (body3dViewer){ set3DMode(true); return; }
+  if (body3dLoading) return;
+
+  if (!canWebGL()){
+    showBody3dMessage('当前浏览器或设备不支持 WebGL，已保留 2.5D 分层视图。');
+    return;
+  }
+
+  const box = document.getElementById('body3d');
+  const loading = document.getElementById('body3dLoading');
+  const canvas = document.getElementById('body3dCanvas');
+  if (!box || !canvas) return;
+
+  body3dLoading = true;
+  set3DMode(true);
+  if (loading) loading.classList.remove('hidden');
+
+  try {
+    /* 动态 import：只有点 3D 时才下载 three.js 与模型 */
+    const mod = await import('./vendor/body3d.js');
+    body3dViewer = await mod.createBodyViewer({
+      canvas,
+      url: './models/body.glb',
+      onPick: id => openBodyPart(id)
+    });
+    if (loading) loading.classList.add('hidden');
+    body3dViewer.resize();
+    body3dViewer.setSelection(selectedOrgans());
+  } catch (e){
+    set3DMode(false);
+    showBody3dMessage('3D 模型加载失败（本地直接双击打开时浏览器会拦截模块加载），已回到 2.5D 视图；用本地服务器打开即可。');
+  } finally {
+    body3dLoading = false;
+  }
 }
 
 function bindBodyMap(){
@@ -1914,9 +1998,17 @@ function bindBodyMap(){
   document.querySelectorAll('.body-jump').forEach(btn => {
     btn.addEventListener('click', () => openBodyPart(btn.dataset.part));
   });
-  document.querySelectorAll('.body-tab').forEach(btn => {
+  document.querySelectorAll('.body-tab[data-view]').forEach(btn => {
     btn.addEventListener('click', () => switchBodyView(btn.dataset.view));
   });
+  const btn3d = document.getElementById('body3dBtn');
+  if (btn3d) btn3d.addEventListener('click', () => {
+    const box = document.getElementById('body3d');
+    if (box && !box.classList.contains('hidden')) set3DMode(false);
+    else open3D();
+  });
+  const back3d = document.getElementById('body3dClose');
+  if (back3d) back3d.addEventListener('click', () => set3DMode(false));
   document.querySelectorAll('.layer-toggle').forEach(btn => {
     btn.addEventListener('click', () => toggleLayer(btn.dataset.layer));
   });

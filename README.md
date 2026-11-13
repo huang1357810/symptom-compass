@@ -39,7 +39,12 @@ symptom-checker/
 │   ├── gen-cloud-logic.js   Web 数据 → 云函数 logic.js 生成器
 │   ├── test-nlu.js          自然语言识别自测（node tools/test-nlu.js）
 │   ├── test-profile.js      用户档案提醒规则自测（node tools/test-profile.js）
-│   └── test-bodymap.js      人体部位图自测（node tools/test-bodymap.js）
+│   ├── test-bodymap.js      人体部位图自测（node tools/test-bodymap.js）
+│   ├── build-body-glb.js    生成低模躯干 GLB（node tools/build-body-glb.js）
+│   └── test-body3d.js       3D 视图自测（node tools/test-body3d.js）
+├── site/
+│   ├── vendor/              3D 模块（three.js / GLTFLoader / OrbitControls，已本地化）
+│   └── models/body.glb      程序化低模躯干（器官独立命名，供点击拾取）
 ├── serve-site.js            本地静态服务器（预览用，Node 自带模块，无依赖）
 └── 启动公网地址.ps1          备用：临时公网隧道（Windows）
 ```
@@ -77,8 +82,8 @@ node serve-site.js
 | --- | --- |
 | 语言 | 原生 HTML5 / CSS3 / ES2017 JavaScript |
 | 框架 | 无 |
-| 依赖 | 无（字体用系统字体栈，图标是内联 SVG / data URI） |
-| 构建 | 无，改完保存刷新即可 |
+| 依赖 | 2.5D 与其余功能零依赖；3D 视图使用本地化的 three.js 模块，不访问 CDN |
+| 构建 | 无，改完保存刷新即可；GLB 由 `node tools/build-body-glb.js` 生成 |
 | 存储 | 无后端；分享链接通过 URL hash 携带症状，不经过服务器 |
 
 ## 代码结构
@@ -194,9 +199,20 @@ const SYMPTOMS = {
 | 肾 | 腰侧痛、尿频尿急、尿痛、血尿、发热 |
 | 肠 | 腹痛、腹泻、便秘、便血、腹胀 |
 
-体表点位与器官点位都与下方症状分组双向同步，选中后点位高亮；点任何一处都会在右侧列出可多选的症状。纯 SVG + CSS 实现，不引入 3D 库或模型文件，离线可用。
+体表点位与器官点位都与下方症状分组双向同步，选中后点位高亮；点任何一处都会在右侧列出可多选的症状。2.5D 视图纯 SVG + CSS 实现，不依赖任何库。
 
 数据在 `BODY_PARTS` 中维护：`layer: 'organ'` 表示器官，其余为体表部位；新增点位时同时在 SVG 里加 `data-part="部位id"`，并跑 `node tools/test-bodymap.js`。
+
+### 3D 视图（可选，按需加载）
+
+点「3D 视图」时才会下载 three.js（本地 `site/vendor/`）和低模躯干 `site/models/body.glb`，不拖慢首屏。
+
+- 低模躯干由 `tools/build-body-glb.js` 用椭球与放样程序化生成；心、肺、胃、肝、双肾、肠各自是独立命名网格
+- 可拖动旋转、滚轮缩放；点击器官 → 右侧列出对应症状并勾选
+- 皮肤材质半透明（opacity 0.3）且关闭深度写入，内部器官可见
+- WebGL 不可用、模块加载失败（例如直接双击 `index.html`）时自动回到 2.5D 图层，不影响原有功能
+- Service Worker 已把模型与 three.js 模块加入预缓存，离线也能打开 3D；体积约 2.3MB（three 模块 2.2MB + 模型 65KB）
+- 重新生成模型：`node tools/build-body-glb.js`；校验：`node tools/test-body3d.js`
 
 ## 用户档案与提醒
 
@@ -245,6 +261,7 @@ const SYMPTOMS = {
 - 内容以常见病为主，覆盖 35 种情况、81 个症状，不能覆盖复杂或罕见病
 - 提醒依赖本机记录，只在下次打开页面时检查；换设备或清除浏览器数据后记录会丢失，纯前端也做不到后台定时推送
 - 人体图是示意图，骨骼与器官位置为示意画法、并非解剖学精确位置；点位只帮助定位大致区域，不能替代查体
+- 3D 视图是程序化低模（不是精细解剖模型），需要 WebGL；`file://` 直接打开会被浏览器拦截模块加载，需用本地服务器或线上访问
 - 药物只给通用名与注意事项，**刻意不写剂量**——剂量必须由医生/药师按个体情况决定
 
 ## 内容免责

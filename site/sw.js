@@ -4,13 +4,16 @@
  *   - 静态资源：缓存优先（图标、manifest 这类不常变的）
  *   - /api/ 请求：永不缓存
  */
-const CACHE = 'mingbian-kangtu-v3';
+const CACHE = 'mingbian-kangtu-v5';
 const SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png'
+  /* 3D 资源（three.js 约 2.3MB）不预缓存：
+     它们只在用户点「3D 视图」时才按需加载，首次加载后由下面的 fetch 逻辑
+     写入运行时缓存，之后离线也能旋转。 */
 ];
 
 self.addEventListener('install', (event) => {

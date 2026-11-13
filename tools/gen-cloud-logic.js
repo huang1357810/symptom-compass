@@ -33,7 +33,29 @@ const header = `/**
 `;
 fs.writeFileSync(path.join(OUT_DIR, 'logic.js'), header + m[1], 'utf8');
 
-// 3. 自检：确认能 require 且导出关键函数
+// 3. 3D 资源（模型 + three.js 模块）一并同步，云端页面才能打开 3D 视图
+const ASSET_DIRS = [
+  [path.join(ROOT, 'site', 'models'), path.join(OUT_DIR, 'models')],
+  [path.join(ROOT, 'site', 'vendor'), path.join(OUT_DIR, 'vendor')]
+];
+
+function copyDir(src, dst) {
+  if (!fs.existsSync(src)) return 0;
+  fs.mkdirSync(dst, { recursive: true });
+  let n = 0;
+  fs.readdirSync(src, { withFileTypes: true }).forEach(ent => {
+    const s = path.join(src, ent.name);
+    const d = path.join(dst, ent.name);
+    if (ent.isDirectory()) n += copyDir(s, d);
+    else { fs.copyFileSync(s, d); n++; }
+  });
+  return n;
+}
+
+let assetCount = 0;
+ASSET_DIRS.forEach(([s, d]) => { assetCount += copyDir(s, d); });
+
+// 4. 自检：确认能 require 且导出关键函数
 delete require.cache[require.resolve(path.join(OUT_DIR, 'logic.js'))];
 const logic = require(path.join(OUT_DIR, 'logic.js'));
 const required = ['scoreConditions', 'flagsFor', 'SYMPTOMS', 'CONDITIONS', 'RED_FLAGS'];
