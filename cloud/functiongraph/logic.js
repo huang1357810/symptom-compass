@@ -1050,6 +1050,135 @@ function esc(s){
 }
 
 /* =========================================================
+   年龄分级与用药冲突检查
+   ========================================================= */
+const CHRONIC_MEDS = [
+  { id: 'anticoag', label: '抗凝/抗血小板' },
+  { id: 'bp', label: '降压药' },
+  { id: 'dm', label: '降糖药' },
+  { id: 'statin', label: '他汀类降脂药' },
+  { id: 'ssri', label: '抗抑郁药（SSRI）' },
+  { id: 'diuretic', label: '利尿剂' },
+  { id: 'steroid', label: '激素（泼尼松等）' },
+  { id: 'ppi', label: '胃药（奥美拉唑等）' }
+];
+
+let patientAge = null;              /* 单位：岁；null = 未填写 */
+const chronicMeds = new Set();
+
+function ageGroup(age){
+  if (age === null || isNaN(age)) return 'unknown';
+  if (age < 1) return 'infant';
+  if (age < 14) return 'child';
+  if (age < 18) return 'teen';
+  if (age < 65) return 'adult';
+  return 'senior';
+}
+
+function ageLabel(age){
+  const map = { infant: '婴儿', child: '儿童', teen: '青少年', adult: '成人', senior: '老人', unknown: '未填写' };
+  return map[ageGroup(age)] || '未填写';
+}
+
+/* 年龄相关的用药禁忌 */
+const AGE_MED_RULES = [
+  { re: /阿司匹林/, test: a => a !== null && a < 18, level: 'red',
+    text: '18 岁以下（尤其发热时）禁用阿司匹林，可能诱发瑞氏综合征' },
+  { re: /布洛芬|萘普生|双氯芬酸|依托考昔/, test: a => a !== null && a < 0.5, level: 'red',
+    text: '6 个月以下婴儿不建议使用这类退热止痛药，请先就医' },
+  { re: /右美沙芬/, test: a => a !== null && a < 6, level: 'red',
+    text: '6 岁以下儿童不建议使用右美沙芬镇咳' },
+  { re: /氯苯那敏|扑尔敏/, test: a => a !== null && a < 2, level: 'red',
+    text: '2 岁以下儿童禁用第一代抗组胺药' },
+  { re: /甲硝唑/, test: a => a !== null && a < 12, level: 'yellow',
+    text: '12 岁以下使用甲硝唑需医生评估' },
+  { re: /布洛芬|萘普生|双氯芬酸|依托考昔/, test: a => a !== null && a >= 65, level: 'yellow',
+    text: '老人使用这类止痛药，消化道出血与肾损伤风险更高，建议短期、饭后服' },
+  { re: /氯苯那敏|扑尔敏/, test: a => a !== null && a >= 65, level: 'yellow',
+    text: '老人使用第一代抗组胺药易嗜睡、跌倒、排尿困难，建议改用二代抗组胺' },
+  { re: /奥美拉唑|泮托拉唑/, test: a => a !== null && a >= 65, level: 'yellow',
+    text: '老人长期使用质子泵抑制剂需评估骨折与低镁风险' },
+  { re: /铁剂|琥珀酸亚铁/, test: a => a !== null && a < 6, level: 'yellow',
+    text: '铁剂对幼儿有误服中毒风险，请放在儿童拿不到的地方' }
+];
+
+/* 与长期用药的相互作用 */
+const INTERACTION_RULES = [
+  { re: /布洛芬|萘普生|双氯芬酸|依托考昔|阿司匹林/, chronic: 'anticoag', level: 'red',
+    text: '正在服用抗凝/抗血小板药，再叠加这类止痛药会显著增加出血风险，请先咨询医生' },
+  { re: /布洛芬|萘普生|双氯芬酸|依托考昔/, chronic: 'bp', level: 'yellow',
+    text: '这类止痛药可能削弱降压药效果并影响肾功能，需监测血压' },
+  { re: /布洛芬|萘普生|双氯芬酸|依托考昔/, chronic: 'diuretic', level: 'yellow',
+    text: '止痛药与利尿剂同用可能增加肾损伤风险，注意补水' },
+  { re: /布洛芬|萘普生|双氯芬酸|依托考昔/, chronic: 'ssri', level: 'yellow',
+    text: '与 SSRI 类抗抑郁药同用，消化道出血风险升高' },
+  { re: /布洛芬|萘普生|双氯芬酸|依托考昔/, chronic: 'steroid', level: 'yellow',
+    text: '与激素同用，消化道溃疡风险升高，必要时加用胃黏膜保护' },
+  { re: /甲硝唑/, chronic: 'anticoag', level: 'red',
+    text: '甲硝唑会增强华法林的抗凝作用，需医生调整剂量' },
+  { re: /铁剂|琥珀酸亚铁/, chronic: 'ppi', level: 'yellow',
+    text: '胃药会降低铁剂吸收，建议间隔 2 小时以上服用' },
+  { re: /减充血剂|伪麻黄碱/, chronic: 'bp', level: 'yellow',
+    text: '含减充血剂的复方感冒药可能升高血压，高血压患者慎用' },
+  { re: /糖皮质激素|泼尼松/, chronic: 'dm', level: 'yellow',
+    text: '激素可能升高血糖，糖尿病患者需增加监测' }
+];
+
+/* 纯函数：返回需要提示的用药安全问题 */
+function safetyCheck(age, chronic, results){
+  const items = [];
+  const seen = new Set();
+  const push = (level, text) => {
+    if (seen.has(text)) return;
+    seen.add(text);
+    items.push({ level: level, text: text });
+  };
+
+  const meds = [];
+  (results || []).forEach(c => (c.meds || []).forEach(m => meds.push(m.n)));
+
+  AGE_MED_RULES.forEach(rule => {
+    if (!rule.test(age)) return;
+    if (meds.some(n => rule.re.test(n))) push(rule.level, rule.text);
+  });
+
+  INTERACTION_RULES.forEach(rule => {
+    if (!chronic.has(rule.chronic)) return;
+    if (meds.some(n => rule.re.test(n))) push(rule.level, rule.text);
+  });
+
+  if (age !== null && age >= 65 && meds.length > 0){
+    push('yellow', '老人肾功能普遍下降，用药剂量通常需要下调，建议让医生或药师核对');
+  }
+  if (age !== null && age < 14 && meds.length > 0){
+    push('yellow', '儿童用药按体重计算，不要直接使用成人剂量');
+  }
+
+  items.sort((a, b) => (a.level === b.level ? 0 : a.level === 'red' ? -1 : 1));
+  return items;
+}
+
+/* 把检查结果渲染到结果页 */
+function renderSafety(age, chronic, results){
+  const box = document.getElementById('safetyBox');
+  if (!box) return;
+  const items = safetyCheck(age, chronic, results);
+  if (!items.length){
+    box.className = '';
+    box.innerHTML = '';
+    return;
+  }
+  const hasRed = items.some(i => i.level === 'red');
+  const who = (age === null || isNaN(age)) ? '未填写年龄' : ageLabel(age) + '（' + age + ' 岁）';
+  const chronicText = chronic && chronic.size ? chronic.size + ' 项长期用药' : '未填写长期用药';
+  box.className = 'safety-box' + (hasRed ? '' : ' ok');
+  box.innerHTML =
+    '<h4>' + (hasRed ? '用药安全提示（需要留意）' : '用药安全提示') + '</h4>' +
+    '<ul>' + items.map(i => '<li class="' + (i.level === 'red' ? 'red' : '') + '">' + i.text + '</li>').join('') + '</ul>' +
+    '<p class="note">已按「' + who + '」和「' + chronicText + '」检查；具体用药请遵医嘱或咨询药师。</p>';
+}
+
+/* =========================================================
    视图层
    ========================================================= */
 const selected = new Set();
@@ -1150,6 +1279,17 @@ function computeTriage(results, flags){
       advice: '你选择的症状里有需要紧急处理的情况，不适合自我观察或自行用药。请立即前往医院急诊，紧急时拨打 120。',
       reasons: flags.map(f => f.title),
       flags: flags
+    };
+  }
+
+  /* 1 岁以下婴儿发热：直接红色，不进入加权流程 */
+  if (patientAge !== null && patientAge < 1 && selected.has('fever')){
+    return {
+      level: 'red',
+      title: '婴儿发热，建议立即就医',
+      advice: '1 岁以下婴儿发热可能提示严重感染，不建议在家观察，请尽快到医院就诊。',
+      reasons: ['年龄小于 1 岁'].concat(selected.has('high_fever') ? ['高热'] : ['发热']),
+      flags: []
     };
   }
 
@@ -1612,6 +1752,55 @@ function bindEvents(){
     nluBtn.addEventListener('click', () => run(true));
   }
 
+  /* 年龄与长期用药 */
+  const ageInput = document.getElementById('ageInput');
+  const ageHint = document.getElementById('ageHint');
+  if (ageInput){
+    const applyAge = () => {
+      const raw = ageInput.value.trim();
+      const n = raw === '' ? null : Number(raw);
+      patientAge = (n === null || isNaN(n) || n < 0 || n > 120) ? null : n;
+      if (!ageHint) return;
+      if (patientAge === null){
+        ageHint.textContent = '填了才能检查儿童 / 老人用药禁忌';
+      } else if (patientAge < 1){
+        ageHint.textContent = '婴儿：发热需立即就医';
+      } else if (patientAge < 14){
+        ageHint.textContent = '儿童：已启用儿科用药禁忌检查';
+      } else if (patientAge >= 65){
+        ageHint.textContent = '老人：已启用多病共存用药冲突检查';
+      } else {
+        ageHint.textContent = '成人：按常规剂量提示';
+      }
+    };
+    ageInput.addEventListener('input', applyAge);
+    document.querySelectorAll('.age-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        ageInput.value = chip.getAttribute('data-age');
+        applyAge();
+      });
+    });
+    applyAge();
+  }
+
+  const chronicToggle = document.getElementById('chronicToggle');
+  const chronicList = document.getElementById('chronicList');
+  if (chronicToggle && chronicList){
+    chronicList.innerHTML = CHRONIC_MEDS.map(m =>
+      '<button type="button" class="chronic-chip" data-med="' + m.id + '">' + m.label + '</button>'
+    ).join('');
+    chronicToggle.addEventListener('click', () => {
+      chronicList.classList.toggle('hidden');
+    });
+    chronicList.querySelectorAll('.chronic-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const id = chip.getAttribute('data-med');
+        if (chronicMeds.has(id)) chronicMeds.delete(id); else chronicMeds.add(id);
+        chip.classList.toggle('on', chronicMeds.has(id));
+      });
+    });
+  }
+
   /* 档案、提醒横幅与通知 */
   const profileBtn = document.getElementById('profileBtn');
   if (profileBtn) profileBtn.addEventListener('click', openProfile);
@@ -1733,6 +1922,8 @@ async function showResults(){
     meta.textContent = new Date().toLocaleString('zh-CN') + ' · 已选症状：' +
       [...selected].map(id => SYMPTOMS[id].label).join('、');
   }
+
+  renderSafety(patientAge, chronicMeds, results);
 
   /* 已选症状 */
   document.getElementById('selrow').innerHTML = [...selected]
