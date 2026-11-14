@@ -1100,6 +1100,154 @@ function clearProfileData(){
   try { window.localStorage.removeItem(PROFILE_KEY); } catch (e) {}
 }
 
+/* =========================================================
+   症状时间轴：按天记录 0–10 的严重度
+   来源：查看结果时自动估算 + 档案里手动打卡（手动优先）
+   ========================================================= */
+const TIMELINE_KEY = 'mingbian.timeline.v1';
+const TIMELINE_DAYS = 14;
+
+function dayKey(t){
+  const d = new Date(t || Date.now());
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return d.getFullYear() + '-' + m + '-' + day;
+}
+
+function emptyTimeline(){ return { days: {} }; }
+
+function loadTimeline(){
+  try {
+    const raw = window.localStorage.getItem(TIMELINE_KEY);
+    if (!raw) return emptyTimeline();
+    const data = JSON.parse(raw);
+    if (!data || !data.days || typeof data.days !== 'object') return emptyTimeline();
+    return { days: data.days };
+  } catch (e){
+    return emptyTimeline();
+  }
+}
+
+function saveTimeline(tl){
+  try { window.localStorage.setItem(TIMELINE_KEY, JSON.stringify(tl)); } catch (e) {}
+}
+
+function clearTimelineData(){
+  try { window.localStorage.removeItem(TIMELINE_KEY); } catch (e) {}
+}
+
+/* 0–10：症状越多、分诊等级越高，分值越高 */
+function estimateSeverity(sym, level){
+  const n = (sym || []).length;
+  let score = Math.min(n * 1.4, 6);
+  if (level === 'yellow') score += 2;
+  if (level === 'red') score += 4;
+  return Math.max(0, Math.min(10, Math.round(score)));
+}
+
+/* 自动记录当天；当天已有手动记录时不覆盖 */
+function recordTimeline(sym, level, now){
+  const t = now || Date.now();
+  const key = dayKey(t);
+  const tl = loadTimeline();
+  const prev = tl.days[key];
+  if (prev && prev.source === 'manual') return tl;
+
+  const score = estimateSeverity(sym, level);
+  tl.days[key] = {
+    score: prev ? Math.max(prev.score, score) : score,
+    source: 'auto',
+    level: level || '',
+    sym: (sym || []).slice()
+  };
+  saveTimeline(tl);
+  return tl;
+}
+
+/* 手动打卡：轻 3 / 中 6 / 重 9 / 已好转 0 */
+function setManualSeverity(score, now){
+  const key = dayKey(now || Date.now());
+  const tl = loadTimeline();
+  tl.days[key] = {
+    score: Math.max(0, Math.min(10, score)),
+    source: 'manual',
+    level: '',
+    sym: []
+  };
+  saveTimeline(tl);
+  return tl;
+}
+
+/* 取最近 N 天（含今天）的点，缺失天为 null */
+function timelinePoints(tl, days, now){
+  const base = new Date(now || Date.now());
+  base.setHours(0, 0, 0, 0);
+  const out = [];
+  for (let i = days - 1; i >= 0; i--){
+    const d = new Date(base.getTime() - i * 86400000);
+    const key = dayKey(d.getTime());
+    const hit = tl.days[key];
+    out.push({
+      key,
+      label: (d.getMonth() + 1) + '/' + d.getDate(),
+      score: hit ? hit.score : null,
+      source: hit ? hit.source : ''
+    });
+  }
+  return out;
+}
+
+function severityLabel(score){
+  if (score >= 8) return '较重';
+  if (score >= 5) return '中等';
+  if (score >= 2) return '较轻';
+  return '已经好转';
+}
+
+/* 自动解读：第 N 天从窗口内第一次记录算起 */
+function analyzeTimeline(tl, days, now){
+  const pts = timelinePoints(tl, days, now);
+  const valid = pts.filter(p => p.score !== null);
+  if (!valid.length){
+    return { empty: true, text: '最近还没有记录。查看一次结果，或点「记录今天」开始。', pts };
+  }
+
+  const firstIdx = pts.findIndex(p => p.score !== null);
+  const dayNo = p => pts.indexOf(p) - firstIdx + 1;
+  const last = valid[valid.length - 1];
+
+  let peak = valid[0];
+  valid.forEach(p => { if (p.score > peak.score) peak = p; });
+
+  let rise = null;
+  for (let i = 1; i < valid.length; i++){
+    if (valid[i].score - valid[i - 1].score >= 2){ rise = valid[i]; break; }
+  }
+  let fall = null;
+  for (let i = valid.indexOf(peak) + 1; i < valid.length; i++){
+    if (peak.score - valid[i].score >= 2){ fall = valid[i]; break; }
+  }
+
+  let text;
+  if (fall && rise && dayNo(rise) < dayNo(fall)){
+    text = '第 ' + dayNo(rise) + ' 天加重，第 ' + dayNo(fall) + ' 天开始缓解。';
+  } else if (fall){
+    text = '第 ' + dayNo(peak) + ' 天最重，第 ' + dayNo(fall) + ' 天开始缓解。';
+  } else if (last.score >= 8){
+    text = '最近一次记录为较重，若持续没有缓解，建议尽快就医。';
+  } else if (rise && last.score >= peak.score - 1){
+    text = '最近还在加重，建议留意休息，必要时就医。';
+  } else {
+    const max = Math.max(...valid.map(p => p.score));
+    const min = Math.min(...valid.map(p => p.score));
+    if (max - min <= 1) text = '这段时间症状比较平稳（' + severityLabel(max) + '）。';
+    else if (last.score === 0) text = '最近一次记录是「已好转」，继续保持观察。';
+    else text = '最近一次记录为' + severityLabel(last.score) + '。';
+  }
+
+  return { empty: false, text, pts, peak, last };
+}
+
 /* 记录一次查看；十分钟内同一组症状只记一次，避免反复点「查看结果」刷屏 */
 function recordVisit(sym, dir, dirName, level, now){
   const t = now || Date.now();
@@ -1472,6 +1620,7 @@ function init(){
   renderGroups();
   bindEvents();
   bindBodyMap();
+  bindPager();
   applyBodyLayers();
   updateCount();
   detectCloud();
@@ -1741,11 +1890,98 @@ function openProfile(){
   if (modal) modal.classList.remove('hidden');
 }
 
+/* ---------------- 症状时间轴：曲线绘制 ---------------- */
+const TL_COLORS = { high: '#d9503f', mid: '#d98a2b', low: '#0e8f86', good: '#3a9d6a' };
+
+function severityColor(score){
+  if (score >= 8) return TL_COLORS.high;
+  if (score >= 5) return TL_COLORS.mid;
+  if (score >= 2) return TL_COLORS.low;
+  return TL_COLORS.good;
+}
+
+function chartSvg(pts){
+  const W = 560;
+  const H = 176;
+  const L = 28;
+  const R = 14;
+  const T = 16;
+  const B = 34;
+  const pw = W - L - R;
+  const ph = H - T - B;
+  const x = i => L + (pts.length <= 1 ? pw / 2 : (i / (pts.length - 1)) * pw);
+  const y = v => T + (1 - v / 10) * ph;
+
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="最近 14 天症状严重度曲线">';
+
+  [0, 5, 10].forEach(v => {
+    svg += '<line x1="' + L + '" y1="' + y(v) + '" x2="' + (W - R) + '" y2="' + y(v) + '" stroke="#e6f0ee" stroke-width="1"/>';
+    svg += '<text x="' + (L - 7) + '" y="' + (y(v) + 3) + '" text-anchor="end" font-size="8" fill="#9fb8b4">' + v + '</text>';
+  });
+
+  /* 缺数据的日期断开，不连线误导 */
+  let run = [];
+  const segments = [];
+  pts.forEach((p, i) => {
+    if (p.score === null){
+      if (run.length) segments.push(run);
+      run = [];
+      return;
+    }
+    run.push(x(i).toFixed(1) + ',' + y(p.score).toFixed(1));
+  });
+  if (run.length) segments.push(run);
+
+  segments.forEach(seg => {
+    if (seg.length < 2) return;
+    svg += '<polyline points="' + seg.join(' ') + '" fill="none" stroke="#0e8f86" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+  });
+
+  pts.forEach((p, i) => {
+    if (p.score === null) return;
+    const color = severityColor(p.score);
+    svg += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.score).toFixed(1) + '" r="3.4" fill="#fff" stroke="' + color + '" stroke-width="2"/>';
+    if (p.source === 'manual'){
+      svg += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.score).toFixed(1) + '" r="1.2" fill="' + color + '"/>';
+    }
+  });
+
+  pts.forEach((p, i) => {
+    if (i % 3 !== 0 && i !== pts.length - 1) return;
+    svg += '<text x="' + x(i).toFixed(1) + '" y="' + (H - 12) + '" text-anchor="middle" font-size="8" fill="#9fb8b4">' +
+      (i === pts.length - 1 ? '今天' : p.label) + '</text>';
+  });
+
+  svg += '</svg>';
+  return svg;
+}
+
+function renderTimeline(){
+  const box = document.getElementById('tlChart');
+  const read = document.getElementById('tlRead');
+  if (!box) return;
+
+  const tl = loadTimeline();
+  const view = analyzeTimeline(tl, TIMELINE_DAYS);
+  box.innerHTML = chartSvg(view.pts);
+  if (read) read.textContent = view.text;
+
+  const today = tl.days[dayKey(Date.now())];
+  const manual = document.getElementById('tlManual');
+  if (manual){
+    manual.querySelectorAll('.tl-sev').forEach(btn => {
+      btn.classList.toggle('on', !!today && today.source === 'manual' && Number(btn.dataset.sev) === today.score);
+    });
+  }
+}
+
 function renderProfilePanel(){
   const stats = document.getElementById('profileStats');
   const list = document.getElementById('profileList');
   const btn = document.getElementById('notifyBtn');
   const entries = (profile && profile.entries) || [];
+
+  renderTimeline();
 
   if (stats){
     stats.textContent = entries.length
@@ -1808,6 +2044,7 @@ function enableNotify(){
 function clearAllProfile(){
   if (!window.confirm('清除后，历史记录和提醒状态都会删除，无法恢复。确定清除吗？')) return;
   clearProfileData();
+  clearTimelineData();
   profile = emptyProfile();
   renderProfilePanel();
   renderCareBanner();
@@ -2002,6 +2239,62 @@ async function open3D(){
   }
 }
 
+/* ---------------- 输入方式分页：左滑右滑 ---------------- */
+let pagerIndex = 0;
+
+function pagerPages(){
+  return document.querySelectorAll('.pager-page');
+}
+
+function syncPagerNav(index){
+  document.querySelectorAll('.pager-tab').forEach(btn => {
+    const on = Number(btn.dataset.page) === index;
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-selected', String(on));
+  });
+  document.querySelectorAll('.pager-dots i').forEach((dot, i) => dot.classList.toggle('on', i === index));
+}
+
+function setPager(index, smooth){
+  const pager = document.getElementById('pager');
+  const pages = pagerPages();
+  if (!pager || !pages.length) return;
+
+  const i = Math.max(0, Math.min(pages.length - 1, index));
+  pagerIndex = i;
+  const left = pages[i].offsetLeft - pages[0].offsetLeft;
+  try {
+    pager.scrollTo({ left, behavior: smooth === false ? 'auto' : 'smooth' });
+  } catch (e) {
+    pager.scrollLeft = left;
+  }
+  syncPagerNav(i);
+}
+
+function bindPager(){
+  const pager = document.getElementById('pager');
+  if (!pager) return;
+
+  document.querySelectorAll('.pager-tab').forEach(btn => {
+    btn.addEventListener('click', () => setPager(Number(btn.dataset.page)));
+  });
+
+  /* 滑动结束后同步页签与指示点 */
+  let timer = 0;
+  pager.addEventListener('scroll', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      const pages = pagerPages();
+      if (!pages.length) return;
+      const width = pages[0].offsetWidth || pager.clientWidth || 1;
+      const i = Math.max(0, Math.min(pages.length - 1, Math.round(pager.scrollLeft / width)));
+      pagerIndex = i;
+      syncPagerNav(i);
+      if (body3dViewer && i === 1) body3dViewer.resize();
+    }, 90);
+  }, { passive: true });
+}
+
 function bindBodyMap(){
   document.querySelectorAll('.body-hot').forEach(g => {
     g.addEventListener('click', () => openBodyPart(g.dataset.part));
@@ -2169,6 +2462,22 @@ function bindEvents(){
   const clearProfileBtn = document.getElementById('clearProfile');
   if (clearProfileBtn) clearProfileBtn.addEventListener('click', clearAllProfile);
 
+  /* 时间轴：手动打卡 */
+  const tlBtn = document.getElementById('tlManualBtn');
+  if (tlBtn) tlBtn.addEventListener('click', () => {
+    const box = document.getElementById('tlManual');
+    if (box) box.classList.toggle('hidden');
+  });
+
+  const tlManual = document.getElementById('tlManual');
+  if (tlManual) tlManual.addEventListener('click', e => {
+    const target = e.target && e.target.closest ? e.target.closest('.tl-sev') : null;
+    if (!target) return;
+    setManualSeverity(Number(target.dataset.sev));
+    renderTimeline();
+    tlManual.classList.add('hidden');
+  });
+
   const careBanner = document.getElementById('careBanner');
   if (careBanner){
     careBanner.addEventListener('click', e => {
@@ -2244,6 +2553,9 @@ async function showResults(){
     topResult ? topResult.name : '',
     triage.level
   );
+
+  /* 同步记一条当天严重度，供档案里的时间轴画曲线 */
+  recordTimeline([...selected], triage.level);
 
   const levelLabel = { red: '高风险 · 需急诊', yellow: '中风险 · 需就医', green: '低风险 · 可观察' };
   document.getElementById('urgent').innerHTML =
@@ -2359,5 +2671,5 @@ if (typeof document !== 'undefined'){
   document.addEventListener('DOMContentLoaded', init);
 }
 if (typeof module !== 'undefined' && module.exports){
-  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit };
+  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline };
 }

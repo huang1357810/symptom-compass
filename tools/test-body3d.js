@@ -109,11 +109,13 @@ checks.forEach(([needle, msg]) => {
   if (html.indexOf(needle) === -1) errors.push(msg + '（' + needle + '）');
 });
 
-/* ---------- 4. Service Worker 缓存 ---------- */
+/* ---------- 4. Service Worker 缓存策略 ---------- */
 const sw = fs.readFileSync(path.join(ROOT, 'site', 'sw.js'), 'utf8');
-['./vendor/three.module.js', './vendor/body3d.js', './models/body.glb'].forEach(f => {
-  if (sw.indexOf(f) === -1) errors.push('sw.js 未缓存 ' + f);
-});
+const preCached = ['./vendor/three.module.js', './vendor/body3d.js', './models/body.glb']
+  .every(f => sw.indexOf(f) !== -1);
+const runtimeCached = sw.indexOf('cache.put(request') !== -1;
+/* 3D 资源体积大，允许「不预缓存 + 首开时运行时缓存」的懒加载策略 */
+if (!preCached && !runtimeCached) errors.push('3D 资源既未预缓存，sw.js 也没有运行时缓存逻辑');
 
 if (errors.length) {
   console.error('3D 视图校验失败：\n  ' + errors.join('\n  '));

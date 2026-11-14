@@ -41,7 +41,9 @@ symptom-checker/
 │   ├── test-profile.js      用户档案提醒规则自测（node tools/test-profile.js）
 │   ├── test-bodymap.js      人体部位图自测（node tools/test-bodymap.js）
 │   ├── build-body-glb.js    生成低模躯干 GLB（node tools/build-body-glb.js）
-│   └── test-body3d.js       3D 视图自测（node tools/test-body3d.js）
+│   ├── test-body3d.js       3D 视图自测（node tools/test-body3d.js）
+│   ├── test-layout.js       输入区分页布局自测（node tools/test-layout.js）
+│   └── test-timeline.js     症状时间轴自测（node tools/test-timeline.js）
 ├── site/
 │   ├── vendor/              3D 模块（three.js / GLTFLoader / OrbitControls，已本地化）
 │   └── models/body.glb      程序化低模躯干（器官独立命名，供点击拾取）
@@ -179,6 +181,18 @@ const SYMPTOMS = {
 
 识别不全时仍可手动勾选或用搜索框过滤。自测：`node tools/test-nlu.js`（检查词表覆盖与 19 条常见说法）。该功能目前只在 Web 版，鸿蒙端尚未同步。
 
+## 输入区分页（左滑右滑）
+
+症状选择区拆成两页横向滑动，避免一屏堆太多内容：
+
+- **第 1 页「说一句话 / 搜索」**：一句话描述、搜索框、快速开始
+- **第 2 页「点身体部位 / 3D」**：2.5D 人体图、3D 视图、全部症状分组
+- 顶部页签可直接跳转；手机上左右滑动切换，指示点跟随当前页
+- 已选症状数、年龄 / 长期用药、清空与「查看可能情况」固定在分页之外，滑到哪页都能操作
+- 用 CSS `scroll-snap` 实现，无额外依赖；桌面端也可拖动或点页签切换
+
+自测：`node tools/test-layout.js`。
+
 ## 人体部位图（2.5D 分层）
 
 症状区里有一张内联 SVG 人体图，用「皮肤 / 肌肉 / 骨骼 / 内脏」四个图层叠加出 2.5D 透视感，每层都能单独开关。
@@ -211,7 +225,7 @@ const SYMPTOMS = {
 - 可拖动旋转、滚轮缩放；点击器官 → 右侧列出对应症状并勾选
 - 皮肤材质半透明（opacity 0.3）且关闭深度写入，内部器官可见
 - WebGL 不可用、模块加载失败（例如直接双击 `index.html`）时自动回到 2.5D 图层，不影响原有功能
-- Service Worker 已把模型与 three.js 模块加入预缓存，离线也能打开 3D；体积约 2.3MB（three 模块 2.2MB + 模型 65KB）
+- 3D 资源不预缓存，避免首次安装就下载 2.3MB；首次打开 3D 后由 Service Worker 运行时缓存，之后离线也能旋转（three 模块 2.2MB + 模型 65KB）
 - 重新生成模型：`node tools/build-body-glb.js`；校验：`node tools/test-body3d.js`
 
 ## 用户档案与提醒
@@ -225,6 +239,18 @@ const SYMPTOMS = {
 - 同一组症状 10 分钟内重复查看只记一次，历史最多保留 200 条，超出后丢弃最早的
 
 规则常量集中在 `PROFILE_RULES`（`days` / `times` / `careDays`），自测：`node tools/test-profile.js`。
+
+### 症状时间轴
+
+档案面板顶部画最近 14 天的严重度曲线（内联 SVG，无图表库）：
+
+- 每次查看结果自动记一条：按症状数 + 分诊等级估算 0–10 分，同一天取较高值
+- 点「记录今天」可手动打卡：轻 3 / 中 6 / 重 9 / 已好转 0；手动记录优先，自动记录不会覆盖
+- 缺数据的日期折线断开，不连线误导；手动记录的点中心带实心小圆
+- 自动解读给出「第 3 天加重，第 5 天开始缓解」这类结论；持续加重会提示就医
+- 数据存在本机 `localStorage`（`mingbian.timeline.v1`），与档案一起可一键清除
+
+自测：`node tools/test-timeline.js`。
 
 ## 如何新增一种疾病
 
