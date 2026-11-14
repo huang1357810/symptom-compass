@@ -1,6 +1,10 @@
 /*
  * 明辨康途 · 3D 躯干查看器（three.js）
  * 由 index.html 懒加载：只在用户点「3D 视图」时才会下载本模块与模型。
+ *
+ * 轻量增强：
+ *   1. 器官标签（HTML 覆盖层，随模型旋转跟随，指针穿透，可点击）
+ *   2. 选中互斥：材质逐个克隆，避免共享材质导致的高亮串色/闪烁
  */
 import * as THREE from './three.module.js';
 import { GLTFLoader } from './GLTFLoader.js';
@@ -19,6 +23,7 @@ export async function createBodyViewer(options) {
   const canvas = options.canvas;
   const url = options.url;
   const onPick = options.onPick;
+  const labelMap = options.labels || {};
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -49,6 +54,11 @@ export async function createBodyViewer(options) {
   const gltf = await loader.loadAsync(url);
   const root = gltf.scene;
 
+  /* 标签层：绝对定位覆盖在 canvas 上，默认不拦截指针 */
+  const labelLayer = document.createElement('div');
+  labelLayer.className = 'body3d-labels';
+  canvas.parentElement.appendChild(labelLayer);
+
   const organs = [];
   root.traverse(obj => {
     if (!obj.isMesh) return;
@@ -60,12 +70,44 @@ export async function createBodyViewer(options) {
       mat.side = THREE.DoubleSide;
       mat.roughness = 0.9;
       obj.renderOrder = 2;
-    } else {
-      obj.userData.part = obj.name;
-      organs.push(obj);
+      return;
     }
+    /* 每个器官克隆独立材质，避免多个器官共享材质导致高亮互相影响 */
+    obj.material = Array.isArray(obj.material)
+      ? obj.material.map(m => m.clone())
+      : obj.material.clone();
+    obj.userData.part = obj.name;
+    obj.userData.baseEmissive = 0x000000;
+
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'organ-label';
+    el.textContent = labelMap[obj.name] || obj.name;
+    el.setAttribute('aria-label', '选择' + el.textContent);
+    el.addEventListener('click', ev => {
+      ev.stopPropagation();
+      if (typeof onPick === 'function') onPick(obj.name);
+    });
+    labelLayer.appendChild(el);
+    obj.userData.labelEl = el;
+
+    organs.push(obj);
   });
+
   scene.add(root);
+  root.updateMatrixWorld(true);
+
+  /* 预先算好每个器官的世界坐标中心，用于标签投影 */
+  const tmpBox = new THREE.Box3();
+  organs.forEach(o => {
+    /* 防御：外部模型的 accessor 包围盒可能不准，这里按顶点重算一次 */
+    if (o.geometry) {
+      o.geometry.computeBoundingBox();
+      o.geometry.computeBoundingSphere();
+    }
+    tmpBox.setFromObject(o);
+    o.userData.center = tmpBox.getCenter(new THREE.Vector3());
+  });
 
   function resize() {
     const w = canvas.clientWidth || 320;
@@ -109,11 +151,33 @@ export async function createBodyViewer(options) {
   canvas.addEventListener('pointerdown', onDown);
   canvas.addEventListener('pointerup', onUp);
 
+  const labelVec = new THREE.Vector3();
+  /* 每个器官标签在屏幕上的微调，避免挤在一起 */
+  const LABEL_OFFSET = {
+    heart: [-26, -4], lung: [26, -16], stomach: [-28, 6],
+    liver: [30, 2], kidney: [30, 22], intestine: [0, 30]
+  };
   let raf = 0;
   function loop() {
     raf = requestAnimationFrame(loop);
     controls.update();
     renderer.render(scene, camera);
+
+    /* 标签跟随：把器官中心投影到屏幕坐标 */
+    const w = canvas.clientWidth || 320;
+    const h = canvas.clientHeight || 420;
+    organs.forEach(o => {
+      const el = o.userData.labelEl;
+      if (!el || !o.userData.center) return;
+      labelVec.copy(o.userData.center).project(camera);
+      const visible = labelVec.z < 1 && Math.abs(labelVec.x) < 1.15 && Math.abs(labelVec.y) < 1.15;
+      if (!visible) { el.style.display = 'none'; return; }
+      el.style.display = '';
+      const off = LABEL_OFFSET[o.name] || [0, 0];
+      const x = (labelVec.x * 0.5 + 0.5) * w + off[0];
+      const y = (-labelVec.y * 0.5 + 0.5) * h + off[1];
+      el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) translate(-50%,-50%)';
+    });
   }
   loop();
 
@@ -121,8 +185,13 @@ export async function createBodyViewer(options) {
     const active = ids || new Set();
     organs.forEach(o => {
       const on = active.has(o.name);
-      o.material.emissive.setHex(on ? 0x1fa89d : 0x000000);
-      o.material.emissiveIntensity = on ? 0.6 : 0;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      mats.forEach(m => {
+        if (!m.emissive) return;
+        m.emissive.setHex(on ? 0x1fa89d : 0x000000);
+        m.emissiveIntensity = on ? 0.6 : 0;
+      });
+      if (o.userData.labelEl) o.userData.labelEl.classList.toggle('on', on);
     });
   }
 
@@ -139,6 +208,7 @@ export async function createBodyViewer(options) {
     canvas.removeEventListener('pointerdown', onDown);
     canvas.removeEventListener('pointerup', onUp);
     controls.dispose();
+    if (labelLayer && labelLayer.parentElement) labelLayer.parentElement.removeChild(labelLayer);
     root.traverse(obj => {
       if (obj.isMesh) {
         obj.geometry.dispose();

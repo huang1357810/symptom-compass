@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 生成低模躯干 GLB：node tools/build-body-glb.js
  * 纯几何拼装（椭球 + 环放样），器官各自成独立命名网格，供 three.js 拾取。
  * 输出：site/models/body.glb
@@ -157,7 +157,18 @@ meshes.forEach((mesh, mi) => {
   const nrmView = pushBuffer(nrm, 34962);
   const idxView = pushIndices(mesh.geo.idx);
 
-  accessors.push({ bufferView: posView, componentType: 5126, count: mesh.geo.pos.length / 3, type: 'VEC3', min: [-0.4, 0, -0.3], max: [0.4, 1.75, 0.3] });
+  /* 按顶点真实坐标计算包围盒：之前写死成身体的边界，
+     会让 three.js 认为每个器官都占满全身（3D 标签全堆在一点） */
+  const pmin = [Infinity, Infinity, Infinity];
+  const pmax = [-Infinity, -Infinity, -Infinity];
+  for (let vi = 0; vi < mesh.geo.pos.length; vi += 3) {
+    for (let k = 0; k < 3; k++) {
+      const v = mesh.geo.pos[vi + k];
+      if (v < pmin[k]) pmin[k] = v;
+      if (v > pmax[k]) pmax[k] = v;
+    }
+  }
+  accessors.push({ bufferView: posView, componentType: 5126, count: mesh.geo.pos.length / 3, type: 'VEC3', min: pmin, max: pmax });
   accessors.push({ bufferView: nrmView, componentType: 5126, count: nrm.length / 3, type: 'VEC3' });
   accessors.push({ bufferView: idxView, componentType: 5123, count: mesh.geo.idx.length, type: 'SCALAR' });
 

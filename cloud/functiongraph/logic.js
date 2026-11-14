@@ -1551,6 +1551,8 @@ function toggle(id){
     chip.setAttribute('aria-pressed', String(selected.has(id)));
   }
   updateCount();
+  /* 同步人体图热点与 3D 器官高亮 */
+  if (typeof updateBodySelection === 'function') updateBodySelection();
 }
 
 function updateCount(){
@@ -1942,6 +1944,8 @@ function set3DMode(on){
   if (btn) btn.classList.toggle('on', on);
   document.querySelectorAll('.body-tab[data-view]').forEach(b => { b.disabled = on; });
   if (body3dViewer && on) body3dViewer.resize();
+  const map = document.querySelector('.body-map');
+  if (map) map.classList.toggle('viewing-3d', on);
   if (on) closeBodyPart();
 }
 
@@ -1975,9 +1979,16 @@ async function open3D(){
   try {
     /* 动态 import：只有点 3D 时才下载 three.js 与模型 */
     const mod = await import('./vendor/body3d.js');
+    /* 标签文字：取器官部位的中文短名（去掉“/ 右上腹”这类副标题） */
+    const labelMap = {};
+    BODY_PARTS.forEach(p => {
+      if (p.layer !== 'organ') return;
+      labelMap[p.id] = String(p.label).split('/')[0].trim();
+    });
     body3dViewer = await mod.createBodyViewer({
       canvas,
       url: './models/body.glb',
+      labels: labelMap,
       onPick: id => openBodyPart(id)
     });
     if (loading) loading.classList.add('hidden');

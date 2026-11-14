@@ -29,12 +29,6 @@ const STATIC_FILES = {
   '/icon-512.png': { file: 'icon-512.png', type: 'image/png' }
 };
 
-/* 3D 视图资源：模型与 three.js 模块（懒加载时才会请求） */
-const STATIC_PREFIXES = {
-  '/vendor/': { dir: 'vendor', type: 'text/javascript; charset=utf-8' },
-  '/models/': { dir: 'models', type: 'model/gltf-binary' }
-};
-
 function serveStatic(p) {
   for (const suffix of Object.keys(STATIC_FILES)) {
     if (p.endsWith(suffix)) {
@@ -50,23 +44,6 @@ function serveStatic(p) {
       };
     }
   }
-
-  for (const prefix of Object.keys(STATIC_PREFIXES)) {
-    if (p.indexOf(prefix) !== 0) continue;
-    const name = p.slice(prefix.length);
-    if (!name || name.indexOf('..') !== -1 || name.indexOf('/') !== -1) return null;
-    const meta = STATIC_PREFIXES[prefix];
-    const full = path.join(__dirname, meta.dir, name);
-    if (!fs.existsSync(full)) return null;
-    const buf = fs.readFileSync(full);
-    return {
-      statusCode: 200,
-      headers: Object.assign({ 'Content-Type': meta.type, 'Cache-Control': 'public, max-age=3600' }, CORS),
-      body: buf.toString('base64'),
-      isBase64Encoded: true
-    };
-  }
-
   return null;
 }
 
