@@ -143,6 +143,16 @@
   .nlu textarea:focus{border-color:var(--teal); background:#fff; box-shadow:0 0 0 4px rgba(14,143,134,.10)}
   .nlu-row .btn{white-space:nowrap; padding:12px 20px; font-size:14px; align-self:stretch}
   .nlu-note{font-size:12px; color:#93aeab; margin-top:7px}
+  .nlu-acts{display:flex; flex-direction:column; gap:8px; flex:0 0 104px}
+  .nlu-acts .btn{padding:10px 8px; font-size:13px; white-space:nowrap}
+  .mic-btn{display:inline-flex; align-items:center; justify-content:center; gap:5px}
+  .mic-btn[hidden]{display:none !important}
+  .mic-btn.on{background:#fff1ef; border-color:#e7b3a9; color:#b3382a; animation:micPulse 1.3s ease-in-out infinite}
+  @keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.18)}50%{box-shadow:0 0 0 6px rgba(192,57,43,.04)}}
+  @media (max-width:640px){
+    .nlu-acts{flex-direction:row; flex:1 1 auto}
+    .nlu-acts .btn{flex:1}
+  }
   .nlu-result{
     margin-top:10px; padding:11px 14px; font-size:13.5px; line-height:1.65;
     background:#f0faf8; border:1px solid #cdeae5; border-radius:12px; color:#1f5d58;
@@ -510,31 +520,11 @@
   .triage li{font-size:13px;color:#7a2b20;margin:5px 0;padding-left:14px;position:relative}
   .triage li::before{content:"";position:absolute;left:2px;top:.66em;width:5px;height:5px;border-radius:50%;background:#d9503f}
 
-  /* 建议挂号科室与近 14 天摘要 */
-  .dept-card{
-    margin:14px 0 6px; padding:16px 18px; border-radius:16px;
-    background:linear-gradient(135deg,#effaf8,#e4f4f1);
-    border:1px solid #cfe9e4; border-left:5px solid var(--teal);
-  }
-  .dept-card.red{background:linear-gradient(135deg,#fff4f2,#ffe9e5); border-color:#f6c9c2; border-left-color:#d9503f}
-  .dept-head{font-size:12.5px; color:#5d7b78; letter-spacing:.5px}
-  .dept-main{font-size:22px; font-weight:700; color:#0b5f58; margin:4px 0 2px}
-  .dept-card.red .dept-main{color:#a3271a}
-  .dept-alt{font-size:13px; color:#41615f; margin-top:2px}
-  .dept-note{font-size:12.5px; color:#5d7b78; line-height:1.7; margin-top:8px}
-  .report-timeline{margin:10px 0 6px; padding:12px 14px; border:1px dashed #dbe9e7; border-radius:12px; background:#fbfefd; font-size:13px; line-height:1.7; color:#41615f}
-  .report-timeline b{color:#0b6f68; margin-right:4px}
-  .report-tl-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px}
-  .report-tl-head b{flex:none}
-  .report-tl-head span{color:#41615f}
-  .report-tl-chart{margin-top:6px}
-  .report-tl-chart svg{width:100%; height:auto; display:block}
-
   /* 打印 / 导出给医生：只保留结论与建议 */
   .print-head{display:none}
   @media print{
     body{background:#fff !important}
-    .hero,.notice,#intake,#triage,.actions,.safety,.share-hint,.hint,.care-banner,
+    .hero,.notice,#intake,#triage,.actions,.safety,.disclaimer,.share-hint,.hint,.care-banner,
     #results>.sec-head,.urgent .call,footer{display:none !important}
     .print-head{display:block;margin:0 0 16px;padding-bottom:12px;border-bottom:2px solid #0e8f86}
     .print-head h1{font-size:19px;color:#0b6f68;letter-spacing:1px}
@@ -545,16 +535,6 @@
     .cond summary{grid-template-columns:auto 1fr auto}
     .bar,.chev{display:none}
     a{color:inherit;text-decoration:none}
-    .dept-card{background:#fff !important; border:1px solid #999 !important; padding:12px 14px; break-inside:avoid}
-    .dept-main{font-size:19px}
-    .dept-note,.report-timeline{color:#333 !important}
-    .report-timeline{background:#fff !important; border:1px dashed #999 !important; break-inside:avoid}
-    .report-tl-chart{margin-top:4px}
-    .safety-box{background:#fff !important; border:1px solid #bbb !important; padding:10px 12px; break-inside:avoid}
-    .safety-box h4{color:#333 !important}
-    .safety-box .note{color:#555 !important}
-    .disclaimer{display:block !important; color:#444 !important; border-top:1px solid #999; padding-top:10px; margin-top:14px; font-size:11px; break-inside:avoid}
-    .disclaimer b{color:#222 !important}
   }
 
   .fade{animation:fade .38s ease both}
@@ -617,7 +597,7 @@
   <section class="card notice" id="notice">
     <p>
       <b>先说明：</b>这是一个健康科普工具，帮你梳理症状、了解可能的方向和常见处理方式。
-      它<b>不能诊断疾病，也不能替代医生面诊</b>。所有分析都在你的浏览器本地完成，不会上传任何数据。
+      它<b>不能诊断疾病，也不能替代医生面诊</b>。所有分析都在你的浏览器本地完成，不会上传任何数据；语音输入由浏览器语音服务转成文字，音频不由我们保存。
     </p>
   </section>
 
@@ -645,9 +625,17 @@
       </div>
       <div class="nlu-row">
         <textarea id="nluInput" rows="2" placeholder="说说哪里不舒服，停笔后会自动识别并勾选下方症状"></textarea>
-        <button class="btn primary" id="nluBtn" type="button">识别</button>
+        <div class="nlu-acts">
+          <button class="btn ghost mic-btn" id="micBtn" type="button" hidden aria-pressed="false">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/>
+            </svg>
+            <span id="micLabel">语音</span>
+          </button>
+          <button class="btn primary" id="nluBtn" type="button">识别</button>
+        </div>
       </div>
-      <p class="nlu-note">只在本机匹配，不会上传任何文字；识别不全时可以再手动勾选或搜索。</p>
+      <p class="nlu-note">文字只在本机匹配，不会上传；识别不全时可以再手动勾选或搜索。<br>语音由浏览器自带的语音服务识别（音频可能经浏览器传给其服务商），识别后的文字仍只在本机处理。</p>
       <div class="nlu-result hidden" id="nluResult" role="status" aria-live="polite"></div>
     </div>
 
@@ -892,7 +880,7 @@
       <h2>2. 可能的方向</h2>
       <span class="pill" id="modeBadge">本地分析</span>
       <span class="spacer"></span>
-      <button class="btn ghost" id="exportBtn" style="padding:8px 15px; font-size:13px">导出 PDF（打印）</button>
+      <button class="btn ghost" id="exportBtn" style="padding:8px 15px; font-size:13px">导出给医生</button>
       <button class="btn ghost" id="back" style="padding:8px 15px; font-size:13px">修改症状</button>
     </div>
 
@@ -902,11 +890,8 @@
     </div>
 
     <div id="urgent"></div>
-    <div class="dept-card hidden" id="deptBox"></div>
     <div id="safetyBox"></div>
     <div class="selrow" id="selrow"></div>
-    <div class="report-timeline hidden" id="reportTimeline"></div>
-    <p class="hint export-tip">点「导出 PDF（打印）」后，在打印对话框里选择「另存为 PDF」，即可把这份报告交给医生。</p>
     <p class="share-hint hidden" id="shareHint">地址栏的链接已包含这次选择，可以直接发给家人或医生。</p>
 
     <div id="list"></div>
@@ -2457,25 +2442,14 @@ function renderSafety(age, chronic, results){
   const box = document.getElementById('safetyBox');
   if (!box) return;
   const items = safetyCheck(age, chronic, results);
-  const hasInfo = age !== null || (chronic && chronic.size > 0);
-  const who = (age === null || isNaN(age)) ? '未填写年龄' : ageLabel(age) + '（' + age + ' 岁）';
-  const chronicText = chronic && chronic.size ? chronic.size + ' 项长期用药' : '未填写长期用药';
-
   if (!items.length){
-    /* 即使没冲突，也把年龄/用药这一栏留给医生看 */
-    if (!hasInfo){
-      box.className = '';
-      box.innerHTML = '';
-      return;
-    }
-    box.className = 'safety-box ok';
-    box.innerHTML =
-      '<h4>用药安全提示</h4>' +
-      '<p class="note">已按「' + who + '」和「' + chronicText + '」检查，未发现明显的年龄或药物冲突；具体用药仍请遵医嘱或咨询药师。</p>';
+    box.className = '';
+    box.innerHTML = '';
     return;
   }
-
   const hasRed = items.some(i => i.level === 'red');
+  const who = (age === null || isNaN(age)) ? '未填写年龄' : ageLabel(age) + '（' + age + ' 岁）';
+  const chronicText = chronic && chronic.size ? chronic.size + ' 项长期用药' : '未填写长期用药';
   box.className = 'safety-box' + (hasRed ? '' : ' ok');
   box.innerHTML =
     '<h4>' + (hasRed ? '用药安全提示（需要留意）' : '用药安全提示') + '</h4>' +
@@ -2645,48 +2619,6 @@ function computeTriage(results, flags){
     advice: '目前整体偏轻，可以先按下方建议自我照护。若 3 天内没有好转，或症状加重，请及时就医。',
     reasons: t.reasons,
     flags: []
-  };
-}
-
-/* 建议挂号科室：红级直接急诊；其余取前三个方向的科室去重 */
-function suggestDepts(results, triage){
-  if (triage && triage.level === 'red'){
-    return {
-      primary: ['急诊科'],
-      others: [],
-      note: '存在需要尽快处理的情况，建议直接到急诊分诊台，不要等待普通门诊号源。'
-    };
-  }
-  if (!results || !results.length){
-    return {
-      primary: ['全科医学科'],
-      others: [],
-      note: '暂时没有匹配到明确方向，可以先挂全科医学科，由医生分诊到相应专科。'
-    };
-  }
-
-  const all = [];
-  results.slice(0, 3).forEach(r => {
-    String(r.dept || '').split('/').forEach(part => {
-      const d = part.trim();
-      if (d && all.indexOf(d) === -1) all.push(d);
-    });
-  });
-
-  if (!all.length){
-    return { primary: ['全科医学科'], others: [], note: '可以先挂全科医学科，再由医生分诊。' };
-  }
-  if (all.indexOf('急诊') !== -1){
-    return {
-      primary: ['急诊科'],
-      others: all.filter(d => d !== '急诊').slice(0, 2),
-      note: '这种情况可能需要急诊评估，优先到急诊；症状不重时也可挂对应的专科门诊。'
-    };
-  }
-  return {
-    primary: all.slice(0, 1),
-    others: all.slice(1, 3),
-    note: '优先挂首选科室；约不到号可以先挂全科医学科，再按医生建议转诊。'
   };
 }
 
@@ -3506,6 +3438,79 @@ function bindEvents(){
       }
     });
     nluBtn.addEventListener('click', () => run(true));
+
+    /* 语音输入：浏览器原生 SpeechRecognition，识别结果回填输入框 */
+    const micBtn = document.getElementById('micBtn');
+    const micLabel = document.getElementById('micLabel');
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (micBtn && SR){
+      micBtn.hidden = false;
+      let recog = null;
+      let listening = false;
+
+      const setListening = on => {
+        listening = on;
+        micBtn.classList.toggle('on', on);
+        micBtn.setAttribute('aria-pressed', String(on));
+        if (micLabel) micLabel.textContent = on ? '停止' : '语音';
+      };
+
+      const say = (text, warn) => {
+        const box = document.getElementById('nluResult');
+        if (!box) return;
+        box.classList.remove('hidden');
+        box.classList.toggle('warn', !!warn);
+        box.innerHTML = text;
+      };
+
+      micBtn.addEventListener('click', () => {
+        if (listening && recog){
+          try { recog.stop(); } catch (e) {}
+          return;
+        }
+        try {
+          recog = new SR();
+          recog.lang = 'zh-CN';
+          recog.interimResults = true;
+          recog.continuous = false;
+          recog.maxAlternatives = 1;
+          let finalText = '';
+
+          recog.onstart = () => { setListening(true); say('正在听你说话…说完会自动识别', false); };
+          recog.onresult = e => {
+            let interim = '';
+            for (let i = e.resultIndex; i < e.results.length; i++){
+              const r = e.results[i];
+              if (r.isFinal) finalText += r[0].transcript;
+              else interim += r[0].transcript;
+            }
+            const text = (finalText + interim).trim();
+            if (text) nluInput.value = text;
+          };
+          recog.onerror = e => {
+            setListening(false);
+            const map = {
+              'not-allowed': '麦克风权限被拒绝。请在浏览器地址栏的权限设置里允许麦克风，或直接打字。',
+              'service-not-allowed': '当前环境不允许调用语音服务，请直接打字。',
+              'no-speech': '没有听到声音，请靠近麦克风再说一次。',
+              'audio-capture': '没有找到麦克风设备。',
+              'network': '语音识别需要联网，请检查网络后重试。'
+            };
+            say(map[e.error] || '语音识别失败，请直接打字。', true);
+          };
+          recog.onend = () => {
+            setListening(false);
+            const text = nluInput.value.trim();
+            if (text) run(true);
+            else say('没有听到内容，可以再说一次或直接打字。', true);
+          };
+          recog.start();
+        } catch (err){
+          setListening(false);
+          say('这个浏览器不支持语音输入，请直接打字。', true);
+        }
+      });
+    }
   }
 
   /* 年龄与长期用药 */
@@ -3623,38 +3628,6 @@ function bindEvents(){
   });
 }
 
-/* 结果页：建议挂号科室 */
-function renderDeptBox(results, triage){
-  const box = document.getElementById('deptBox');
-  if (!box) return;
-
-  const d = suggestDepts(results, triage);
-  box.classList.remove('hidden');
-  box.classList.toggle('red', triage.level === 'red');
-  box.innerHTML =
-    '<div class="dept-head">建议挂号科室</div>' +
-    '<div class="dept-main">' + esc(d.primary.join(' / ')) + '</div>' +
-    (d.others.length ? '<div class="dept-alt">备选：' + d.others.map(x => esc(x)).join('、') + '</div>' : '') +
-    '<p class="dept-note">' + esc(d.note) + '</p>';
-}
-
-/* 结果页：近 14 天症状变化摘要（写入打印报告） */
-function renderReportTimeline(){
-  const box = document.getElementById('reportTimeline');
-  if (!box) return;
-
-  const view = analyzeTimeline(loadTimeline(), TIMELINE_DAYS);
-  if (view.empty){
-    box.classList.add('hidden');
-    box.innerHTML = '';
-    return;
-  }
-  box.classList.remove('hidden');
-  box.innerHTML =
-    '<div class="report-tl-head"><b>近 14 天症状变化</b><span>' + esc(view.text) + '</span></div>' +
-    '<div class="report-tl-chart">' + chartSvg(view.pts, view.series) + '</div>';
-}
-
 async function showResults(){
   if (!selected.size) return;
 
@@ -3726,22 +3699,11 @@ async function showResults(){
 
   const meta = document.getElementById('printMeta');
   if (meta){
-    const medNames = [...chronicMeds].map(id => {
-      const m = CHRONIC_MEDS.find(x => x.id === id);
-      return m ? m.label : id;
-    });
-    meta.textContent = [
-      new Date().toLocaleString('zh-CN'),
-      patientAge == null ? '年龄未填' : patientAge + ' 岁',
-      medNames.length ? '长期用药：' + medNames.join('、') : '无长期用药',
-      '已选症状：' + [...selected].map(id => SYMPTOMS[id].label).join('、')
-    ].join(' · ');
+    meta.textContent = new Date().toLocaleString('zh-CN') + ' · 已选症状：' +
+      [...selected].map(id => SYMPTOMS[id].label).join('、');
   }
 
   renderSafety(patientAge, chronicMeds, results);
-
-  renderDeptBox(results, triage);
-  renderReportTimeline();
 
   /* 已选症状 */
   document.getElementById('selrow').innerHTML = [...selected]
@@ -3834,7 +3796,7 @@ if (typeof document !== 'undefined'){
   document.addEventListener('DOMContentLoaded', init);
 }
 if (typeof module !== 'undefined' && module.exports){
-  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, suggestDepts, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline };
+  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline };
 }
 </script>
 <script>

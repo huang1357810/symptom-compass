@@ -1492,25 +1492,14 @@ function renderSafety(age, chronic, results){
   const box = document.getElementById('safetyBox');
   if (!box) return;
   const items = safetyCheck(age, chronic, results);
-  const hasInfo = age !== null || (chronic && chronic.size > 0);
-  const who = (age === null || isNaN(age)) ? '未填写年龄' : ageLabel(age) + '（' + age + ' 岁）';
-  const chronicText = chronic && chronic.size ? chronic.size + ' 项长期用药' : '未填写长期用药';
-
   if (!items.length){
-    /* 即使没冲突，也把年龄/用药这一栏留给医生看 */
-    if (!hasInfo){
-      box.className = '';
-      box.innerHTML = '';
-      return;
-    }
-    box.className = 'safety-box ok';
-    box.innerHTML =
-      '<h4>用药安全提示</h4>' +
-      '<p class="note">已按「' + who + '」和「' + chronicText + '」检查，未发现明显的年龄或药物冲突；具体用药仍请遵医嘱或咨询药师。</p>';
+    box.className = '';
+    box.innerHTML = '';
     return;
   }
-
   const hasRed = items.some(i => i.level === 'red');
+  const who = (age === null || isNaN(age)) ? '未填写年龄' : ageLabel(age) + '（' + age + ' 岁）';
+  const chronicText = chronic && chronic.size ? chronic.size + ' 项长期用药' : '未填写长期用药';
   box.className = 'safety-box' + (hasRed ? '' : ' ok');
   box.innerHTML =
     '<h4>' + (hasRed ? '用药安全提示（需要留意）' : '用药安全提示') + '</h4>' +
@@ -1680,48 +1669,6 @@ function computeTriage(results, flags){
     advice: '目前整体偏轻，可以先按下方建议自我照护。若 3 天内没有好转，或症状加重，请及时就医。',
     reasons: t.reasons,
     flags: []
-  };
-}
-
-/* 建议挂号科室：红级直接急诊；其余取前三个方向的科室去重 */
-function suggestDepts(results, triage){
-  if (triage && triage.level === 'red'){
-    return {
-      primary: ['急诊科'],
-      others: [],
-      note: '存在需要尽快处理的情况，建议直接到急诊分诊台，不要等待普通门诊号源。'
-    };
-  }
-  if (!results || !results.length){
-    return {
-      primary: ['全科医学科'],
-      others: [],
-      note: '暂时没有匹配到明确方向，可以先挂全科医学科，由医生分诊到相应专科。'
-    };
-  }
-
-  const all = [];
-  results.slice(0, 3).forEach(r => {
-    String(r.dept || '').split('/').forEach(part => {
-      const d = part.trim();
-      if (d && all.indexOf(d) === -1) all.push(d);
-    });
-  });
-
-  if (!all.length){
-    return { primary: ['全科医学科'], others: [], note: '可以先挂全科医学科，再由医生分诊。' };
-  }
-  if (all.indexOf('急诊') !== -1){
-    return {
-      primary: ['急诊科'],
-      others: all.filter(d => d !== '急诊').slice(0, 2),
-      note: '这种情况可能需要急诊评估，优先到急诊；症状不重时也可挂对应的专科门诊。'
-    };
-  }
-  return {
-    primary: all.slice(0, 1),
-    others: all.slice(1, 3),
-    note: '优先挂首选科室；约不到号可以先挂全科医学科，再按医生建议转诊。'
   };
 }
 
@@ -2541,6 +2488,79 @@ function bindEvents(){
       }
     });
     nluBtn.addEventListener('click', () => run(true));
+
+    /* 语音输入：浏览器原生 SpeechRecognition，识别结果回填输入框 */
+    const micBtn = document.getElementById('micBtn');
+    const micLabel = document.getElementById('micLabel');
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (micBtn && SR){
+      micBtn.hidden = false;
+      let recog = null;
+      let listening = false;
+
+      const setListening = on => {
+        listening = on;
+        micBtn.classList.toggle('on', on);
+        micBtn.setAttribute('aria-pressed', String(on));
+        if (micLabel) micLabel.textContent = on ? '停止' : '语音';
+      };
+
+      const say = (text, warn) => {
+        const box = document.getElementById('nluResult');
+        if (!box) return;
+        box.classList.remove('hidden');
+        box.classList.toggle('warn', !!warn);
+        box.innerHTML = text;
+      };
+
+      micBtn.addEventListener('click', () => {
+        if (listening && recog){
+          try { recog.stop(); } catch (e) {}
+          return;
+        }
+        try {
+          recog = new SR();
+          recog.lang = 'zh-CN';
+          recog.interimResults = true;
+          recog.continuous = false;
+          recog.maxAlternatives = 1;
+          let finalText = '';
+
+          recog.onstart = () => { setListening(true); say('正在听你说话…说完会自动识别', false); };
+          recog.onresult = e => {
+            let interim = '';
+            for (let i = e.resultIndex; i < e.results.length; i++){
+              const r = e.results[i];
+              if (r.isFinal) finalText += r[0].transcript;
+              else interim += r[0].transcript;
+            }
+            const text = (finalText + interim).trim();
+            if (text) nluInput.value = text;
+          };
+          recog.onerror = e => {
+            setListening(false);
+            const map = {
+              'not-allowed': '麦克风权限被拒绝。请在浏览器地址栏的权限设置里允许麦克风，或直接打字。',
+              'service-not-allowed': '当前环境不允许调用语音服务，请直接打字。',
+              'no-speech': '没有听到声音，请靠近麦克风再说一次。',
+              'audio-capture': '没有找到麦克风设备。',
+              'network': '语音识别需要联网，请检查网络后重试。'
+            };
+            say(map[e.error] || '语音识别失败，请直接打字。', true);
+          };
+          recog.onend = () => {
+            setListening(false);
+            const text = nluInput.value.trim();
+            if (text) run(true);
+            else say('没有听到内容，可以再说一次或直接打字。', true);
+          };
+          recog.start();
+        } catch (err){
+          setListening(false);
+          say('这个浏览器不支持语音输入，请直接打字。', true);
+        }
+      });
+    }
   }
 
   /* 年龄与长期用药 */
@@ -2658,38 +2678,6 @@ function bindEvents(){
   });
 }
 
-/* 结果页：建议挂号科室 */
-function renderDeptBox(results, triage){
-  const box = document.getElementById('deptBox');
-  if (!box) return;
-
-  const d = suggestDepts(results, triage);
-  box.classList.remove('hidden');
-  box.classList.toggle('red', triage.level === 'red');
-  box.innerHTML =
-    '<div class="dept-head">建议挂号科室</div>' +
-    '<div class="dept-main">' + esc(d.primary.join(' / ')) + '</div>' +
-    (d.others.length ? '<div class="dept-alt">备选：' + d.others.map(x => esc(x)).join('、') + '</div>' : '') +
-    '<p class="dept-note">' + esc(d.note) + '</p>';
-}
-
-/* 结果页：近 14 天症状变化摘要（写入打印报告） */
-function renderReportTimeline(){
-  const box = document.getElementById('reportTimeline');
-  if (!box) return;
-
-  const view = analyzeTimeline(loadTimeline(), TIMELINE_DAYS);
-  if (view.empty){
-    box.classList.add('hidden');
-    box.innerHTML = '';
-    return;
-  }
-  box.classList.remove('hidden');
-  box.innerHTML =
-    '<div class="report-tl-head"><b>近 14 天症状变化</b><span>' + esc(view.text) + '</span></div>' +
-    '<div class="report-tl-chart">' + chartSvg(view.pts, view.series) + '</div>';
-}
-
 async function showResults(){
   if (!selected.size) return;
 
@@ -2761,22 +2749,11 @@ async function showResults(){
 
   const meta = document.getElementById('printMeta');
   if (meta){
-    const medNames = [...chronicMeds].map(id => {
-      const m = CHRONIC_MEDS.find(x => x.id === id);
-      return m ? m.label : id;
-    });
-    meta.textContent = [
-      new Date().toLocaleString('zh-CN'),
-      patientAge == null ? '年龄未填' : patientAge + ' 岁',
-      medNames.length ? '长期用药：' + medNames.join('、') : '无长期用药',
-      '已选症状：' + [...selected].map(id => SYMPTOMS[id].label).join('、')
-    ].join(' · ');
+    meta.textContent = new Date().toLocaleString('zh-CN') + ' · 已选症状：' +
+      [...selected].map(id => SYMPTOMS[id].label).join('、');
   }
 
   renderSafety(patientAge, chronicMeds, results);
-
-  renderDeptBox(results, triage);
-  renderReportTimeline();
 
   /* 已选症状 */
   document.getElementById('selrow').innerHTML = [...selected]
@@ -2869,5 +2846,5 @@ if (typeof document !== 'undefined'){
   document.addEventListener('DOMContentLoaded', init);
 }
 if (typeof module !== 'undefined' && module.exports){
-  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, suggestDepts, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline };
+  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline };
 }
