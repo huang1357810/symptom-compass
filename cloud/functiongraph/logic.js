@@ -1768,6 +1768,8 @@ function toggle(id){
 function updateCount(){
   const n = selected.size;
   document.getElementById('count').textContent = '已选 ' + n + ' 项';
+  const ci = document.getElementById('clearInline');
+  if (ci) ci.classList.toggle('hidden', n === 0);
   document.getElementById('go').disabled = n === 0;
   updateBodySelection();
 }
@@ -1778,11 +1780,27 @@ function clearAll(){
   manualIds.clear();
   const nluBox = document.getElementById('nluResult');
   if (nluBox) nluBox.classList.add('hidden');
+  const nluInput = document.getElementById('nluInput');
+  if (nluInput) nluInput.value = '';
+  if (typeof answers === 'object' && answers) Object.keys(answers).forEach(k => delete answers[k]);
   Object.values(chipMap).forEach(c => {
     c.classList.remove('on');
     c.setAttribute('aria-pressed', 'false');
   });
   updateCount();
+}
+
+/* 一键重新开始：清空已选 + 回到第一页 */
+function restartAll(){
+  clearAll();
+  document.getElementById('results').classList.add('hidden');
+  document.getElementById('triage').classList.add('hidden');
+  document.getElementById('intake').classList.remove('hidden');
+  document.getElementById('notice').classList.remove('hidden');
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  if (typeof setPager === 'function') setPager(0, false);
+  if (typeof renderCareBanner === 'function') renderCareBanner();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /* 自然语言识别结果：合并勾选 + 结果提示 */
@@ -2450,6 +2468,11 @@ function bindEvents(){
   });
 
   document.getElementById('toResults').addEventListener('click', showResults);
+
+  const restartBtn = document.getElementById('restart');
+  if (restartBtn) restartBtn.addEventListener('click', restartAll);
+  const clearInline = document.getElementById('clearInline');
+  if (clearInline) clearInline.addEventListener('click', clearAll);
 
   document.getElementById('exportBtn').addEventListener('click', () => {
     window.print();

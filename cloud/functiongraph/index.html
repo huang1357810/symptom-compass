@@ -242,6 +242,8 @@
   /* ---------- 引导与折叠 ---------- */
   .intake-lead{font-size:13px; color:#5d7b78; margin:14px 0 4px; line-height:1.7}
   .intake-lead b{color:#0b6f68; font-weight:600}
+  .link-clear{font-size:12px; color:#0b6f68; background:none; border:none; padding:2px 0 0 2px; cursor:pointer; text-decoration:underline dotted}
+  .link-clear.hidden{display:none}
   .all-symptoms{margin:16px 0 6px; border:1px solid var(--line); border-radius:14px; background:#fbfefd; overflow:hidden}
   .all-symptoms > summary{
     padding:13px 16px; cursor:pointer; font-size:13.5px; font-weight:600; color:#0b6f68;
@@ -607,6 +609,7 @@
       <h2>1. 你有哪些不适？</h2>
       <span class="spacer"></span>
       <span class="pill" id="count">已选 0 项</span>
+        <button type="button" class="link-clear hidden" id="clearInline">清空已选</button>
     </div>
 
         <div class="pager-nav" role="tablist" aria-label="选择输入方式">
@@ -883,6 +886,7 @@
       <span class="spacer"></span>
       <button class="btn ghost" id="exportBtn" style="padding:8px 15px; font-size:13px">导出给医生</button>
       <button class="btn ghost" id="back" style="padding:8px 15px; font-size:13px">修改症状</button>
+        <button class="btn ghost" id="restart" style="padding:8px 15px; font-size:13px">重新选择</button>
     </div>
 
     <div class="print-head">
@@ -2719,6 +2723,8 @@ function toggle(id){
 function updateCount(){
   const n = selected.size;
   document.getElementById('count').textContent = '已选 ' + n + ' 项';
+  const ci = document.getElementById('clearInline');
+  if (ci) ci.classList.toggle('hidden', n === 0);
   document.getElementById('go').disabled = n === 0;
   updateBodySelection();
 }
@@ -2729,11 +2735,27 @@ function clearAll(){
   manualIds.clear();
   const nluBox = document.getElementById('nluResult');
   if (nluBox) nluBox.classList.add('hidden');
+  const nluInput = document.getElementById('nluInput');
+  if (nluInput) nluInput.value = '';
+  if (typeof answers === 'object' && answers) Object.keys(answers).forEach(k => delete answers[k]);
   Object.values(chipMap).forEach(c => {
     c.classList.remove('on');
     c.setAttribute('aria-pressed', 'false');
   });
   updateCount();
+}
+
+/* 一键重新开始：清空已选 + 回到第一页 */
+function restartAll(){
+  clearAll();
+  document.getElementById('results').classList.add('hidden');
+  document.getElementById('triage').classList.add('hidden');
+  document.getElementById('intake').classList.remove('hidden');
+  document.getElementById('notice').classList.remove('hidden');
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  if (typeof setPager === 'function') setPager(0, false);
+  if (typeof renderCareBanner === 'function') renderCareBanner();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /* 自然语言识别结果：合并勾选 + 结果提示 */
@@ -3401,6 +3423,11 @@ function bindEvents(){
   });
 
   document.getElementById('toResults').addEventListener('click', showResults);
+
+  const restartBtn = document.getElementById('restart');
+  if (restartBtn) restartBtn.addEventListener('click', restartAll);
+  const clearInline = document.getElementById('clearInline');
+  if (clearInline) clearInline.addEventListener('click', clearAll);
 
   document.getElementById('exportBtn').addEventListener('click', () => {
     window.print();
