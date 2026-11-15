@@ -171,7 +171,7 @@
   .body-map{display:flex; gap:18px; align-items:flex-start; margin:16px 0 18px}
   .body-stage{flex:0 0 190px; text-align:center}
   .body-tabs{display:inline-flex; gap:2px; background:#f1f8f7; border:1px solid #dbe9e7; border-radius:999px; padding:3px; margin-bottom:8px}
-  .body-tab{font-size:12px; padding:4px 13px; border-radius:999px; color:#5d7b78; background:transparent; border:none; cursor:pointer; transition:.15s}
+  .body-tab{font-size:12px; padding:4px 13px; border-radius:999px; color:#5d7b78; background:transparent; border:none; cursor:pointer; white-space:nowrap; transition:.15s}
   .body-tab.on{background:var(--teal); color:#fff}
   .body-svg{width:100%; height:auto; display:block; filter:drop-shadow(0 10px 18px rgba(12,74,72,.10))}
   .body-layer{transition:opacity .3s ease}
@@ -231,10 +231,11 @@
   .pager-dots{margin-left:auto; display:flex; gap:5px; align-items:center}
   .pager-dots i{width:6px; height:6px; border-radius:50%; background:#d5e5e2; transition:.2s}
   .pager-dots i.on{width:16px; border-radius:3px; background:var(--teal)}
-  .pager{overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; scrollbar-width:none; -ms-overflow-style:none; margin:0 -2px; padding:0 2px; transition:height .25s ease}
+  .pager{overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; scrollbar-width:none; -ms-overflow-style:none; margin:0; padding:0; scroll-padding-left:0; transition:height .25s ease}
   .pager::-webkit-scrollbar{display:none}
   .pager-track{display:flex; align-items:flex-start}
-  .pager-page{flex:0 0 100%; scroll-snap-align:start; min-width:0}
+  .pager-page{flex:0 0 100%; scroll-snap-align:start; scroll-snap-stop:always; min-width:0; overflow:hidden}
+  .pager-page:not(.is-active){pointer-events:none}
   .pager-page > :first-child{margin-top:0}
   .pager-page > :last-child{margin-bottom:0}
 
@@ -3283,6 +3284,7 @@ function syncPagerNav(index){
     btn.setAttribute('aria-selected', String(on));
   });
   document.querySelectorAll('.pager-dots i').forEach((dot, i) => dot.classList.toggle('on', i === index));
+  pagerPages().forEach((p, i) => p.classList.toggle('is-active', i === index));
   syncPagerHeight();
 }
 
@@ -3334,11 +3336,17 @@ function bindPager(){
       const width = pages[0].offsetWidth || pager.clientWidth || 1;
       const i = Math.max(0, Math.min(pages.length - 1, Math.round(pager.scrollLeft / width)));
       pagerIndex = i;
+      /* 对齐到整页：避免停在两页之间露出邻页一条边 */
+      const target = i * width;
+      if (Math.abs(pager.scrollLeft - target) > 1){
+        try { pager.scrollTo({ left: target, behavior: 'smooth' }); } catch (e) { pager.scrollLeft = target; }
+      }
       syncPagerNav(i);
       if (body3dViewer && i === 1) body3dViewer.resize();
     }, 90);
   }, { passive: true });
 
+  syncPagerNav(pagerIndex);   /* 初始化时把第 1 页标记为当前页（否则两页都不可点） */
   syncPagerHeight();
   if (typeof ResizeObserver !== 'undefined'){
     /* 页内内容变化（展开/收起症状、识别结果出现）时重新贴合高度 */

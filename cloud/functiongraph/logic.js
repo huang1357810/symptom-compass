@@ -2333,6 +2333,7 @@ function syncPagerNav(index){
     btn.setAttribute('aria-selected', String(on));
   });
   document.querySelectorAll('.pager-dots i').forEach((dot, i) => dot.classList.toggle('on', i === index));
+  pagerPages().forEach((p, i) => p.classList.toggle('is-active', i === index));
   syncPagerHeight();
 }
 
@@ -2384,11 +2385,17 @@ function bindPager(){
       const width = pages[0].offsetWidth || pager.clientWidth || 1;
       const i = Math.max(0, Math.min(pages.length - 1, Math.round(pager.scrollLeft / width)));
       pagerIndex = i;
+      /* 对齐到整页：避免停在两页之间露出邻页一条边 */
+      const target = i * width;
+      if (Math.abs(pager.scrollLeft - target) > 1){
+        try { pager.scrollTo({ left: target, behavior: 'smooth' }); } catch (e) { pager.scrollLeft = target; }
+      }
       syncPagerNav(i);
       if (body3dViewer && i === 1) body3dViewer.resize();
     }, 90);
   }, { passive: true });
 
+  syncPagerNav(pagerIndex);   /* 初始化时把第 1 页标记为当前页（否则两页都不可点） */
   syncPagerHeight();
   if (typeof ResizeObserver !== 'undefined'){
     /* 页内内容变化（展开/收起症状、识别结果出现）时重新贴合高度 */
