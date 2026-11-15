@@ -1,6 +1,6 @@
 /*
  * 症状时间轴自测：node tools/test-timeline.js
- * 校验严重度估算、按天记录（自动/手动覆盖）与曲线解读文案
+ * 校验严重度估算、按天记录（自动/手动覆盖）、每个症状一条曲线与解读
  */
 const fs = require('fs');
 const path = require('path');
@@ -27,7 +27,7 @@ const sandbox = {
 sandbox.globalThis = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(
-  m[1] + '\n;globalThis.__out = { TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline };',
+  m[1] + '\n;globalThis.__out = { TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline };',
   sandbox,
   { timeout: 5000 }
 );
@@ -40,7 +40,14 @@ function tlWith(list) {
   const days = {};
   list.forEach(x => {
     const t = NOW - x.daysAgo * DAY;
-    days[T.dayKey(t)] = { score: x.score, source: x.source || 'auto', level: '', sym: [] };
+    const symptoms = x.symptoms || {};
+    days[T.dayKey(t)] = {
+      score: x.score,
+      source: x.source || 'auto',
+      level: '',
+      sym: Object.keys(symptoms),
+      symptoms
+    };
   });
   return { days };
 }
@@ -59,44 +66,55 @@ cases.push({
   }
 });
 
-/* 2. 同一天自动记录取较高值 */
+/* 2. 同一天自动记录：整体分与每个症状都取较高值 */
 cases.push({
-  name: '同一天重复查看取较高分',
+  name: '同一天重复查看取较高分（含各症状）',
   run() {
     Object.keys(store).forEach(k => delete store[k]);
     T.recordTimeline(['fever'], 'green', NOW);
     T.recordTimeline(['fever', 'cough', 'fatigue', 'nausea'], 'yellow', NOW);
     const saved = JSON.parse(store[T.TIMELINE_KEY]);
-    return saved.days[T.dayKey(NOW)].score >= 5;
+    const day = saved.days[T.dayKey(NOW)];
+    return day.score >= 5 && day.symptoms.fever >= 5 && day.symptoms.cough >= 5 && day.symptoms.nausea >= 5;
   }
 });
 
-/* 3. 手动记录优先，自动不覆盖 */
+/* 3. 自动记录会写入症状明细 */
+cases.push({
+  name: '自动记录写入每个症状的分值',
+  run() {
+    Object.keys(store).forEach(k => delete store[k]);
+    T.recordTimeline(['fever', 'cough'], 'yellow', NOW);
+    const day = JSON.parse(store[T.TIMELINE_KEY]).days[T.dayKey(NOW)];
+    return day.symptoms && Object.keys(day.symptoms).length === 2;
+  }
+});
+
+/* 4. 手动记录优先，自动不覆盖 */
 cases.push({
   name: '手动打卡不被自动记录覆盖',
   run() {
     Object.keys(store).forEach(k => delete store[k]);
-    T.setManualSeverity(9, NOW);
+    T.setManualSeverity(9, ['fever'], NOW);
     T.recordTimeline(['fever', 'cough'], 'green', NOW);
-    const saved = JSON.parse(store[T.TIMELINE_KEY]);
-    const hit = saved.days[T.dayKey(NOW)];
-    return hit.score === 9 && hit.source === 'manual';
+    const hit = JSON.parse(store[T.TIMELINE_KEY]).days[T.dayKey(NOW)];
+    return hit.score === 9 && hit.source === 'manual' && hit.symptoms.fever === 9;
   }
 });
 
-/* 4. 手动记录可以覆盖自动 */
+/* 5. 手动记录可以覆盖自动 */
 cases.push({
   name: '手动打卡覆盖当天自动分',
   run() {
     Object.keys(store).forEach(k => delete store[k]);
     T.recordTimeline(['fever', 'cough', 'fatigue'], 'yellow', NOW);
-    T.setManualSeverity(3, NOW);
-    const saved = JSON.parse(store[T.TIMELINE_KEY]);
-    return saved.days[T.dayKey(NOW)].score === 3 && saved.days[T.dayKey(NOW)].source === 'manual';
+    T.setManualSeverity(3, ['fever'], NOW);
+    const hit = JSON.parse(store[T.TIMELINE_KEY]).days[T.dayKey(NOW)];
+    return hit.score === 3 && hit.source === 'manual' && hit.symptoms.fever === 3 && hit.symptoms.cough === undefined;
   }
 });
 
-/* 5. 窗口长度与缺失天 */
+/* 6. 窗口长度与缺失天 */
 cases.push({
   name: '取 14 天且缺失天为 null',
   run() {
@@ -106,49 +124,67 @@ cases.push({
   }
 });
 
-/* 6. 「第 3 天加重，第 5 天缓解」 */
+/* 7. 每个症状一条线，按出现天数排序 */
 cases.push({
-  name: '解读出第 3 天加重、第 5 天缓解',
+  name: '每个症状生成一条序列',
   run() {
     const tl = tlWith([
-      { daysAgo: 4, score: 2 },
-      { daysAgo: 3, score: 2 },
-      { daysAgo: 2, score: 7 },
-      { daysAgo: 1, score: 6 },
-      { daysAgo: 0, score: 2 }
+      { daysAgo: 4, score: 6, symptoms: { fever: 6, cough: 3 } },
+      { daysAgo: 3, score: 7, symptoms: { fever: 7, cough: 3 } },
+      { daysAgo: 2, score: 8, symptoms: { fever: 8 } },
+      { daysAgo: 1, score: 5, symptoms: { fever: 5 } }
     ]);
-    const r = T.analyzeTimeline(tl, T.TIMELINE_DAYS, NOW);
-    return r.text.indexOf('第 3 天加重') >= 0 && r.text.indexOf('第 5 天开始缓解') >= 0;
+    const series = T.timelineSeries(tl, T.TIMELINE_DAYS, NOW);
+    const count = s => s.points.filter(v => v !== null).length;
+    return series.length === 2 &&
+      series[0].id === 'fever' && count(series[0]) === 4 &&
+      series[1].id === 'cough' && count(series[1]) === 2;
   }
 });
 
-/* 7. 持续加重提示 */
+/* 8. 序列与日期对齐，没有该症状的日子是 null */
 cases.push({
-  name: '持续加重给出就医提醒',
+  name: '序列按日期对齐、缺失为 null',
   run() {
     const tl = tlWith([
-      { daysAgo: 2, score: 2 },
-      { daysAgo: 1, score: 5 },
-      { daysAgo: 0, score: 7 }
+      { daysAgo: 2, score: 6, symptoms: { fever: 6 } },
+      { daysAgo: 0, score: 4, symptoms: { fever: 4 } }
     ]);
-    return T.analyzeTimeline(tl, T.TIMELINE_DAYS, NOW).text.indexOf('还在加重') >= 0;
+    const s = T.timelineSeries(tl, T.TIMELINE_DAYS, NOW)[0];
+    return s.points[11] === 6 && s.points[12] === null && s.points[13] === 4;
   }
 });
 
-/* 8. 平稳 */
+/* 9. 按症状解读：发热第 2 天最重，第 3 天后缓解 */
 cases.push({
-  name: '平稳波动给出平稳文案',
+  name: '按症状解读加重与缓解',
   run() {
     const tl = tlWith([
-      { daysAgo: 2, score: 3 },
-      { daysAgo: 1, score: 3 },
-      { daysAgo: 0, score: 3 }
+      { daysAgo: 4, score: 6, symptoms: { fever: 6, cough: 3 } },
+      { daysAgo: 3, score: 9, symptoms: { fever: 9, cough: 3 } },
+      { daysAgo: 2, score: 8, symptoms: { fever: 8 } },
+      { daysAgo: 1, score: 4, symptoms: { cough: 4 } },
+      { daysAgo: 0, score: 3, symptoms: { cough: 3 } }
     ]);
-    return T.analyzeTimeline(tl, T.TIMELINE_DAYS, NOW).text.indexOf('平稳') >= 0;
+    const text = T.analyzeTimeline(tl, T.TIMELINE_DAYS, NOW).text;
+    return text.indexOf('发热第 2 天最重') >= 0 && text.indexOf('第 3 天后缓解') >= 0;
   }
 });
 
-/* 9. 空数据 */
+/* 10. 旧数据（没有症状明细）仍能出整体解读 */
+cases.push({
+  name: '旧记录没有症状明细时退回整体解读',
+  run() {
+    const days = {};
+    [[4, 2], [3, 2], [2, 7], [1, 6], [0, 2]].forEach(([ago, score]) => {
+      days[T.dayKey(NOW - ago * DAY)] = { score, source: 'auto', level: '', sym: [] };
+    });
+    const r = T.analyzeTimeline({ days }, T.TIMELINE_DAYS, NOW);
+    return r.series.length === 0 && r.text.indexOf('第 3 天加重') >= 0;
+  }
+});
+
+/* 11. 空数据 */
 cases.push({
   name: '没有记录时给出引导',
   run() {
@@ -157,7 +193,7 @@ cases.push({
   }
 });
 
-/* 10. 窗口外的旧记录不参与解读 */
+/* 12. 窗口外的旧记录不参与曲线 */
 cases.push({
   name: '超过 14 天的记录不参与曲线',
   run() {
@@ -165,8 +201,7 @@ cases.push({
       { daysAgo: 20, score: 9 },
       { daysAgo: 0, score: 3 }
     ]);
-    const pts = T.timelinePoints(tl, T.TIMELINE_DAYS, NOW);
-    const valid = pts.filter(p => p.score !== null);
+    const valid = T.timelinePoints(tl, T.TIMELINE_DAYS, NOW).filter(p => p.score !== null);
     return valid.length === 1 && valid[0].score === 3;
   }
 });

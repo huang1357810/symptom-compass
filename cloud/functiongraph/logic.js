@@ -1145,7 +1145,7 @@ function estimateSeverity(sym, level){
   return Math.max(0, Math.min(10, Math.round(score)));
 }
 
-/* 自动记录当天；当天已有手动记录时不覆盖 */
+/* 自动记录当天；当天已有手动记录时不覆盖。同时记录每个症状的分值 */
 function recordTimeline(sym, level, now){
   const t = now || Date.now();
   const key = dayKey(t);
@@ -1154,31 +1154,47 @@ function recordTimeline(sym, level, now){
   if (prev && prev.source === 'manual') return tl;
 
   const score = estimateSeverity(sym, level);
+  const symptoms = {};
+  (sym || []).forEach(id => {
+    symptoms[id] = Math.min(10, score + (RED_SET.has(id) ? 1 : 0));
+  });
+
+  const merged = Object.assign({}, prev && prev.symptoms ? prev.symptoms : {});
+  Object.keys(symptoms).forEach(id => {
+    merged[id] = Math.max(merged[id] || 0, symptoms[id]);
+  });
+
   tl.days[key] = {
     score: prev ? Math.max(prev.score, score) : score,
     source: 'auto',
     level: level || '',
-    sym: (sym || []).slice()
+    sym: (sym || []).slice(),
+    symptoms: merged
   };
   saveTimeline(tl);
   return tl;
 }
 
-/* 手动打卡：轻 3 / 中 6 / 重 9 / 已好转 0 */
-function setManualSeverity(score, now){
+/* 手动打卡：轻 3 / 中 6 / 重 9 / 已好转 0；同时记到当天所选症状上 */
+function setManualSeverity(score, sym, now){
   const key = dayKey(now || Date.now());
   const tl = loadTimeline();
+  const value = Math.max(0, Math.min(10, score));
+  const symptoms = {};
+  (sym || []).forEach(id => { symptoms[id] = value; });
+
   tl.days[key] = {
-    score: Math.max(0, Math.min(10, score)),
+    score: value,
     source: 'manual',
     level: '',
-    sym: []
+    sym: (sym || []).slice(),
+    symptoms
   };
   saveTimeline(tl);
   return tl;
 }
 
-/* 取最近 N 天（含今天）的点，缺失天为 null */
+/* 取最近 N 天（含今天）的点，缺失天为 null；每天带上各症状分值 */
 function timelinePoints(tl, days, now){
   const base = new Date(now || Date.now());
   base.setHours(0, 0, 0, 0);
@@ -1191,10 +1207,36 @@ function timelinePoints(tl, days, now){
       key,
       label: (d.getMonth() + 1) + '/' + d.getDate(),
       score: hit ? hit.score : null,
-      source: hit ? hit.source : ''
+      source: hit ? hit.source : '',
+      symptoms: hit && hit.symptoms ? hit.symptoms : null
     });
   }
   return out;
+}
+
+/* 每个症状一条序列：按出现天数、最近出现时间排序，最多取 limit 条 */
+function timelineSeries(tl, days, now, limit){
+  const pts = timelinePoints(tl, days, now);
+  const counts = {};
+  const lastSeen = {};
+
+  pts.forEach((p, i) => {
+    if (!p.symptoms) return;
+    Object.keys(p.symptoms).forEach(id => {
+      counts[id] = (counts[id] || 0) + 1;
+      lastSeen[id] = i;
+    });
+  });
+
+  const ids = Object.keys(counts).sort((a, b) =>
+    counts[b] - counts[a] || (lastSeen[b] || 0) - (lastSeen[a] || 0)
+  ).slice(0, limit || 5);
+
+  return ids.map(id => ({
+    id,
+    label: SYMPTOMS[id] ? SYMPTOMS[id].label : id,
+    points: pts.map(p => (p.symptoms && p.symptoms[id] !== undefined ? p.symptoms[id] : null))
+  }));
 }
 
 function severityLabel(score){
@@ -1204,48 +1246,67 @@ function severityLabel(score){
   return '已经好转';
 }
 
-/* 自动解读：第 N 天从窗口内第一次记录算起 */
+/* 自动解读：按症状分别描述，第 N 天从窗口内第一次记录算起 */
 function analyzeTimeline(tl, days, now){
   const pts = timelinePoints(tl, days, now);
+  const series = timelineSeries(tl, days, now);
   const valid = pts.filter(p => p.score !== null);
   if (!valid.length){
-    return { empty: true, text: '最近还没有记录。查看一次结果，或点「记录今天」开始。', pts };
+    return { empty: true, text: '最近还没有记录。查看一次结果，或点「记录今天」开始。', pts, series };
   }
 
   const firstIdx = pts.findIndex(p => p.score !== null);
-  const dayNo = p => pts.indexOf(p) - firstIdx + 1;
-  const last = valid[valid.length - 1];
+  const dayNo = i => i - firstIdx + 1;
+  const lastIdx = pts.length - 1;
 
-  let peak = valid[0];
-  valid.forEach(p => { if (p.score > peak.score) peak = p; });
-
-  let rise = null;
-  for (let i = 1; i < valid.length; i++){
-    if (valid[i].score - valid[i - 1].score >= 2){ rise = valid[i]; break; }
-  }
-  let fall = null;
-  for (let i = valid.indexOf(peak) + 1; i < valid.length; i++){
-    if (peak.score - valid[i].score >= 2){ fall = valid[i]; break; }
-  }
-
-  let text;
-  if (fall && rise && dayNo(rise) < dayNo(fall)){
-    text = '第 ' + dayNo(rise) + ' 天加重，第 ' + dayNo(fall) + ' 天开始缓解。';
-  } else if (fall){
-    text = '第 ' + dayNo(peak) + ' 天最重，第 ' + dayNo(fall) + ' 天开始缓解。';
-  } else if (last.score >= 8){
-    text = '最近一次记录为较重，若持续没有缓解，建议尽快就医。';
-  } else if (rise && last.score >= peak.score - 1){
-    text = '最近还在加重，建议留意休息，必要时就医。';
-  } else {
-    const max = Math.max(...valid.map(p => p.score));
-    const min = Math.min(...valid.map(p => p.score));
-    if (max - min <= 1) text = '这段时间症状比较平稳（' + severityLabel(max) + '）。';
-    else if (last.score === 0) text = '最近一次记录是「已好转」，继续保持观察。';
-    else text = '最近一次记录为' + severityLabel(last.score) + '。';
+  /* 兼容没有症状明细的旧记录：退回整体曲线 */
+  if (!series.length){
+    let peak = valid[0];
+    valid.forEach(p => { if (p.score > peak.score) peak = p; });
+    let rise = null;
+    for (let i = 1; i < valid.length; i++){
+      if (valid[i].score - valid[i - 1].score >= 2){ rise = valid[i]; break; }
+    }
+    let fall = null;
+    for (let i = valid.indexOf(peak) + 1; i < valid.length; i++){
+      if (peak.score - valid[i].score >= 2){ fall = valid[i]; break; }
+    }
+    const d = p => dayNo(pts.indexOf(p));
+    let text;
+    if (fall && rise) text = '第 ' + d(rise) + ' 天加重，第 ' + d(fall) + ' 天开始缓解。';
+    else if (fall) text = '第 ' + d(peak) + ' 天最重，第 ' + d(fall) + ' 天开始缓解。';
+    else if (valid[valid.length - 1].score >= 8) text = '最近一次记录为较重，若持续没有缓解，建议尽快就医。';
+    else text = '最近一次记录为' + severityLabel(valid[valid.length - 1].score) + '。';
+    return { empty: false, text, pts, series };
   }
 
-  return { empty: false, text, pts, peak, last };
+  const parts = [];
+  series.slice(0, 3).forEach(s => {
+    const idx = [];
+    s.points.forEach((v, i) => { if (v !== null) idx.push(i); });
+    if (!idx.length) return;
+
+    const peak = idx.reduce((best, i) => (s.points[i] > s.points[best] ? i : best), idx[0]);
+    const end = idx[idx.length - 1];
+    const after = pts.slice(end + 1).filter(p => p.score !== null);
+
+    if (idx.length === 1 && after.length){
+      parts.push(s.label + '只在第 ' + dayNo(idx[0]) + ' 天出现');
+    } else if (after.length){
+      parts.push(s.label + '第 ' + dayNo(peak) + ' 天最重，第 ' + dayNo(end) + ' 天后缓解');
+    } else if (s.points[end] >= 8){
+      parts.push(s.label + '仍较重，持续到第 ' + dayNo(end) + ' 天');
+    } else {
+      parts.push(s.label + '持续到第 ' + dayNo(end) + ' 天');
+    }
+  });
+
+  let text = parts.length ? parts.join('；') + '。' : '这段时间症状比较平稳。';
+  if (series.some(s => s.points[lastIdx] !== null && s.points[lastIdx] >= 8)){
+    text += ' 目前仍有较重的症状，建议尽快就医。';
+  }
+
+  return { empty: false, text, pts, series };
 }
 
 /* 记录一次查看；十分钟内同一组症状只记一次，避免反复点「查看结果」刷屏 */
@@ -1613,7 +1674,7 @@ function computeTriage(results, flags){
 
 function init(){
   const summ = document.getElementById('allSymptomsSummary');
-  if (summ) summ.textContent = '查看全部 ' + SYMPTOM_IDS.length + ' 个症状（按系统分组）';
+  if (summ) summ.textContent = '全部 ' + SYMPTOM_IDS.length + ' 个症状（按系统分组）';
   document.getElementById('stat-cond').textContent = CONDITIONS.length;
   document.getElementById('stat-sym').textContent = SYMPTOM_IDS.length;
 
@@ -1900,7 +1961,9 @@ function severityColor(score){
   return TL_COLORS.good;
 }
 
-function chartSvg(pts){
+const SERIES_COLORS = ['#0e8f86', '#d98a2b', '#d9503f', '#7b8fd4', '#b58bd0', '#3a9d6a'];
+
+function chartSvg(pts, series){
   const W = 560;
   const H = 176;
   const L = 28;
@@ -1912,39 +1975,46 @@ function chartSvg(pts){
   const x = i => L + (pts.length <= 1 ? pw / 2 : (i / (pts.length - 1)) * pw);
   const y = v => T + (1 - v / 10) * ph;
 
-  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="最近 14 天症状严重度曲线">';
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="最近 14 天各症状变化曲线">';
 
   [0, 5, 10].forEach(v => {
     svg += '<line x1="' + L + '" y1="' + y(v) + '" x2="' + (W - R) + '" y2="' + y(v) + '" stroke="#e6f0ee" stroke-width="1"/>';
     svg += '<text x="' + (L - 7) + '" y="' + (y(v) + 3) + '" text-anchor="end" font-size="8" fill="#9fb8b4">' + v + '</text>';
   });
 
-  /* 缺数据的日期断开，不连线误导 */
-  let run = [];
-  const segments = [];
-  pts.forEach((p, i) => {
-    if (p.score === null){
-      if (run.length) segments.push(run);
-      run = [];
-      return;
-    }
-    run.push(x(i).toFixed(1) + ',' + y(p.score).toFixed(1));
-  });
-  if (run.length) segments.push(run);
+  /* 每条线独立断开：某天没有这个症状就不连线 */
+  const drawSeries = (values, color) => {
+    let run = [];
+    const segments = [];
+    values.forEach((v, i) => {
+      if (v === null){
+        if (run.length) segments.push(run);
+        run = [];
+        return;
+      }
+      run.push(x(i).toFixed(1) + ',' + y(v).toFixed(1));
+    });
+    if (run.length) segments.push(run);
 
-  segments.forEach(seg => {
-    if (seg.length < 2) return;
-    svg += '<polyline points="' + seg.join(' ') + '" fill="none" stroke="#0e8f86" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
-  });
+    segments.forEach(seg => {
+      if (seg.length < 2) return;
+      svg += '<polyline points="' + seg.join(' ') + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    });
 
-  pts.forEach((p, i) => {
-    if (p.score === null) return;
-    const color = severityColor(p.score);
-    svg += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.score).toFixed(1) + '" r="3.4" fill="#fff" stroke="' + color + '" stroke-width="2"/>';
-    if (p.source === 'manual'){
-      svg += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.score).toFixed(1) + '" r="1.2" fill="' + color + '"/>';
-    }
-  });
+    values.forEach((v, i) => {
+      if (v === null) return;
+      svg += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(v).toFixed(1) + '" r="2.4" fill="' + color + '"/>';
+    });
+  };
+
+  if (series && series.length){
+    series.forEach((s, si) => {
+      drawSeries(s.points, SERIES_COLORS[si % SERIES_COLORS.length]);
+    });
+  } else {
+    /* 没有症状明细的旧记录：退回一条整体曲线 */
+    drawSeries(pts.map(p => p.score), '#0e8f86');
+  }
 
   pts.forEach((p, i) => {
     if (i % 3 !== 0 && i !== pts.length - 1) return;
@@ -1959,11 +2029,21 @@ function chartSvg(pts){
 function renderTimeline(){
   const box = document.getElementById('tlChart');
   const read = document.getElementById('tlRead');
+  const legend = document.getElementById('tlLegend');
   if (!box) return;
 
   const tl = loadTimeline();
   const view = analyzeTimeline(tl, TIMELINE_DAYS);
-  box.innerHTML = chartSvg(view.pts);
+
+  if (legend){
+    legend.innerHTML = view.series.length
+      ? view.series.map((s, i) =>
+          '<span class="tl-key"><i style="background:' + SERIES_COLORS[i % SERIES_COLORS.length] + '"></i>' + esc(s.label) + '</span>'
+        ).join('')
+      : '';
+  }
+
+  box.innerHTML = chartSvg(view.pts, view.series);
   if (read) read.textContent = view.text;
 
   const today = tl.days[dayKey(Date.now())];
@@ -2253,6 +2333,21 @@ function syncPagerNav(index){
     btn.setAttribute('aria-selected', String(on));
   });
   document.querySelectorAll('.pager-dots i').forEach((dot, i) => dot.classList.toggle('on', i === index));
+  syncPagerHeight();
+}
+
+/* 滚动容器高度跟随当前页内容，避免较矮那页下面出现大片空白 */
+function syncPagerHeight(){
+  const pager = document.getElementById('pager');
+  const pages = pagerPages();
+  if (!pager || !pages.length) return;
+
+  const i = Math.max(0, Math.min(pages.length - 1, pagerIndex));
+  const page = pages[i];
+  if (!page) return;
+
+  const h = page.scrollHeight || 0;
+  if (h > 0) pager.style.height = h + 'px';
 }
 
 function setPager(index, smooth){
@@ -2293,6 +2388,13 @@ function bindPager(){
       if (body3dViewer && i === 1) body3dViewer.resize();
     }, 90);
   }, { passive: true });
+
+  syncPagerHeight();
+  if (typeof ResizeObserver !== 'undefined'){
+    /* 页内内容变化（展开/收起症状、识别结果出现）时重新贴合高度 */
+    const ro = new ResizeObserver(() => syncPagerHeight());
+    pagerPages().forEach(p => ro.observe(p));
+  }
 }
 
 function bindBodyMap(){
@@ -2473,7 +2575,7 @@ function bindEvents(){
   if (tlManual) tlManual.addEventListener('click', e => {
     const target = e.target && e.target.closest ? e.target.closest('.tl-sev') : null;
     if (!target) return;
-    setManualSeverity(Number(target.dataset.sev));
+    setManualSeverity(Number(target.dataset.sev), [...selected]);
     renderTimeline();
     tlManual.classList.add('hidden');
   });
@@ -2671,5 +2773,5 @@ if (typeof document !== 'undefined'){
   document.addEventListener('DOMContentLoaded', init);
 }
 if (typeof module !== 'undefined' && module.exports){
-  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline };
+  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline };
 }

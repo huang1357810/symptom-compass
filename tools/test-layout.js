@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 分页布局自测：node tools/test-layout.js
  * 确认「关键词」与「人体图 / 3D」分别在两页，年龄与操作区固定在分页之外
  */
@@ -31,11 +31,14 @@ function lacks(block, needle, label) {
 has(page0, 'id="nluInput"', '第 1 页');
 has(page0, 'id="search"', '第 1 页');
 has(page0, 'data-preset="cold"', '第 1 页');
+has(page0, 'id="groups"', '第 1 页');
+has(page0, 'id="allSymptomsBox"', '第 1 页');
+lacks(page0, 'all-symptoms" open', '第 1 页（默认应收起）');
 lacks(page0, 'id="body3dBtn"', '第 1 页');
 
 has(page1, 'id="body3dBtn"', '第 2 页');
 has(page1, 'class="body-map"', '第 2 页');
-has(page1, 'id="groups"', '第 2 页');
+lacks(page1, 'id="groups"', '第 2 页');
 lacks(page1, 'id="nluInput"', '第 2 页');
 
 if (ageIndex !== -1 && p1 !== -1 && ageIndex < p1) errors.push('年龄框应在分页之后（固定不随页滑动）');
@@ -46,10 +49,11 @@ if (html.indexOf('id="pager"') === -1) errors.push('缺少分页容器 id="pager
 if (html.indexOf('scroll-snap-type:x mandatory') === -1) errors.push('缺少横向滑动（scroll-snap）样式');
 if (html.indexOf('class="pager-tab') === -1) errors.push('缺少页签');
 if (html.indexOf('function setPager') === -1) errors.push('缺少分页切换逻辑');
+if (html.indexOf('function syncPagerHeight') === -1) errors.push('缺少分页高度自适应逻辑');
 
 if (errors.length) {
   console.error('分页布局校验失败：\n  ' + errors.join('\n  '));
 } else {
-  console.log('分页结构正确：第 1 页关键词 / 第 2 页人体图与 3D，年龄与操作区固定');
+  console.log('分页结构正确：第 1 页关键词 + 全部症状 / 第 2 页人体图与 3D，高度自适应，年龄与操作区固定');
 }
 process.exit(errors.length ? 1 : 0);
