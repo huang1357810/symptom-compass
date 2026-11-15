@@ -43,7 +43,8 @@ symptom-checker/
 │   ├── build-body-glb.js    生成低模躯干 GLB（node tools/build-body-glb.js）
 │   ├── test-body3d.js       3D 视图自测（node tools/test-body3d.js）
 │   ├── test-layout.js       输入区分页布局自测（node tools/test-layout.js）
-│   └── test-timeline.js     症状时间轴自测（node tools/test-timeline.js）
+│   ├── test-timeline.js     症状时间轴自测（node tools/test-timeline.js）
+│   └── test-report.js       科室推荐与医生版报告自测（node tools/test-report.js）
 ├── site/
 │   ├── vendor/              3D 模块（three.js / GLTFLoader / OrbitControls，已本地化）
 │   └── models/body.glb      程序化低模躯干（器官独立命名，供点击拾取）
@@ -253,6 +254,17 @@ const SYMPTOMS = {
 - 数据存在本机 `localStorage`（`mingbian.timeline.v1`），与档案一起可一键清除
 
 自测：`node tools/test-timeline.js`。
+
+## 导出给医生与挂号科室
+
+结果页顶部的「导出 PDF（打印）」会把当前结论整理成一份医生版报告：
+
+- 点按钮后打开浏览器打印对话框，选择「另存为 PDF」即可保存；全程在本机完成，不上传
+- 打印版自动隐藏输入区、按钮与操作提示，只保留：记录时间、年龄 / 长期用药、已选症状、分诊等级与理由、**建议挂号科室**、**近 14 天症状曲线**（矢量图 + 文字解读）、**年龄与用药冲突提示**（没有冲突时也会给出「已检查、未发现明显冲突」的结论）、可能方向与建议、**免责声明**
+- 科室推荐：红级直接给「急诊科」；其余取前 3 个可能方向的 `dept` 字段拆分去重，给出首选与备选；科室含「急诊」时优先急诊
+- 约不到首选科室时提示先挂全科医学科，再按医生建议转诊
+
+自测：`node tools/test-report.js`。
 
 ## 如何新增一种疾病
 

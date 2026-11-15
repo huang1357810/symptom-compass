@@ -510,11 +510,31 @@
   .triage li{font-size:13px;color:#7a2b20;margin:5px 0;padding-left:14px;position:relative}
   .triage li::before{content:"";position:absolute;left:2px;top:.66em;width:5px;height:5px;border-radius:50%;background:#d9503f}
 
+  /* 建议挂号科室与近 14 天摘要 */
+  .dept-card{
+    margin:14px 0 6px; padding:16px 18px; border-radius:16px;
+    background:linear-gradient(135deg,#effaf8,#e4f4f1);
+    border:1px solid #cfe9e4; border-left:5px solid var(--teal);
+  }
+  .dept-card.red{background:linear-gradient(135deg,#fff4f2,#ffe9e5); border-color:#f6c9c2; border-left-color:#d9503f}
+  .dept-head{font-size:12.5px; color:#5d7b78; letter-spacing:.5px}
+  .dept-main{font-size:22px; font-weight:700; color:#0b5f58; margin:4px 0 2px}
+  .dept-card.red .dept-main{color:#a3271a}
+  .dept-alt{font-size:13px; color:#41615f; margin-top:2px}
+  .dept-note{font-size:12.5px; color:#5d7b78; line-height:1.7; margin-top:8px}
+  .report-timeline{margin:10px 0 6px; padding:12px 14px; border:1px dashed #dbe9e7; border-radius:12px; background:#fbfefd; font-size:13px; line-height:1.7; color:#41615f}
+  .report-timeline b{color:#0b6f68; margin-right:4px}
+  .report-tl-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px}
+  .report-tl-head b{flex:none}
+  .report-tl-head span{color:#41615f}
+  .report-tl-chart{margin-top:6px}
+  .report-tl-chart svg{width:100%; height:auto; display:block}
+
   /* 打印 / 导出给医生：只保留结论与建议 */
   .print-head{display:none}
   @media print{
     body{background:#fff !important}
-    .hero,.notice,#intake,#triage,.actions,.safety,.disclaimer,.share-hint,.hint,.care-banner,
+    .hero,.notice,#intake,#triage,.actions,.safety,.share-hint,.hint,.care-banner,
     #results>.sec-head,.urgent .call,footer{display:none !important}
     .print-head{display:block;margin:0 0 16px;padding-bottom:12px;border-bottom:2px solid #0e8f86}
     .print-head h1{font-size:19px;color:#0b6f68;letter-spacing:1px}
@@ -525,6 +545,16 @@
     .cond summary{grid-template-columns:auto 1fr auto}
     .bar,.chev{display:none}
     a{color:inherit;text-decoration:none}
+    .dept-card{background:#fff !important; border:1px solid #999 !important; padding:12px 14px; break-inside:avoid}
+    .dept-main{font-size:19px}
+    .dept-note,.report-timeline{color:#333 !important}
+    .report-timeline{background:#fff !important; border:1px dashed #999 !important; break-inside:avoid}
+    .report-tl-chart{margin-top:4px}
+    .safety-box{background:#fff !important; border:1px solid #bbb !important; padding:10px 12px; break-inside:avoid}
+    .safety-box h4{color:#333 !important}
+    .safety-box .note{color:#555 !important}
+    .disclaimer{display:block !important; color:#444 !important; border-top:1px solid #999; padding-top:10px; margin-top:14px; font-size:11px; break-inside:avoid}
+    .disclaimer b{color:#222 !important}
   }
 
   .fade{animation:fade .38s ease both}
@@ -862,7 +892,7 @@
       <h2>2. 可能的方向</h2>
       <span class="pill" id="modeBadge">本地分析</span>
       <span class="spacer"></span>
-      <button class="btn ghost" id="exportBtn" style="padding:8px 15px; font-size:13px">导出给医生</button>
+      <button class="btn ghost" id="exportBtn" style="padding:8px 15px; font-size:13px">导出 PDF（打印）</button>
       <button class="btn ghost" id="back" style="padding:8px 15px; font-size:13px">修改症状</button>
     </div>
 
@@ -872,8 +902,11 @@
     </div>
 
     <div id="urgent"></div>
+    <div class="dept-card hidden" id="deptBox"></div>
     <div id="safetyBox"></div>
     <div class="selrow" id="selrow"></div>
+    <div class="report-timeline hidden" id="reportTimeline"></div>
+    <p class="hint export-tip">点「导出 PDF（打印）」后，在打印对话框里选择「另存为 PDF」，即可把这份报告交给医生。</p>
     <p class="share-hint hidden" id="shareHint">地址栏的链接已包含这次选择，可以直接发给家人或医生。</p>
 
     <div id="list"></div>
@@ -2424,14 +2457,25 @@ function renderSafety(age, chronic, results){
   const box = document.getElementById('safetyBox');
   if (!box) return;
   const items = safetyCheck(age, chronic, results);
-  if (!items.length){
-    box.className = '';
-    box.innerHTML = '';
-    return;
-  }
-  const hasRed = items.some(i => i.level === 'red');
+  const hasInfo = age !== null || (chronic && chronic.size > 0);
   const who = (age === null || isNaN(age)) ? '未填写年龄' : ageLabel(age) + '（' + age + ' 岁）';
   const chronicText = chronic && chronic.size ? chronic.size + ' 项长期用药' : '未填写长期用药';
+
+  if (!items.length){
+    /* 即使没冲突，也把年龄/用药这一栏留给医生看 */
+    if (!hasInfo){
+      box.className = '';
+      box.innerHTML = '';
+      return;
+    }
+    box.className = 'safety-box ok';
+    box.innerHTML =
+      '<h4>用药安全提示</h4>' +
+      '<p class="note">已按「' + who + '」和「' + chronicText + '」检查，未发现明显的年龄或药物冲突；具体用药仍请遵医嘱或咨询药师。</p>';
+    return;
+  }
+
+  const hasRed = items.some(i => i.level === 'red');
   box.className = 'safety-box' + (hasRed ? '' : ' ok');
   box.innerHTML =
     '<h4>' + (hasRed ? '用药安全提示（需要留意）' : '用药安全提示') + '</h4>' +
@@ -2601,6 +2645,48 @@ function computeTriage(results, flags){
     advice: '目前整体偏轻，可以先按下方建议自我照护。若 3 天内没有好转，或症状加重，请及时就医。',
     reasons: t.reasons,
     flags: []
+  };
+}
+
+/* 建议挂号科室：红级直接急诊；其余取前三个方向的科室去重 */
+function suggestDepts(results, triage){
+  if (triage && triage.level === 'red'){
+    return {
+      primary: ['急诊科'],
+      others: [],
+      note: '存在需要尽快处理的情况，建议直接到急诊分诊台，不要等待普通门诊号源。'
+    };
+  }
+  if (!results || !results.length){
+    return {
+      primary: ['全科医学科'],
+      others: [],
+      note: '暂时没有匹配到明确方向，可以先挂全科医学科，由医生分诊到相应专科。'
+    };
+  }
+
+  const all = [];
+  results.slice(0, 3).forEach(r => {
+    String(r.dept || '').split('/').forEach(part => {
+      const d = part.trim();
+      if (d && all.indexOf(d) === -1) all.push(d);
+    });
+  });
+
+  if (!all.length){
+    return { primary: ['全科医学科'], others: [], note: '可以先挂全科医学科，再由医生分诊。' };
+  }
+  if (all.indexOf('急诊') !== -1){
+    return {
+      primary: ['急诊科'],
+      others: all.filter(d => d !== '急诊').slice(0, 2),
+      note: '这种情况可能需要急诊评估，优先到急诊；症状不重时也可挂对应的专科门诊。'
+    };
+  }
+  return {
+    primary: all.slice(0, 1),
+    others: all.slice(1, 3),
+    note: '优先挂首选科室；约不到号可以先挂全科医学科，再按医生建议转诊。'
   };
 }
 
@@ -3537,6 +3623,38 @@ function bindEvents(){
   });
 }
 
+/* 结果页：建议挂号科室 */
+function renderDeptBox(results, triage){
+  const box = document.getElementById('deptBox');
+  if (!box) return;
+
+  const d = suggestDepts(results, triage);
+  box.classList.remove('hidden');
+  box.classList.toggle('red', triage.level === 'red');
+  box.innerHTML =
+    '<div class="dept-head">建议挂号科室</div>' +
+    '<div class="dept-main">' + esc(d.primary.join(' / ')) + '</div>' +
+    (d.others.length ? '<div class="dept-alt">备选：' + d.others.map(x => esc(x)).join('、') + '</div>' : '') +
+    '<p class="dept-note">' + esc(d.note) + '</p>';
+}
+
+/* 结果页：近 14 天症状变化摘要（写入打印报告） */
+function renderReportTimeline(){
+  const box = document.getElementById('reportTimeline');
+  if (!box) return;
+
+  const view = analyzeTimeline(loadTimeline(), TIMELINE_DAYS);
+  if (view.empty){
+    box.classList.add('hidden');
+    box.innerHTML = '';
+    return;
+  }
+  box.classList.remove('hidden');
+  box.innerHTML =
+    '<div class="report-tl-head"><b>近 14 天症状变化</b><span>' + esc(view.text) + '</span></div>' +
+    '<div class="report-tl-chart">' + chartSvg(view.pts, view.series) + '</div>';
+}
+
 async function showResults(){
   if (!selected.size) return;
 
@@ -3608,11 +3726,22 @@ async function showResults(){
 
   const meta = document.getElementById('printMeta');
   if (meta){
-    meta.textContent = new Date().toLocaleString('zh-CN') + ' · 已选症状：' +
-      [...selected].map(id => SYMPTOMS[id].label).join('、');
+    const medNames = [...chronicMeds].map(id => {
+      const m = CHRONIC_MEDS.find(x => x.id === id);
+      return m ? m.label : id;
+    });
+    meta.textContent = [
+      new Date().toLocaleString('zh-CN'),
+      patientAge == null ? '年龄未填' : patientAge + ' 岁',
+      medNames.length ? '长期用药：' + medNames.join('、') : '无长期用药',
+      '已选症状：' + [...selected].map(id => SYMPTOMS[id].label).join('、')
+    ].join(' · ');
   }
 
   renderSafety(patientAge, chronicMeds, results);
+
+  renderDeptBox(results, triage);
+  renderReportTimeline();
 
   /* 已选症状 */
   document.getElementById('selrow').innerHTML = [...selected]
@@ -3705,7 +3834,7 @@ if (typeof document !== 'undefined'){
   document.addEventListener('DOMContentLoaded', init);
 }
 if (typeof module !== 'undefined' && module.exports){
-  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline };
+  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, suggestDepts, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline };
 }
 </script>
 <script>
