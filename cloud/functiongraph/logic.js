@@ -1979,6 +1979,131 @@ function severityColor(score){
   return TL_COLORS.good;
 }
 
+/* =========================================================
+   皮肤拍照：只做外观特征描述与护理建议，不做诊断、不识别病名
+   ========================================================= */
+const SKIN_SYMPTOMS = ['rash', 'itch', 'hives', 'blister', 'dry_skin', 'hand_foot_rash'];
+
+const SKIN_CARE = {
+  itch: ['尽量不要抓挠，可以冷敷或外用炉甘石洗剂止痒', '洗澡水温不要太高，少用碱性强的肥皂或沐浴露'],
+  rash: ['保持局部清洁干燥，避免摩擦与热水烫洗', '新出现的皮疹先停用新换的护肤品、洗衣液或药物'],
+  hives: ['留意并避开可能的诱因（食物、药物、冷热刺激）', '反复发作或伴嘴唇肿胀、呼吸不畅要立即就医'],
+  blister: ['不要挑破水疱，保持清洁干燥', '破溃处可用干净纱布覆盖，不要自行涂抹刺激性药膏'],
+  dry_skin: ['洗澡后及时涂保湿霜，减少搓澡和频繁去角质', '室内干燥时可以用加湿器'],
+  hand_foot_rash: ['手部和足部保持清洁干燥，避免共用毛巾', '出现脱皮、水疱时不要撕扯']
+};
+
+function rgbToHsv(r, g, b){
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const d = max - min;
+  let h = 0;
+  if (d !== 0){
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  return { h, s: max === 0 ? 0 : d / max, v: max };
+}
+
+/* 纯函数：统计颜色/纹理特征，不输出任何病名 */
+function analyzeSkinPixels(data, width, height){
+  const lum = k => (0.299 * data[k] + 0.587 * data[k + 1] + 0.114 * data[k + 2]) / 255;
+
+  let total = 0;
+  let red = 0;
+  let vSum = 0;
+  let sSum = 0;
+  let hueX = 0;
+  let hueY = 0;
+  let hueCount = 0;
+  let texSum = 0;
+  let texCount = 0;
+  const step = 2;
+
+  for (let y = 0; y < height; y += step){
+    for (let x = 0; x < width; x += step){
+      const i = (y * width + x) * 4;
+      const hsv = rgbToHsv(data[i] / 255, data[i + 1] / 255, data[i + 2] / 255);
+      total++;
+      vSum += hsv.v;
+      sSum += hsv.s;
+
+      if (hsv.s > 0.2 && hsv.v > 0.2 && (hsv.h < 25 || hsv.h > 335)) red++;
+
+      if (hsv.s > 0.15){
+        const rad = hsv.h * Math.PI / 180;
+        hueX += Math.cos(rad);
+        hueY += Math.sin(rad);
+        hueCount++;
+      }
+
+      if (x + step < width){
+        texSum += Math.abs(lum(i) - lum(i + step * 4));
+        texCount++;
+      }
+    }
+  }
+
+  return {
+    redRatio: total ? red / total : 0,
+    brightness: total ? vSum / total : 0,
+    saturation: total ? sSum / total : 0,
+    hueSpread: hueCount ? Math.min(1, Math.max(0, 1 - Math.sqrt(hueX * hueX + hueY * hueY) / hueCount)) : 0,
+    texture: texCount ? Math.min(1, (texSum / texCount) * 4) : 0
+  };
+}
+
+function describeSkinFeatures(f){
+  const lines = [];
+  if (f.redRatio >= 0.28) lines.push('偏红的区域比较明显');
+  else if (f.redRatio <= 0.06) lines.push('没有看到大片明显发红');
+  else lines.push('有少量偏红的区域');
+
+  if (f.hueSpread >= 0.18) lines.push('颜色不太均匀');
+  if (f.texture >= 0.12) lines.push('表面纹理看起来比较粗糙');
+  if (f.brightness <= 0.28) lines.push('局部颜色偏深');
+  return lines;
+}
+
+/* 纯函数：通用护理与就医提示，不给病名、不给处方与剂量 */
+function skinAdvice(selectedSet, features){
+  const care = [];
+  const see = [];
+  const flags = [];
+  const add = (arr, text) => { if (arr.indexOf(text) === -1) arr.push(text); };
+
+  SKIN_SYMPTOMS.forEach(id => {
+    if (!selectedSet.has(id)) return;
+    (SKIN_CARE[id] || []).forEach(t => add(care, t));
+  });
+
+  if (SKIN_SYMPTOMS.some(id => selectedSet.has(id))){
+    add(care, '不要自行长期使用激素类或抗生素类软膏；需要用药时先咨询药师或皮肤科医生');
+    add(care, '穿宽松透气的衣物，避免反复摩擦和出汗后闷住');
+  }
+
+  if (selectedSet.has('fever') || selectedSet.has('high_fever')){
+    add(flags, '皮疹同时伴发热，建议今天内就医');
+  }
+  if (selectedSet.has('dyspnea')){
+    add(flags, '出现呼吸不畅、口唇或眼睑肿胀，请立即急诊');
+  }
+  if (selectedSet.has('oral_ulcer') || selectedSet.has('eye_red') || selectedSet.has('eye_pain')){
+    add(flags, '皮疹累及口腔或眼睛，需尽快就医');
+  }
+  if (features && features.redRatio >= 0.5){
+    add(see, '照片里发红范围较大，建议尽快到皮肤科面诊');
+  }
+  if (!flags.length){
+    add(see, '如果 1 周内没有好转、范围扩大或反复发作，建议挂皮肤科');
+  }
+
+  return { care, see, flags };
+}
+
 const SERIES_COLORS = ['#0e8f86', '#d98a2b', '#d9503f', '#7b8fd4', '#b58bd0', '#3a9d6a'];
 
 function chartSvg(pts, series){
@@ -2520,6 +2645,27 @@ function bindEvents(){
     nluBtn.addEventListener('click', () => run(true));
   }
 
+  /* 皮肤拍照（可选，图片只在本机分析） */
+  const skinPick = document.getElementById('skinPick');
+  const skinFile = document.getElementById('skinFile');
+  if (skinPick && skinFile){
+    skinPick.addEventListener('click', () => skinFile.click());
+    skinFile.addEventListener('change', () => handleSkinFile(skinFile.files && skinFile.files[0]));
+  }
+  const skinClear = document.getElementById('skinClear');
+  if (skinClear){
+    skinClear.addEventListener('click', () => {
+      skinAnalysis = null;
+      if (skinFile) skinFile.value = '';
+      const preview = document.getElementById('skinPreview');
+      if (preview){ preview.innerHTML = ''; preview.classList.add('hidden'); }
+      const result = document.getElementById('skinResult');
+      if (result){ result.innerHTML = ''; result.classList.add('hidden'); }
+      skinClear.classList.add('hidden');
+      renderSkinSummary();
+    });
+  }
+
   /* 年龄与长期用药 */
   const ageInput = document.getElementById('ageInput');
   const ageHint = document.getElementById('ageHint');
@@ -2635,6 +2781,103 @@ function bindEvents(){
   });
 }
 
+/* ---------------- 皮肤拍照：视图与交互 ---------------- */
+let skinAnalysis = null;
+
+function renderSkinResult(){
+  const box = document.getElementById('skinResult');
+  if (!box || !skinAnalysis) return;
+  const a = skinAnalysis.advice;
+  box.classList.remove('hidden');
+  box.innerHTML =
+    '<span class="sp-badge">外观记录 · 不是诊断</span>' +
+    '<div><b>照片里能看到：</b>' + esc(skinAnalysis.description.join('、')) + '。</div>' +
+    (a.care.length ? '<h5>日常护理</h5><ul>' + a.care.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '') +
+    (a.flags.length ? '<h5 class="warn">需要尽快就医</h5><ul>' + a.flags.map(t => '<li class="warn">' + esc(t) + '</li>').join('') + '</ul>' : '') +
+    (a.see.length ? '<h5>就医建议</h5><ul>' + a.see.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '') +
+    '<p class="sp-note">这只是一次照片外观记录，不能用来判断是什么病，也不替代医生面诊。图片没有上传，也没有保存。</p>';
+}
+
+/* 结果页 / 打印报告里的皮肤摘要（不含照片本身） */
+function renderSkinSummary(){
+  const box = document.getElementById('skinSummary');
+  if (!box) return;
+  if (!skinAnalysis){
+    box.classList.add('hidden');
+    box.innerHTML = '';
+    return;
+  }
+  const a = skinAnalysis.advice;
+  box.classList.remove('hidden');
+  box.innerHTML =
+    '<b>皮肤照片外观记录（非诊断）</b><br>' +
+    esc(skinAnalysis.description.join('、')) + '。' +
+    (a.flags.length ? '<br><span style="color:#a3271a">' + esc(a.flags.join('；')) + '</span>' : '');
+}
+
+function handleSkinFile(file){
+  const box = document.getElementById('skinResult');
+  if (!file) return;
+
+  if (!/^image\//.test(file.type || '')){
+    if (box){
+      box.classList.remove('hidden');
+      box.innerHTML = '<p class="sp-note">请选择图片文件。</p>';
+    }
+    return;
+  }
+
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    try {
+      const max = 480;
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      const data = ctx.getImageData(0, 0, w, h).data;
+
+      const features = analyzeSkinPixels(data, w, h);
+      skinAnalysis = {
+        features,
+        description: describeSkinFeatures(features),
+        advice: skinAdvice(selected, features)
+      };
+
+      const preview = document.getElementById('skinPreview');
+      if (preview){
+        preview.innerHTML = '<img alt="皮肤照片预览" src="' + canvas.toDataURL('image/jpeg', 0.8) + '">';
+        preview.classList.remove('hidden');
+      }
+      const clearBtn = document.getElementById('skinClear');
+      if (clearBtn) clearBtn.classList.remove('hidden');
+
+      renderSkinResult();
+      renderSkinSummary();
+    } catch (e){
+      if (box){
+        box.classList.remove('hidden');
+        box.innerHTML = '<p class="sp-note">这张图片读不出来，换一张试试，或直接描述症状。</p>';
+      }
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  };
+  img.onerror = () => {
+    URL.revokeObjectURL(url);
+    if (box){
+      box.classList.remove('hidden');
+      box.innerHTML = '<p class="sp-note">图片加载失败，请换一张。</p>';
+    }
+  };
+  img.src = url;
+}
+
 async function showResults(){
   if (!selected.size) return;
 
@@ -2715,6 +2958,7 @@ async function showResults(){
   /* 已选症状 */
   document.getElementById('selrow').innerHTML = [...selected]
     .map(id => '<span>' + SYMPTOMS[id].label + '</span>').join('');
+  renderSkinSummary();
 
   /* 结果列表 */
   const list = document.getElementById('list');
@@ -2803,5 +3047,5 @@ if (typeof document !== 'undefined'){
   document.addEventListener('DOMContentLoaded', init);
 }
 if (typeof module !== 'undefined' && module.exports){
-  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline };
+  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, SKIN_SYMPTOMS, analyzeSkinPixels, describeSkinFeatures, skinAdvice, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline };
 }

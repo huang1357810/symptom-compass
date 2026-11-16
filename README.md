@@ -44,7 +44,8 @@ symptom-checker/
 │   ├── test-body3d.js       3D 视图自测（node tools/test-body3d.js）
 │   ├── test-layout.js       输入区分页布局自测（node tools/test-layout.js）
 │   ├── test-timeline.js     症状时间轴自测（node tools/test-timeline.js）
-│   └── test-report.js       科室推荐与医生版报告自测（node tools/test-report.js）
+
+│   └── test-skin.js         皮肤拍照（非诊断）自测（node tools/test-skin.js）
 ├── site/
 │   ├── vendor/              3D 模块（three.js / GLTFLoader / OrbitControls，已本地化）
 │   └── models/body.glb      程序化低模躯干（器官独立命名，供点击拾取）
@@ -181,6 +182,7 @@ const SYMPTOMS = {
 - **方言**：词表专门收了口语与方言说法（跑肚、打摆子、脑壳疼、大姨妈疼等），见 `EXTRA_ALIASES`
 
 
+
 ## 输入区分页（左滑右滑）
 
 症状选择区拆成两页横向滑动，避免一屏堆太多内容：
@@ -193,6 +195,18 @@ const SYMPTOMS = {
 - 用 CSS `scroll-snap` 实现，无额外依赖；桌面端也可拖动或点页签切换
 
 自测：`node tools/test-layout.js`。
+
+## 皮肤拍照（非诊断）
+
+第 2 页人体图下方可以拍照或选图（`<input type="file" accept="image/*" capture="environment">`），做一次本机外观记录：
+
+- 图片只在浏览器内用 canvas 缩放并统计颜色/纹理，**不上传、不保存**；点「移除照片」即清空
+- 只输出外观描述（如「偏红的区域比较明显、颜色不太均匀」），**不识别病名、不给概率、不做诊断**
+- 按已选皮肤症状给通用护理：炉甘石洗剂止痒、保湿、避免抓挠与热水烫洗、不要自行长期用激素或抗生素软膏
+- 不给处方药、不写剂量；皮疹伴发热、呼吸不畅或嘴唇肿胀、累及口腔/眼睛时提示尽快就医或急诊
+- 照片分析摘要会进入结果页与打印报告（不含照片本身）
+
+自测：`node tools/test-skin.js`（含「输出文案不出现病名」的合规检查）。
 
 ## 人体部位图（2.5D 分层）
 
