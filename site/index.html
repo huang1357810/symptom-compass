@@ -294,6 +294,26 @@
   }
   .chronic-chip.on{background:#0e8f86;border-color:#0e8f86;color:#fff}
   .chronic-chip.on::before{content:"✓";margin-right:4px;font-size:10px}
+  .med-input{margin-top:10px}
+  .med-input.hidden{display:none}
+  .med-row{display:flex; gap:8px}
+  .med-row input{
+    flex:1; min-width:0; padding:9px 11px; font-size:13px; color:inherit;
+    border:1px solid #dbe9e7; border-radius:10px; background:#fff; outline:none;
+  }
+  .med-row input:focus{border-color:var(--teal); box-shadow:0 0 0 3px rgba(14,143,134,.1)}
+  .med-row .btn{padding:9px 14px; font-size:13px}
+  .med-tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+  .med-tag{
+    display:inline-flex; align-items:center; gap:5px; font-size:12px;
+    padding:3px 9px; border-radius:999px; background:#e7f5f2; color:#0b6f68; border:1px solid #b7ded8;
+  }
+  .med-tag b{font-weight:600}
+  .med-tag span{color:#5d7b78; font-size:11px}
+  .med-tag button{border:none; background:none; color:#7fa9a4; cursor:pointer; font-size:13px; padding:0 0 0 2px}
+  .med-tag button:hover{color:#c0392b}
+  .med-hint{font-size:11.5px; color:#93aeab; margin-top:6px}
+  .med-hint.warn{color:#8a5a12}
 
   /* ---------- 用药安全提示 ---------- */
   .safety-box{border-radius:14px;padding:14px 16px;margin-bottom:14px;border:1px solid #f0dcae;background:#fffdf6}
@@ -871,6 +891,16 @@
       </div>
       <button type="button" class="chronic-toggle" id="chronicToggle">正在长期吃药？点这里添加（可跳过）</button>
       <div class="chronic-list hidden" id="chronicList"></div>
+      <div class="med-input hidden" id="medBox">
+        <div class="med-row">
+          <input id="medInput" type="text" list="medList" autocomplete="off"
+                 placeholder="也可直接输入药名，如 华法林、氨氯地平">
+          <button type="button" class="btn ghost" id="medAdd">添加</button>
+        </div>
+        <datalist id="medList"></datalist>
+        <div class="med-tags" id="medTags"></div>
+        <p class="med-hint" id="medHint"></p>
+      </div>
     </div>
 
     <div class="actions">
@@ -2352,6 +2382,44 @@ function esc(s){
 /* =========================================================
    年龄分级与用药冲突检查
    ========================================================= */
+/* 常见药名 → 长期用药类别（用户可直接输入药名） */
+const MED_DICT = [
+  ['华法林','anticoag'],['阿司匹林','anticoag'],['氯吡格雷','anticoag'],['替格瑞洛','anticoag'],
+  ['利伐沙班','anticoag'],['达比加群','anticoag'],['阿哌沙班','anticoag'],['依诺肝素','anticoag'],
+  ['低分子肝素','anticoag'],['双嘧达莫','anticoag'],['西洛他唑','anticoag'],
+  ['氨氯地平','bp'],['硝苯地平','bp'],['非洛地平','bp'],['左旋氨氯地平','bp'],
+  ['缬沙坦','bp'],['氯沙坦','bp'],['厄贝沙坦','bp'],['替米沙坦','bp'],['奥美沙坦','bp'],
+  ['卡托普利','bp'],['依那普利','bp'],['培哚普利','bp'],['贝那普利','bp'],['雷米普利','bp'],
+  ['美托洛尔','bp'],['比索洛尔','bp'],['阿替洛尔','bp'],['普萘洛尔','bp'],
+  ['氢氯噻嗪','bp'],['吲达帕胺','bp'],['特拉唑嗪','bp'],['可乐定','bp'],
+  ['呋塞米','diuretic'],['螺内酯','diuretic'],['托拉塞米','diuretic'],['托伐普坦','diuretic'],
+  ['二甲双胍','dm'],['格列美脲','dm'],['格列齐特','dm'],['格列吡嗪','dm'],['格列本脲','dm'],
+  ['阿卡波糖','dm'],['西格列汀','dm'],['沙格列汀','dm'],['利格列汀','dm'],
+  ['达格列净','dm'],['恩格列净','dm'],['卡格列净','dm'],
+  ['胰岛素','dm'],['门冬胰岛素','dm'],['甘精胰岛素','dm'],['利拉鲁肽','dm'],['司美格鲁肽','dm'],
+  ['阿托伐他汀','statin'],['瑞舒伐他汀','statin'],['辛伐他汀','statin'],['普伐他汀','statin'],
+  ['氟伐他汀','statin'],['匹伐他汀','statin'],
+  ['舍曲林','ssri'],['帕罗西汀','ssri'],['氟西汀','ssri'],['西酞普兰','ssri'],['艾司西酞普兰','ssri'],
+  ['文拉法辛','ssri'],['度洛西汀','ssri'],['米氮平','ssri'],['阿米替林','ssri'],
+  ['泼尼松','steroid'],['泼尼松龙','steroid'],['甲泼尼龙','steroid'],['地塞米松','steroid'],['氢化可的松','steroid'],
+  ['奥美拉唑','ppi'],['泮托拉唑','ppi'],['雷贝拉唑','ppi'],['埃索美拉唑','ppi'],['兰索拉唑','ppi'],
+  ['左甲状腺素','thyroid'],['优甲乐','thyroid'],
+  ['卡马西平','antiepileptic'],['丙戊酸钠','antiepileptic'],['左乙拉西坦','antiepileptic'],['苯妥英钠','antiepileptic'],
+  ['别嘌醇','gout'],['非布司他','gout'],['秋水仙碱','gout'],['苯溴马隆','gout']
+];
+
+/* 模糊匹配：支持"华法林钠片""拜阿司匹林"这类写法 */
+function matchMedName(q){
+  const s = String(q || '').trim();
+  if (!s) return null;
+  let best = null;
+  for (const [name, cat] of MED_DICT){
+    if (s === name) return { name, cat, exact: true };
+    if (!best && (s.indexOf(name) >= 0 || name.indexOf(s) >= 0)) best = { name, cat, exact: false };
+  }
+  return best;
+}
+
 const CHRONIC_MEDS = [
   { id: 'anticoag', label: '抗凝/抗血小板' },
   { id: 'bp', label: '降压药' },
@@ -2360,8 +2428,16 @@ const CHRONIC_MEDS = [
   { id: 'ssri', label: '抗抑郁药（SSRI）' },
   { id: 'diuretic', label: '利尿剂' },
   { id: 'steroid', label: '激素（泼尼松等）' },
-  { id: 'ppi', label: '胃药（奥美拉唑等）' }
+  { id: 'ppi', label: '胃药（奥美拉唑等）' },
+  { id: 'thyroid', label: '甲状腺药（左甲状腺素）' },
+  { id: 'antiepileptic', label: '抗癫痫药' },
+  { id: 'gout', label: '降尿酸药' }
 ];
+
+/* 类别中文名 & 用户已识别的药名 */
+const CAT_LABEL = {};
+CHRONIC_MEDS.forEach(m => { CAT_LABEL[m.id] = m.label; });
+const chronicNames = [];
 
 let patientAge = null;              /* 单位：岁；null = 未填写 */
 const chronicMeds = new Set();
@@ -2421,7 +2497,59 @@ const INTERACTION_RULES = [
   { re: /减充血剂|伪麻黄碱/, chronic: 'bp', level: 'yellow',
     text: '含减充血剂的复方感冒药可能升高血压，高血压患者慎用' },
   { re: /糖皮质激素|泼尼松/, chronic: 'dm', level: 'yellow',
-    text: '激素可能升高血糖，糖尿病患者需增加监测' }
+    text: '激素可能升高血糖，糖尿病患者需增加监测' },
+  /* —— 追加：与长期用药的相互作用 —— */
+  { re: /对乙酰氨基酚/, chronic: 'anticoag', level: 'yellow',
+    text: '连续多日使用对乙酰氨基酚可能增强华法林的抗凝作用，需留意出血倾向' },
+  { re: /奥美拉唑|泮托拉唑|雷贝拉唑/, chronic: 'anticoag', level: 'yellow',
+    text: '质子泵抑制剂可能影响抗凝药或氯吡格雷的效果，长期同用请让医生评估' },
+  { re: /铁剂|琥珀酸亚铁|硫酸亚铁/, chronic: 'thyroid', level: 'yellow',
+    text: '铁剂会明显降低左甲状腺素的吸收，两者至少间隔 4 小时' },
+  { re: /奥美拉唑|泮托拉唑/, chronic: 'thyroid', level: 'yellow',
+    text: '抑酸药会降低左甲状腺素吸收，建议间隔服用并定期复查甲功' },
+  { re: /布洛芬|萘普生|双氯芬酸/, chronic: 'gout', level: 'yellow',
+    text: '痛风患者使用这类止痛药可能诱发发作或影响尿酸，尽量短期使用' },
+  { re: /阿司匹林/, chronic: 'gout', level: 'yellow',
+    text: '小剂量阿司匹林可能升高尿酸，痛风患者需与医生确认' },
+  { re: /氢氯噻嗪|呋塞米|吲达帕胺/, chronic: 'gout', level: 'yellow',
+    text: '利尿剂可能升高尿酸，痛风患者需监测' },
+  { re: /泼尼松|甲泼尼龙/, chronic: 'gout', level: 'yellow',
+    text: '激素可能升高尿酸并影响血糖，痛风与糖尿病患者需谨慎' },
+  { re: /右美沙芬/, chronic: 'ssri', level: 'red',
+    text: '右美沙芬与 SSRI 类抗抑郁药同用有 5-羟色胺综合征风险，避免自行合用' },
+  { re: /氯苯那敏|扑尔敏/, chronic: 'antiepileptic', level: 'yellow',
+    text: '第一代抗组胺药与抗癫痫药都可能引起嗜睡、头晕，叠加时避免驾车' },
+  { re: /对乙酰氨基酚/, chronic: 'antiepileptic', level: 'yellow',
+    text: '卡马西平等药物可能影响对乙酰氨基酚代谢，长期同用需医生评估' },
+  { re: /布洛芬|萘普生|双氯芬酸/, chronic: 'antiepileptic', level: 'yellow',
+    text: '部分抗癫痫药与止痛药同用可能影响肝功能，注意监测' },
+  { re: /蒙脱石散/, chronic: 'thyroid', level: 'yellow',
+    text: '蒙脱石散会吸附其他药物，与左甲状腺素至少间隔 2 小时' },
+  { re: /蒙脱石散/, chronic: 'anticoag', level: 'yellow',
+    text: '蒙脱石散可能吸附抗凝药，建议间隔 2 小时以上服用' },
+  { re: /蒙脱石散/, chronic: 'dm', level: 'yellow',
+    text: '蒙脱石散可能影响降糖药吸收，建议间隔 2 小时以上' },
+  { re: /益生菌/, chronic: 'dm', level: 'yellow',
+    text: '益生菌与降糖药一般可同用，但腹泻期间血糖可能波动，注意监测' },
+  { re: /布洛芬|萘普生|双氯芬酸/, chronic: 'statin', level: 'yellow',
+    text: '长期大剂量止痛药与他汀同用需关注肝功能与肌肉症状' },
+  { re: /秋水仙碱/, chronic: 'statin', level: 'red',
+    text: '秋水仙碱与他汀同用增加肌病风险，出现肌肉酸痛要及时就医' },
+  /* —— 追加：推荐药之间的组合 —— */
+  { pair: [/布洛芬|萘普生|双氯芬酸/, /阿司匹林/], level: 'red',
+    text: '同时推荐了阿司匹林与这类止痛药：出血风险叠加，通常不建议同服，请二选一' },
+  { pair: [/对乙酰氨基酚/, /布洛芬|萘普生/], level: 'yellow',
+    text: '对乙酰氨基酚与布洛芬可交替使用，但不要同时服用，注意间隔与每日总量' },
+  { pair: [/氯苯那敏|扑尔敏/, /右美沙芬/], level: 'yellow',
+    text: '抗组胺药与镇咳药都可能引起嗜睡，同服时不要驾车或操作机器' },
+  { pair: [/氯苯那敏|扑尔敏/, /氯雷他定|西替利嗪/], level: 'yellow',
+    text: '两种抗过敏药不需要同时使用，选一种即可' },
+  { pair: [/奥美拉唑|泮托拉唑/, /铁剂|琥珀酸亚铁|硫酸亚铁/], level: 'yellow',
+    text: '抑酸药会降低铁剂吸收，建议间隔 2 小时以上' },
+  { pairAny: [/蒙脱石散/], level: 'yellow',
+    text: '蒙脱石散会吸附同时服用的其他药物，需要与其他药间隔 2 小时以上' },
+  { pairAny: [/益生菌/], level: 'yellow',
+    text: '益生菌与抗生素需间隔 2 小时以上（若同时在用抗生素）' }
 ];
 
 /* 纯函数：返回需要提示的用药安全问题 */
@@ -2443,6 +2571,24 @@ function safetyCheck(age, chronic, results){
   });
 
   INTERACTION_RULES.forEach(rule => {
+    if (rule.pair){
+      const [a, b] = rule.pair;
+      const hitA = meds.some(n => a.test(n));
+      const hitB = meds.some(n => b.test(n));
+      if (hitA && hitB) push(rule.level, rule.text);
+      return;
+    }
+    if (rule.pairAny){
+      const re = rule.pairAny[0];
+      if (meds.some(n => re.test(n)) && meds.length > 1) push(rule.level, rule.text);
+      return;
+    }
+    if (rule.pairDistinct){
+      const re = rule.pairDistinct[0];
+      const hits = meds.filter(n => re.test(n));
+      if (new Set(hits).size >= 2) push(rule.level, rule.text);
+      return;
+    }
     if (!chronic.has(rule.chronic)) return;
     if (meds.some(n => rule.re.test(n))) push(rule.level, rule.text);
   });
@@ -2470,7 +2616,10 @@ function renderSafety(age, chronic, results){
   }
   const hasRed = items.some(i => i.level === 'red');
   const who = (age === null || isNaN(age)) ? '未填写年龄' : ageLabel(age) + '（' + age + ' 岁）';
-  const chronicText = chronic && chronic.size ? chronic.size + ' 项长期用药' : '未填写长期用药';
+  const named = (typeof chronicNames !== 'undefined' && chronicNames.length)
+    ? chronicNames.map(x => x.name).join('、')
+    : '';
+  const chronicText = named || (chronic && chronic.size ? chronic.size + ' 项长期用药' : '未填写长期用药');
   box.className = 'safety-box' + (hasRed ? '' : ' ok');
   box.innerHTML =
     '<h4>' + (hasRed ? '用药安全提示（需要留意）' : '用药安全提示') + '</h4>' +
@@ -3676,6 +3825,8 @@ function bindEvents(){
     ).join('');
     chronicToggle.addEventListener('click', () => {
       chronicList.classList.toggle('hidden');
+      const mb = document.getElementById('medBox');
+      if (mb) mb.classList.toggle('hidden', chronicList.classList.contains('hidden'));
     });
     chronicList.querySelectorAll('.chronic-chip').forEach(chip => {
       chip.addEventListener('click', () => {
@@ -3684,6 +3835,72 @@ function bindEvents(){
         chip.classList.toggle('on', chronicMeds.has(id));
       });
     });
+
+    /* 药名输入 → 归类到长期用药类别 */
+    const medInput = document.getElementById('medInput');
+    const medAdd = document.getElementById('medAdd');
+    const medTags = document.getElementById('medTags');
+    const medHint = document.getElementById('medHint');
+    const medListEl = document.getElementById('medList');
+
+    if (medListEl){
+      medListEl.innerHTML = MED_DICT.map(([name]) => '<option value="' + name + '"></option>').join('');
+    }
+
+    function renderMedTags(){
+      if (!medTags) return;
+      if (!chronicNames.length){ medTags.innerHTML = ''; return; }
+      medTags.innerHTML = chronicNames.map((m, i) =>
+        '<span class="med-tag"><b>' + esc(m.name) + '</b><span>' + esc(CAT_LABEL[m.cat] || '') + '</span>' +
+        '<button type="button" data-i="' + i + '" aria-label="移除">×</button></span>'
+      ).join('');
+      medTags.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const i = Number(btn.getAttribute('data-i'));
+          const gone = chronicNames.splice(i, 1)[0];
+          if (gone && !chronicNames.some(x => x.cat === gone.cat)){
+            chronicMeds.delete(gone.cat);
+            const chip = document.querySelector('.chronic-chip[data-med="' + gone.cat + '"]');
+            if (chip) chip.classList.remove('on');
+          }
+          renderMedTags();
+          if (medHint){ medHint.textContent = '已移除「' + gone.name + '」'; medHint.classList.remove('warn'); }
+        });
+      });
+    }
+
+    function addMedName(){
+      const raw = (medInput && medInput.value || '').trim();
+      if (!raw) return;
+      const hit = matchMedName(raw);
+      if (!hit){
+        if (medHint){
+          medHint.textContent = '未收录「' + raw + '」，可以换用通用名，或直接咨询药师。';
+          medHint.classList.add('warn');
+        }
+        return;
+      }
+      chronicMeds.add(hit.cat);
+      const chip = document.querySelector('.chronic-chip[data-med="' + hit.cat + '"]');
+      if (chip) chip.classList.add('on');
+      if (!chronicNames.some(x => x.name === hit.name)){
+        chronicNames.push({ name: hit.name, cat: hit.cat });
+      }
+      renderMedTags();
+      if (medHint){
+        medHint.textContent = '已识别：' + hit.name + ' → ' + (CAT_LABEL[hit.cat] || hit.cat);
+        medHint.classList.remove('warn');
+      }
+      if (medInput) medInput.value = '';
+    }
+
+    if (medAdd) medAdd.addEventListener('click', addMedName);
+    if (medInput){
+      medInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter'){ e.preventDefault(); addMedName(); }
+      });
+      medInput.addEventListener('change', () => { if (medInput.value.trim()) addMedName(); });
+    }
   }
 
   /* 档案、提醒横幅与通知 */
