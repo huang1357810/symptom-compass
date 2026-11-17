@@ -10,7 +10,8 @@
   },
   "vars": {
     "ADMIN_KEY": "mbkt-admin-2026"
-  }
-  // 反馈存储：在 Cloudflare 控制台创建 KV 命名空间后，把下面的注释换成真实 id 再部署
-  // ,"kv_namespaces": [{ "binding": "FEEDBACK_KV", "id": "粘贴你的 KV 命名空间 ID" }]
+  },
+  "kv_namespaces": [
+    { "binding": "FEEDBACK_KV", "id": "1de22f39cfe24e09979c5bc44ad3c288" }
+  ]
 }
