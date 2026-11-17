@@ -84,62 +84,83 @@ cases.push({
   }
 });
 
-/* 5. 瘙痒给出通用护理（含炉甘石，不给剂量） */
+/* 5. 瘙痒给出可执行步骤（含频次与用量方式，不给药物剂量） */
 cases.push({
-  name: '瘙痒给出通用护理建议',
+  name: '瘙痒给出可执行护理步骤',
   run() {
     const r = skinAdvice(new Set(['itch']), { redRatio: 0.2 });
-    const text = r.care.join('|');
-    return text.indexOf('炉甘石') !== -1 && text.indexOf('不要抓挠') !== -1 && text.indexOf('mg') === -1;
+    const text = r.steps.join('|');
+    return text.indexOf('炉甘石') !== -1 && text.indexOf('每天 2 次') !== -1 &&
+      text.indexOf('10–15 分钟') !== -1 && text.indexOf('mg') === -1;
   }
 });
 
-/* 6. 皮疹 + 发热 → 今天内就医 */
+/* 6. 呼吸不畅 → 急诊 */
 cases.push({
-  name: '皮疹伴发热提示今天内就医',
-  run() {
-    const r = skinAdvice(new Set(['rash', 'high_fever']), { redRatio: 0.3 });
-    return r.flags.join('|').indexOf('今天内就医') !== -1;
-  }
-});
-
-/* 7. 呼吸不畅 → 急诊 */
-cases.push({
-  name: '呼吸不畅提示急诊',
+  name: '呼吸不畅给出急诊级别',
   run() {
     const r = skinAdvice(new Set(['rash', 'dyspnea']), { redRatio: 0.3 });
-    return r.flags.join('|').indexOf('急诊') !== -1;
+    return r.urgency === 'emergency' && r.headline.indexOf('急诊') !== -1 &&
+      r.redFlags.join('|').indexOf('急诊') !== -1;
   }
 });
 
-/* 8. 大面积发红 → 尽快面诊 */
+/* 7. 高热 + 皮疹 → 立即就医 */
+cases.push({
+  name: '高热伴皮疹给出立即就医',
+  run() {
+    const r = skinAdvice(new Set(['rash', 'high_fever']), { redRatio: 0.3 });
+    return r.urgency === 'emergency' && r.redFlags.join('|').indexOf('立即就医') !== -1;
+  }
+});
+
+/* 8. 发热（非高热）→ 24–48 小时就诊 */
+cases.push({
+  name: '发热伴皮疹给出尽快就诊路径',
+  run() {
+    const r = skinAdvice(new Set(['rash', 'fever']), { redRatio: 0.2 });
+    return r.urgency === 'soon' && r.followUp.join('|').indexOf('24–48 小时') !== -1;
+  }
+});
+
+/* 9. 大面积发红 → 尽快面诊 */
 cases.push({
   name: '大面积发红建议尽快面诊',
   run() {
     const r = skinAdvice(new Set(['rash']), { redRatio: 0.6 });
-    return r.see.join('|').indexOf('皮肤科面诊') !== -1;
+    return r.urgency === 'soon' && r.redFlags.join('|').indexOf('皮肤科面诊') !== -1;
   }
 });
 
-/* 9. 未选皮肤症状时不硬给护理 */
+/* 10. 普通情况 → 居家 3 天 + 复查节点 + 就诊准备 */
 cases.push({
-  name: '没有皮肤症状时不输出护理清单',
+  name: '普通情况给出居家与复查计划',
+  run() {
+    const r = skinAdvice(new Set(['itch']), { redRatio: 0.1 });
+    return r.urgency === 'home' && r.followUp.join('|').indexOf('3 天') !== -1 &&
+      r.prepare.length > 0 && r.avoid.length > 0 && r.steps.length > 0;
+  }
+});
+
+/* 11. 未选皮肤症状时不硬给步骤 */
+cases.push({
+  name: '没有皮肤症状时不输出执行步骤',
   run() {
     const r = skinAdvice(new Set(['fever']), { redRatio: 0.1 });
-    return r.care.length === 0 && r.flags.join('|').indexOf('今天内就医') !== -1;
+    return r.steps.length === 0 && r.urgency === 'soon' && r.redFlags.length > 0;
   }
 });
 
-/* 10. 合规：所有输出不出现病名 */
+/* 12. 合规：所有输出不出现病名 */
 cases.push({
   name: '输出文案不包含具体病名',
   run() {
     const banned = ['湿疹', '皮炎', '荨麻疹', '银屑病', '癣', '白癜风', '疥疮', '带状疱疹', '玫瑰糠疹', '痤疮', '肿瘤', '癌'];
+    const r = skinAdvice(new Set(['rash', 'itch', 'hives', 'blister', 'dry_skin', 'hand_foot_rash', 'high_fever', 'dyspnea']), { redRatio: 0.8 });
     const samples = [
       describeSkinFeatures(analyzeSkinPixels(redImg, W, H)).join('|'),
       describeSkinFeatures(analyzeSkinPixels(grayImg, W, H)).join('|'),
-      skinAdvice(new Set(['rash', 'itch', 'hives', 'blister', 'dry_skin', 'hand_foot_rash', 'high_fever', 'dyspnea']), { redRatio: 0.8 })
-        .care.concat(skinAdvice(new Set(['rash']), { redRatio: 0.8 }).see).join('|')
+      [r.headline].concat(r.steps, r.avoid, r.redFlags, r.followUp, r.prepare).join('|')
     ];
     return samples.every(t => banned.every(b => t.indexOf(b) === -1));
   }

@@ -263,6 +263,9 @@
   .sp-result li{margin:3px 0}
   .sp-result .warn{color:#a3271a}
   .sp-badge{display:inline-block; font-size:11.5px; color:#0b6f68; background:#eaf8f5; border:1px dashed #b9ded8; border-radius:999px; padding:2px 8px; margin-bottom:6px}
+  .sp-urgent{margin:8px 0 10px; padding:9px 12px; border-radius:10px; font-size:13px; font-weight:600; background:#f4fbf9; border-left:4px solid var(--teal); color:#0b6f68}
+  .sp-urgent.soon{background:#fff8ec; border-left-color:#d98a2b; color:#8a5a12}
+  .sp-urgent.emergency{background:#fff4f2; border-left-color:#d9503f; color:#a3271a}
   .report-skin{margin:10px 0 6px; padding:12px 14px; border:1px dashed #dbe9e7; border-radius:12px; background:#fbfefd; font-size:13px; line-height:1.7; color:#41615f}
   .report-skin b{color:#0b6f68}
 
@@ -568,6 +571,37 @@
     a{color:inherit;text-decoration:none}
     .report-skin{background:#fff !important; border:1px dashed #999 !important; break-inside:avoid}
   }
+
+  /* ---------- 结果反馈 ---------- */
+  .feedback{margin-top:16px; padding:16px 16px 14px; border:1px solid var(--line); border-radius:14px; background:#fbfefd}
+  .fb-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; margin-bottom:10px}
+  .fb-head b{font-size:14px; color:#0b6f68}
+  .fb-head span{font-size:11.5px; color:#93aeab}
+  .fb-stars{display:flex; gap:6px; margin-bottom:10px}
+  .fb-star{
+    font-size:22px; line-height:1; padding:2px 4px; background:none; border:none;
+    color:#d5e5e2; cursor:pointer; transition:transform .12s, color .12s;
+  }
+  .fb-star:hover{transform:scale(1.12)}
+  .fb-star.on{color:#f0a92b}
+  .fb-tags{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:10px}
+  .fb-tag{
+    font-size:12px; padding:5px 11px; border-radius:999px; cursor:pointer;
+    color:#25514f; background:#fff; border:1px solid #dbe9e7;
+  }
+  .fb-tag.on{background:#0e8f86; border-color:#0e8f86; color:#fff}
+  .feedback textarea{
+    width:100%; box-sizing:border-box; resize:vertical; min-height:56px;
+    padding:9px 11px; font-size:13px; color:inherit; font-family:inherit;
+    border:1px solid #dbe9e7; border-radius:10px; background:#fff; outline:none;
+  }
+  .feedback textarea:focus{border-color:var(--teal); box-shadow:0 0 0 3px rgba(14,143,134,.1)}
+  .fb-actions{display:flex; align-items:center; gap:12px; margin-top:10px; flex-wrap:wrap}
+  .fb-actions .btn{padding:9px 18px; font-size:13px}
+  .fb-status{font-size:12px; color:#5d7b78}
+  .fb-status.ok{color:#0b6f68}
+  .fb-status.warn{color:#8a5a12}
+  .fb-note{font-size:11px; color:#93aeab; margin-top:8px; line-height:1.5}
 
   .fade{animation:fade .38s ease both}
   @keyframes fade{from{opacity:0; transform:translateY(9px)} to{opacity:1; transform:none}}
@@ -962,6 +996,33 @@
       <b>免责声明：</b>本页面内容仅用于健康教育与就医参考，不构成诊断、处方或治疗方案。药物信息为常见通用名及一般性注意事项，
       具体品种、剂量、禁忌须以药品说明书和医生/药师意见为准。如出现危险信号或症状迅速加重，请立即前往医院或拨打 120。
     </p>
+
+    <div class="feedback" id="feedback" hidden>
+      <div class="fb-head">
+        <b>这个结果对你有帮助吗？</b>
+        <span>评分和建议会发给我们，用来改进提示的准确性</span>
+      </div>
+      <div class="fb-stars" id="fbStars" role="group" aria-label="给结果打分（1 到 5 星）">
+        <button type="button" class="fb-star" data-v="1" aria-label="1 星">★</button>
+        <button type="button" class="fb-star" data-v="2" aria-label="2 星">★</button>
+        <button type="button" class="fb-star" data-v="3" aria-label="3 星">★</button>
+        <button type="button" class="fb-star" data-v="4" aria-label="4 星">★</button>
+        <button type="button" class="fb-star" data-v="5" aria-label="5 星">★</button>
+      </div>
+      <div class="fb-tags" id="fbTags">
+        <button type="button" class="fb-tag" data-tag="方向准">方向准</button>
+        <button type="button" class="fb-tag" data-tag="有帮助">有帮助</button>
+        <button type="button" class="fb-tag" data-tag="不够准">不够准</button>
+        <button type="button" class="fb-tag" data-tag="太笼统">太笼统</button>
+        <button type="button" class="fb-tag" data-tag="推荐药不合适">推荐药不合适</button>
+      </div>
+      <textarea id="fbText" rows="2" maxlength="300" placeholder="哪里可以改进？（选填，不超过 300 字）"></textarea>
+      <div class="fb-actions">
+        <button type="button" class="btn primary" id="fbSubmit">提交反馈</button>
+        <span class="fb-status" id="fbStatus"></span>
+      </div>
+      <p class="fb-note">只发送评分、标签和这段文字，<b>不会发送你勾选的症状</b>。</p>
+    </div>
   </section>
 
   <footer>
@@ -3188,40 +3249,72 @@ function describeSkinFeatures(f){
   return lines;
 }
 
-/* 纯函数：通用护理与就医提示，不给病名、不给处方与剂量 */
+/* 纯函数：分层给出可执行的护理方案与就医路径，不给病名、不给处方与剂量 */
 function skinAdvice(selectedSet, features){
-  const care = [];
-  const see = [];
-  const flags = [];
+  const hasSkin = SKIN_SYMPTOMS.some(id => selectedSet.has(id));
+  const steps = [];
+  const avoid = [];
+  const redFlags = [];
+  const followUp = [];
+  const prepare = [];
   const add = (arr, text) => { if (arr.indexOf(text) === -1) arr.push(text); };
 
-  SKIN_SYMPTOMS.forEach(id => {
-    if (!selectedSet.has(id)) return;
-    (SKIN_CARE[id] || []).forEach(t => add(care, t));
-  });
+  /* 紧急度：急诊 / 24–48 小时就诊 / 可先居家 */
+  let urgency = 'home';
+  if (selectedSet.has('dyspnea')) urgency = 'emergency';
+  else if (selectedSet.has('high_fever')) urgency = 'emergency';
+  else if (selectedSet.has('oral_ulcer') || selectedSet.has('eye_red') || selectedSet.has('eye_pain')) urgency = 'emergency';
+  else if (selectedSet.has('fever')) urgency = 'soon';
+  else if (features && features.redRatio >= 0.5) urgency = 'soon';
+  else if (selectedSet.has('blister')) urgency = 'soon';
 
-  if (SKIN_SYMPTOMS.some(id => selectedSet.has(id))){
-    add(care, '不要自行长期使用激素类或抗生素类软膏；需要用药时先咨询药师或皮肤科医生');
-    add(care, '穿宽松透气的衣物，避免反复摩擦和出汗后闷住');
-  }
-
-  if (selectedSet.has('fever') || selectedSet.has('high_fever')){
-    add(flags, '皮疹同时伴发热，建议今天内就医');
-  }
-  if (selectedSet.has('dyspnea')){
-    add(flags, '出现呼吸不畅、口唇或眼睑肿胀，请立即急诊');
-  }
-  if (selectedSet.has('oral_ulcer') || selectedSet.has('eye_red') || selectedSet.has('eye_pain')){
-    add(flags, '皮疹累及口腔或眼睛，需尽快就医');
-  }
-  if (features && features.redRatio >= 0.5){
-    add(see, '照片里发红范围较大，建议尽快到皮肤科面诊');
-  }
-  if (!flags.length){
-    add(see, '如果 1 周内没有好转、范围扩大或反复发作，建议挂皮肤科');
+  /* 今天就能照着做的步骤 */
+  if (hasSkin){
+    add(steps, '用不超过 37℃ 的温水快速冲洗，不用肥皂搓洗，洗后用干净毛巾轻拍吸干');
+    add(steps, '擦干后 3 分钟内薄涂一层无香精保湿霜，每天 2 次（早晚各一次）');
+    add(steps, '痒的时候用冷毛巾敷 10–15 分钟；可以外用炉甘石洗剂止痒，用前摇匀，破皮处不要涂');
+    add(steps, '穿宽松的棉质衣物，出汗后及时更换，避免摩擦和闷热');
   }
 
-  return { care, see, flags };
+  if (selectedSet.has('itch')) add(steps, '把指甲剪短；晚上痒得明显可以戴薄棉手套，避免睡着后抓破');
+  if (selectedSet.has('blister')) add(steps, '水疱不要挑破；已经破的地方用生理盐水轻轻冲洗，覆盖无菌纱布，每天更换一次');
+  if (selectedSet.has('hives')) add(steps, '记录 24 小时内吃过的东西、用过的药和冷热刺激，方便找出诱因');
+  if (selectedSet.has('dry_skin')) add(steps, '减少洗澡次数和时间，不用搓澡巾；洗澡后立刻涂保湿霜');
+  if (selectedSet.has('hand_foot_rash')) add(steps, '毛巾、拖鞋单独使用并定期清洗晾干，手足保持干燥');
+
+  add(avoid, '抓挠、热水烫洗、用力搓洗');
+  add(avoid, '自行使用激素类、抗生素类或抗真菌类软膏');
+  add(avoid, '用酒精、碘伏反复擦拭，或使用偏方、不明成分的药膏');
+  add(avoid, '新换的护肤品、洗衣液、沐浴露先停用，等皮肤恢复后再逐个试');
+
+  if (!hasSkin) add(redFlags, '没有勾选皮肤症状时，当前只是拍照记录；出现瘙痒、疼痛或扩散，请补充症状后再看');
+  if (selectedSet.has('fever')) add(redFlags, '皮疹同时伴发热，建议今天内就医');
+  if (selectedSet.has('high_fever')) add(redFlags, '高热伴皮疹，建议立即就医');
+  if (selectedSet.has('dyspnea')) add(redFlags, '呼吸不畅、口唇或眼睑肿胀，请立即急诊或拨打 120');
+  if (selectedSet.has('oral_ulcer') || selectedSet.has('eye_red') || selectedSet.has('eye_pain')) add(redFlags, '皮疹累及口腔或眼睛，需尽快就医');
+  if (selectedSet.has('blister')) add(redFlags, '水疱变大、破溃后流脓或疼痛加重，需尽快就医');
+  if (features && features.redRatio >= 0.5) add(redFlags, '照片里发红范围较大，建议尽快到皮肤科面诊');
+
+  if (urgency === 'home'){
+    add(followUp, '居家护理 3 天：范围缩小、瘙痒减轻就继续；3 天没有改善就挂皮肤科');
+    add(followUp, '1 周仍未好转、范围扩大、出现新皮疹或渗液，改为尽快就医');
+  } else if (urgency === 'soon'){
+    add(followUp, '建议 24–48 小时内到皮肤科就诊，不要自行加用激素或抗生素软膏');
+  } else {
+    add(followUp, '先按急诊处理，情况稳定后再到皮肤科复诊');
+  }
+
+  add(prepare, '带上这次生成的报告（结果页右上角可导出 PDF）');
+  add(prepare, '记下皮疹出现的时间、变化过程、用过的药和护肤品');
+  add(prepare, '给医生看照片和近 14 天症状变化，能帮助判断');
+
+  const headline = urgency === 'emergency'
+    ? '建议立即就医（急诊）'
+    : urgency === 'soon'
+      ? '建议 24–48 小时内看皮肤科'
+      : '可以先居家护理并观察 3 天';
+
+  return { urgency, headline, steps, avoid, redFlags, followUp, prepare };
 }
 
 const SERIES_COLORS = ['#0e8f86', '#d98a2b', '#d9503f', '#7b8fd4', '#b58bd0', '#3a9d6a'];
@@ -3692,6 +3785,110 @@ function bindBodyMap(){
   if (close) close.addEventListener('click', closeBodyPart);
 }
 
+/* =========================================================
+   结果反馈：评分 + 标签 + 建议，POST 到 /api/feedback
+   ========================================================= */
+const FB_KEY = 'mingbian.feedback.v1';
+let fbRating = 0;
+const fbTags = new Set();
+
+function fbSaveLocal(payload){
+  try {
+    const arr = JSON.parse(localStorage.getItem(FB_KEY) || '[]');
+    arr.push(Object.assign({ t: Date.now() }, payload));
+    localStorage.setItem(FB_KEY, JSON.stringify(arr.slice(-30)));
+  } catch (e) {}
+}
+
+function fbSetStatus(text, cls){
+  const el = document.getElementById('fbStatus');
+  if (!el) return;
+  el.textContent = text || '';
+  el.className = 'fb-status' + (cls ? ' ' + cls : '');
+}
+
+async function fbSubmit(){
+  if (!fbRating){
+    fbSetStatus('请先点一下星星打个分', 'warn');
+    return;
+  }
+  const textEl = document.getElementById('fbText');
+  const payload = {
+    rating: fbRating,
+    tags: Array.from(fbTags),
+    text: (textEl && textEl.value || '').trim(),
+    page: 'result'
+  };
+
+  fbSetStatus('提交中…', '');
+  let ok = false;
+  try {
+    const res = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+    ok = res.ok && data.ok;
+    if (!ok) throw new Error(data.error || ('http ' + res.status));
+  } catch (e) {
+    ok = false;
+  }
+
+  if (ok){
+    fbSaveLocal(payload);
+    fbSetStatus('已收到，谢谢你的反馈', 'ok');
+    const btn = document.getElementById('fbSubmit');
+    if (btn){ btn.disabled = true; btn.textContent = '已提交'; }
+    return;
+  }
+
+  /* 离线或后端未配置：保存到本机，并把内容复制到剪贴板方便转给开发者 */
+  fbSaveLocal(payload);
+  const line = '【明辨康途反馈】评分 ' + payload.rating + ' 星' +
+    (payload.tags.length ? '，标签：' + payload.tags.join('、') : '') +
+    (payload.text ? '，建议：' + payload.text : '');
+  let copied = false;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(line);
+      copied = true;
+    }
+  } catch (e) {}
+  fbSetStatus(copied
+    ? '当前无法提交，内容已复制并保存在本机，可以直接粘贴发给开发者'
+    : '当前无法提交，内容已保存在本机（可在「我的档案」里查看）', 'warn');
+}
+
+function initFeedback(){
+  const stars = document.getElementById('fbStars');
+  const tagsEl = document.getElementById('fbTags');
+  const submit = document.getElementById('fbSubmit');
+  if (!stars || !submit) return;
+
+  stars.querySelectorAll('.fb-star').forEach(btn => {
+    btn.addEventListener('click', () => {
+      fbRating = Number(btn.dataset.v);
+      stars.querySelectorAll('.fb-star').forEach(b => {
+        b.classList.toggle('on', Number(b.dataset.v) <= fbRating);
+      });
+      fbSetStatus(fbRating + ' 星', '');
+    });
+  });
+
+  if (tagsEl){
+    tagsEl.querySelectorAll('.fb-tag').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = btn.dataset.tag;
+        if (fbTags.has(t)) fbTags.delete(t); else fbTags.add(t);
+        btn.classList.toggle('on', fbTags.has(t));
+      });
+    });
+  }
+
+  submit.addEventListener('click', fbSubmit);
+}
+
 function bindEvents(){
   document.getElementById('go').addEventListener('click', showTriage);
   document.getElementById('clear').addEventListener('click', clearAll);
@@ -3722,6 +3919,8 @@ function bindEvents(){
   document.getElementById('exportBtn').addEventListener('click', () => {
     window.print();
   });
+
+  initFeedback();
 
   document.getElementById('skipTriage').addEventListener('click', () => {
     showResults();
@@ -3972,6 +4171,12 @@ function bindEvents(){
 /* ---------------- 皮肤拍照：视图与交互 ---------------- */
 let skinAnalysis = null;
 
+function skinSection(title, items, cls){
+  if (!items || !items.length) return '';
+  return '<h5 class="' + (cls || '') + '">' + title + '</h5>' +
+    '<ul>' + items.map(t => '<li class="' + (cls || '') + '">' + esc(t) + '</li>').join('') + '</ul>';
+}
+
 function renderSkinResult(){
   const box = document.getElementById('skinResult');
   if (!box || !skinAnalysis) return;
@@ -3979,11 +4184,14 @@ function renderSkinResult(){
   box.classList.remove('hidden');
   box.innerHTML =
     '<span class="sp-badge">外观记录 · 不是诊断</span>' +
+    '<div class="sp-urgent ' + a.urgency + '">' + esc(a.headline) + '</div>' +
     '<div><b>照片里能看到：</b>' + esc(skinAnalysis.description.join('、')) + '。</div>' +
-    (a.care.length ? '<h5>日常护理</h5><ul>' + a.care.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '') +
-    (a.flags.length ? '<h5 class="warn">需要尽快就医</h5><ul>' + a.flags.map(t => '<li class="warn">' + esc(t) + '</li>').join('') + '</ul>' : '') +
-    (a.see.length ? '<h5>就医建议</h5><ul>' + a.see.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '') +
-    '<p class="sp-note">这只是一次照片外观记录，不能用来判断是什么病，也不替代医生面诊。图片没有上传，也没有保存。</p>';
+    skinSection('今天可以这样做', a.steps) +
+    skinSection('需要避免', a.avoid) +
+    skinSection('什么情况必须就医', a.redFlags, 'warn') +
+    skinSection('复查节点', a.followUp) +
+    skinSection('就诊准备', a.prepare) +
+    '<p class="sp-note">以上是外观记录与一般护理建议，不是诊断，也不替代医生面诊。图片没有上传，也没有保存。</p>';
 }
 
 /* 结果页 / 打印报告里的皮肤摘要（不含照片本身） */
@@ -3999,8 +4207,9 @@ function renderSkinSummary(){
   box.classList.remove('hidden');
   box.innerHTML =
     '<b>皮肤照片外观记录（非诊断）</b><br>' +
+    '<span class="' + (a.urgency === 'home' ? '' : 'warn') + '">' + esc(a.headline) + '</span><br>' +
     esc(skinAnalysis.description.join('、')) + '。' +
-    (a.flags.length ? '<br><span style="color:#a3271a">' + esc(a.flags.join('；')) + '</span>' : '');
+    (a.redFlags.length ? '<br><span style="color:#a3271a">' + esc(a.redFlags.join('；')) + '</span>' : '');
 }
 
 function handleSkinFile(file){
@@ -4142,6 +4351,9 @@ async function showResults(){
   }
 
   renderSafety(patientAge, chronicMeds, results);
+
+  const fb = document.getElementById('feedback');
+  if (fb) fb.hidden = false;
 
   /* 已选症状 */
   document.getElementById('selrow').innerHTML = [...selected]

@@ -1,9 +1,16 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "mingbian-kangtu",
+  "main": "worker/index.js",
   "compatibility_date": "2025-11-01",
   "assets": {
     "directory": "./site",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application"
+  },
+  "vars": {
+    "ADMIN_KEY": "mbkt-admin-2026"
   }
+  // 反馈存储：在 Cloudflare 控制台创建 KV 命名空间后，把下面的注释换成真实 id 再部署
+  // ,"kv_namespaces": [{ "binding": "FEEDBACK_KV", "id": "粘贴你的 KV 命名空间 ID" }]
 }
