@@ -2876,6 +2876,7 @@ function init(){
   renderGroups();
   bindEvents();
   bindBodyMap();
+  markFileMode();
   bindPager();
   applyBodyLayers();
   updateCount();
@@ -3805,6 +3806,25 @@ function bindPager(){
     /* 页内内容变化（展开/收起症状、识别结果出现）时重新贴合高度 */
     const ro = new ResizeObserver(() => syncPagerHeight());
     pagerPages().forEach(p => ro.observe(p));
+  }
+}
+
+/* file:// 直接双击打开时，浏览器会拦截 ES Module，3D 用不了，这里提前说明 */
+function isFileProtocol(){
+  return location.protocol === 'file:';
+}
+
+function markFileMode(){
+  if (!isFileProtocol()) return;
+  const btn = document.getElementById('body3dBtn');
+  if (btn){
+    btn.textContent = '3D（需本地服务器）';
+    btn.title = '双击打开时浏览器禁止加载 3D 模块，请用 2.5D 或运行一键启动';
+  }
+  const hint = document.getElementById('bodyPanelChips');
+  if (hint && hint.querySelector('.bp-hint')){
+    hint.querySelector('.bp-hint').insertAdjacentHTML('afterend',
+      '<p class="bp-hint" style="color:#8a5a12">当前是双击打开（file://），3D 视图不可用；2.5D 人体图和其余功能都正常。</p>');
   }
 }
 
