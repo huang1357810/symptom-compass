@@ -44,8 +44,8 @@ symptom-checker/
 │   ├── test-body3d.js       3D 视图自测（node tools/test-body3d.js）
 │   ├── test-layout.js       输入区分页布局自测（node tools/test-layout.js）
 │   ├── test-timeline.js     症状时间轴自测（node tools/test-timeline.js）
-
-│   └── test-skin.js         皮肤拍照（非诊断）自测（node tools/test-skin.js）
+│   ├── test-skin.js         皮肤拍照（非诊断）自测（node tools/test-skin.js）
+│   └── test-feedback.js     结果反馈与改进跟踪自测（node tools/test-feedback.js）
 ├── site/
 │   ├── vendor/              3D 模块（three.js / GLTFLoader / OrbitControls，已本地化）
 │   └── models/body.glb      程序化低模躯干（器官独立命名，供点击拾取）
@@ -256,6 +256,16 @@ const SYMPTOMS = {
 - 同一组症状 10 分钟内重复查看只记一次，历史最多保留 200 条，超出后丢弃最早的
 
 规则常量集中在 `PROFILE_RULES`（`days` / `times` / `careDays`），自测：`node tools/test-profile.js`。
+
+## 结果反馈与改进跟踪
+
+结果页底部可以给本次分析打分（1–5 星）、选标签、写改进建议。
+
+- **记录对应病症**：提交时附带本次分析的可能方向（Top 3，含名称与吻合度）和症状名称，用来定位「是哪条判断需要改进」；**不发送年龄、长期用药和照片**
+- **提交**：`POST /api/feedback`（Cloudflare Worker + KV）；未配置后端时自动降级为本地保存，并把内容复制到剪贴板
+- **本地记录**：存在 `mingbian.feedback.v1`；「我的档案」里能看到最近反馈、对应病症与改进状态
+- **改进跟踪**：管理端 `/api/feedback/list?key=ADMIN_KEY` 汇总页新增「对应病症」「改进」两列，可直接把某条标为「已改进」并填写改进说明（`POST /api/feedback/status`）
+- 自测：`node tools/test-feedback.js`
 
 ### 症状时间轴
 

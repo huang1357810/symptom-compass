@@ -1638,6 +1638,9 @@ let manualIds = new Set();
 let nluTimer = null;
 /* 本机档案：搜索历史 + 提醒状态 */
 let profile = null;
+/* 最近一次分析结果，供反馈记录对应病症 */
+let lastResults = null;
+let lastTriage = null;
 let notifiedThisSession = {};
 
 /* 云端分诊 API（部署在华为云 FunctionGraph 时自动启用，否则本地计算） */
@@ -2349,6 +2352,38 @@ function renderTimeline(){
   }
 }
 
+/* 档案面板：我的反馈（本地记录 + 对应方向 + 改进状态） */
+function renderFeedbackHistory(){
+  const box = document.getElementById('fbHistory');
+  if (!box) return;
+
+  let arr = [];
+  try { arr = JSON.parse(localStorage.getItem(FB_KEY) || '[]'); } catch (e) {}
+
+  if (!arr.length){
+    box.innerHTML = '<h5>我的反馈</h5><p class="fb-empty">还没有提交过反馈。在结果页最下方可以打分并提改进建议。</p>';
+    return;
+  }
+
+  const rows = arr.slice(-6).reverse().map(fb => {
+    const ctx = fb.context || {};
+    const top = ctx.top && ctx.top.name ? ctx.top.name : '未记录方向';
+    const d = new Date(fb.t || Date.now());
+    const date = (d.getMonth() + 1) + '/' + d.getDate() + ' ' +
+      String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const improved = fb.status === 'improved';
+    return '<li>' +
+      '<span class="fb-date">' + date + '</span>' +
+      '<span class="fb-rate">' + '★'.repeat(fb.rating || 0) + '</span>' +
+      '<span class="fb-top">' + esc(top) + '</span>' +
+      '<span class="fb-state' + (improved ? ' done' : '') + '">' + (improved ? '已改进' : '待改进') + '</span>' +
+      '</li>';
+  }).join('');
+
+  box.innerHTML = '<h5>我的反馈</h5><ul class="fb-list">' + rows + '</ul>' +
+    '<p class="fb-tip">对应方向用于说明是哪条判断需要改进；改进状态由开发者更新，本机记录不会自动同步。</p>';
+}
+
 function renderProfilePanel(){
   const stats = document.getElementById('profileStats');
   const list = document.getElementById('profileList');
@@ -2390,6 +2425,8 @@ function renderProfilePanel(){
       btn.textContent = '开启浏览器通知';
     }
   }
+
+  renderFeedbackHistory();
 }
 
 function enableNotify(){
@@ -2730,6 +2767,21 @@ const FB_KEY = 'mingbian.feedback.v1';
 let fbRating = 0;
 const fbTags = new Set();
 
+/* 反馈上下文：记录这次分析对应的方向与症状，便于定位是哪条评估出了问题 */
+function fbContext(){
+  const list = (lastResults || []).slice(0, 3).map(r => ({
+    id: r.id,
+    name: r.name,
+    score: Math.round(r.score * 100)
+  }));
+  return {
+    top: list[0] || null,
+    results: list,
+    symptoms: [...selected].map(id => ({ id, label: SYMPTOMS[id] ? SYMPTOMS[id].label : id })),
+    triage: lastTriage ? lastTriage.level : ''
+  };
+}
+
 function fbSaveLocal(payload){
   try {
     const arr = JSON.parse(localStorage.getItem(FB_KEY) || '[]');
@@ -2755,11 +2807,13 @@ async function fbSubmit(){
     rating: fbRating,
     tags: Array.from(fbTags),
     text: (textEl && textEl.value || '').trim(),
-    page: 'result'
+    page: 'result',
+    context: fbContext()
   };
 
   fbSetStatus('提交中…', '');
   let ok = false;
+  let serverId = '';
   try {
     const res = await fetch('/api/feedback', {
       method: 'POST',
@@ -2768,13 +2822,14 @@ async function fbSubmit(){
     });
     const data = await res.json().catch(() => ({}));
     ok = res.ok && data.ok;
+    serverId = data.id || '';
     if (!ok) throw new Error(data.error || ('http ' + res.status));
   } catch (e) {
     ok = false;
   }
 
   if (ok){
-    fbSaveLocal(payload);
+    fbSaveLocal(Object.assign({}, payload, { status: 'open', serverId }));
     fbSetStatus('已收到，谢谢你的反馈', 'ok');
     const btn = document.getElementById('fbSubmit');
     if (btn){ btn.disabled = true; btn.textContent = '已提交'; }
@@ -3254,6 +3309,8 @@ async function showResults(){
 
   /* 三色分诊 */
   const triage = computeTriage(results, flags);
+  lastResults = results;
+  lastTriage = triage;
 
   /* 记到本机档案，用于就医提醒与康复关心（不会上传）；回到首页时再展示横幅 */
   const topResult = results[0];
