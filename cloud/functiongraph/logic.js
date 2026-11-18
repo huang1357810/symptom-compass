@@ -2697,6 +2697,29 @@ function fbSetStatus(text, cls){
   el.className = 'fb-status' + (cls ? ' ' + cls : '');
 }
 
+/* 每次进入新的结果页都重置反馈表单，避免上一次提交把按钮锁死 */
+function fbReset(){
+  fbRating = 0;
+  fbTags.clear();
+
+  const stars = document.getElementById('fbStars');
+  if (stars) stars.querySelectorAll('.fb-star').forEach(b => b.classList.remove('on'));
+
+  const tagBox = document.getElementById('fbTags');
+  if (tagBox) tagBox.querySelectorAll('.fb-tag').forEach(b => b.classList.remove('on'));
+
+  const text = document.getElementById('fbText');
+  if (text) text.value = '';
+
+  const btn = document.getElementById('fbSubmit');
+  if (btn){
+    btn.disabled = false;
+    btn.textContent = '提交反馈';
+  }
+
+  fbSetStatus('', '');
+}
+
 async function fbSubmit(){
   if (!fbRating){
     fbSetStatus('请先点一下星星打个分', 'warn');
@@ -3248,7 +3271,10 @@ async function showResults(){
   renderSafety(patientAge, chronicMeds, results);
 
   const fb = document.getElementById('feedback');
-  if (fb) fb.hidden = false;
+  if (fb){
+    fbReset();
+    fb.hidden = false;
+  }
 
   /* 已选症状 */
   document.getElementById('selrow').innerHTML = [...selected]

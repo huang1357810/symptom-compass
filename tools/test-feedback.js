@@ -135,6 +135,32 @@ cases.push({
   }
 });
 
+/* 11. 每次进入结果页重置反馈表单，避免按钮被上一次提交锁死 */
+cases.push({
+  name: '新结果页重置反馈表单',
+  run() {
+    return html.indexOf('function fbReset()') !== -1 &&
+      html.indexOf('fbReset();') !== -1 &&
+      html.indexOf('btn.disabled = false') !== -1 &&
+      html.indexOf("btn.textContent = '提交反馈'") !== -1;
+  }
+});
+
+/* 12. 重置会清空评分、标签、文本与状态 */
+cases.push({
+  name: '重置清空评分标签与状态',
+  run() {
+    const start = html.indexOf('function fbReset()');
+    const end = html.indexOf('async function fbSubmit');
+    const fn = start !== -1 && end !== -1 ? html.slice(start, end) : '';
+    return fn.indexOf('fbRating = 0') !== -1 &&
+      fn.indexOf('fbTags.clear()') !== -1 &&
+      fn.indexOf("classList.remove('on')") !== -1 &&
+      fn.indexOf('text.value =') !== -1 &&
+      fn.indexOf("fbSetStatus('', '')") !== -1;
+  }
+});
+
 let passed = 0;
 const failures = [];
 cases.forEach(c => {
