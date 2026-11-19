@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 全量自测
+        run: |
+          set -e
+          for f in tools/test-*.js; do
+            echo "== $f"
+            node "$f"
+          done
+
+      - name: 生成物一致性
+        run: |
+          node tools/gen-cloud-logic.js
+          node tools/gen-harmony-data.js
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::生成物与源不一致，请本地运行 tools/gen-*.js 并提交"
+            git status --porcelain
+            git diff --stat
+            exit 1
+          fi
