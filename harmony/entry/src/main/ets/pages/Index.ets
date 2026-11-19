@@ -7,6 +7,8 @@
 import { common, Want } from '@kit.AbilityKit';
 import { GROUPS, SYMPTOMS, PRESETS, MedInfo, RedFlagDef } from '../common/Data';
 import { ConditionResult, flagsFor, scoreConditions, triageOf, labelsOf, QUESTIONS, Question, QuestionOption } from '../common/Triage';
+import { AdviseInfo, checkInToday, loadProfile, recordVisit, refreshCard } from '../common/Profile';
+import { publishAdvise, scheduleRecheck } from '../common/Notify';
 
 const TEAL: string = '#0E8F86';
 const TEAL_DARK: string = '#0B6F68';
@@ -29,6 +31,7 @@ struct Index {
   @State triageAdvice: string = '';
   @State triageReasons: string[] = [];
   @State openIndex: number = 0;
+  @State checkInTip: string = '';
 
   /* 三个追问的答案下标，-1 表示未答 */
   @State q1: number = -1;
@@ -148,6 +151,55 @@ struct Index {
     this.triageReasons = t.reasons;
     this.openIndex = this.results.length > 0 ? 0 : -1;
     this.phase = 'result';
+    this.reportVisit();
+  }
+
+  aboutToAppear(): void {
+    this.restoreLaunch();
+  }
+
+  /** 从服务卡片 / 通知进入时，用本机记录恢复最近一次结果 */
+  private async restoreLaunch(): Promise<void> {
+    const ctx = getContext(this) as common.UIAbilityContext;
+    const from: string = AppStorage.get<string>('launchFrom') || '';
+    if (from.length > 0) {
+      AppStorage.setOrCreate('launchFrom', '');
+      const data = await loadProfile(ctx);
+      if (data.lastSelected.length > 0) {
+        this.selected = data.lastSelected.slice();
+        this.q1 = -1;
+        this.q2 = -1;
+        this.q3 = -1;
+        this.runAnalysis();
+        return;
+      }
+    }
+    refreshCard(ctx);
+  }
+
+  /** 每次分析完成后写入本机档案，并在触发阈值时发通知 / 预约复查提醒 */
+  private reportVisit(): void {
+    const ctx = getContext(this) as common.UIAbilityContext;
+    const top: ConditionResult | null = this.results.length > 0 ? this.results[0] : null;
+    const dir: string = top ? top.id : '';
+    const name: string = top ? top.name : '';
+    recordVisit(ctx, this.selected, dir, name, this.triageLevel, this.triageTitle, this.triageAdvice)
+      .then((advise: AdviseInfo | null) => {
+        if (advise !== null) {
+          publishAdvise(ctx, advise.name, advise.count);
+          scheduleRecheck(ctx, advise.name);
+        }
+        refreshCard(ctx);
+      });
+  }
+
+  /** 结果页打卡：供服务卡片显示「今日症状打卡」 */
+  private doCheckIn(): void {
+    const ctx = getContext(this) as common.UIAbilityContext;
+    checkInToday(ctx).then(() => {
+      this.checkInTip = '已记录今天的打卡';
+      refreshCard(ctx);
+    });
   }
 
   private back(): void {
@@ -589,6 +641,19 @@ struct Index {
         .backgroundColor('#F7FBFA')
         .borderRadius(12)
         .margin({ top: 6 })
+
+        Button(this.checkInTip.length > 0 ? this.checkInTip : '记录今天仍有症状（打卡）')
+          .fontSize(13)
+          .fontColor(TEAL_DARK)
+          .backgroundColor('#FFFFFF')
+          .border({ width: 1, color: LINE })
+          .borderRadius(10)
+          .height(42)
+          .width('100%')
+          .margin({ top: 10 })
+          .onClick(() => {
+            this.doCheckIn();
+          })
 
         Text('免责声明：本页面仅用于健康教育与就医参考，不构成诊断或处方。具体用药须以药品说明书和医生意见为准。如症状迅速加重，请立即就医或拨打 120。')
           .fontSize(10)

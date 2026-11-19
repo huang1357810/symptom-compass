@@ -6,6 +6,10 @@ const TAG: string = 'SymptomChecker';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    const from = want.parameters?.['from'];
+    if (typeof from === 'string') {
+      AppStorage.setOrCreate('launchFrom', from);
+    }
     hilog.info(0x0000, TAG, 'Ability onCreate');
   }
 

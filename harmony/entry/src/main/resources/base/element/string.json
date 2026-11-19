@@ -1,7 +1,9 @@
-﻿{
+{
   "string": [
     { "name": "module_desc", "value": "明辨康途主模块" },
     { "name": "EntryAbility_desc", "value": "明辨康途" },
-    { "name": "EntryAbility_label", "value": "明辨康途" }
+    { "name": "EntryAbility_label", "value": "明辨康途" },
+    { "name": "form_name", "value": "明辨康途 · 今日状态" },
+    { "name": "form_desc", "value": "显示最近方向、今日打卡与复查提醒" }
   ]
 }
