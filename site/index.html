@@ -4496,6 +4496,9 @@ if (typeof module !== 'undefined' && module.exports){
     btn.addEventListener('click', async () => {
       if (!deferred){
         bar.classList.add('ios');
+        const tip = document.getElementById('pwaIosTip');
+        const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent || '');
+        if (tip && !isIos) tip.textContent = '点浏览器菜单（或地址栏右侧）→「安装应用 / 添加到主屏幕」。';
         return;
       }
       const p = deferred;
