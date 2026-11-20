@@ -1,6 +1,5 @@
 ﻿# 依赖与构建产物
 node_modules/
-dist-cloudbase.zip
 oh_modules/
 .hvigor/
 build/
@@ -16,4 +15,3 @@ Thumbs.db
 # 本地临时文件
 *.local
 .env
-site/config.js
