@@ -1,0 +1,15 @@
+{
+  "envId": "${ENV_ID}",
+  "functionRoot": "./functions",
+  "functions": [
+    {
+      "name": "feedback",
+      "timeout": 10,
+      "runtime": "Nodejs16.13",
+      "installDependency": true,
+      "envVariables": {
+        "ADMIN_KEY": "${ADMIN_KEY}"
+      }
+    }
+  ]
+}

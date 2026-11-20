@@ -1,0 +1,10 @@
+{
+  "name": "feedback",
+  "version": "1.0.0",
+  "description": "明辨康途 · 腾讯云 CloudBase 反馈接口",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.9.0"
+  }
+}

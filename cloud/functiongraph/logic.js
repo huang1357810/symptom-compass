@@ -5,6 +5,9 @@
  */
 
 
+/* 反馈接口地址：由 site/config.js 注入；未配置时走同源 /api/feedback */
+const FEEDBACK_API = (typeof window !== 'undefined' && window.__FEEDBACK_API__) || '/api/feedback';
+
 /* =========================================================
    数据层
    ========================================================= */
@@ -2738,7 +2741,7 @@ async function fbSubmit(){
   let ok = false;
   let serverId = '';
   try {
-    const res = await fetch('/api/feedback', {
+    const res = await fetch(FEEDBACK_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

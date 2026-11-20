@@ -1,10 +1,10 @@
-/* 明辨康途 · Service Worker
+﻿/* 明辨康途 · Service Worker
  * 策略：
  *   - 页面导航：网络优先（保证更新能生效），离线时回退缓存
  *   - 静态资源：缓存优先（图标、manifest 这类不常变的）
  *   - /api/ 请求：永不缓存
  */
-const CACHE = 'mingbian-kangtu-v7';
+const CACHE = 'mingbian-kangtu-v8';
 const SHELL = [
   './',
   './index.html',

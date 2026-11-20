@@ -19,6 +19,7 @@ symptom-checker/
 ├── README.md                本文件
 ├── site/
 │   ├── index.html           Web 版：整个应用（HTML + CSS + JS + 数据）
+│   ├── config.example.js    反馈接口地址示例（复制为 config.js 后生效）
 │   └── preview.png          分享卡片图（og:image）
 ├── harmony/                 HarmonyOS 版（ArkTS + ArkUI，参加华为开发者大赛用）
 │   ├── README.md            鸿蒙端说明：环境、打开方式、已知问题
@@ -32,6 +33,10 @@ symptom-checker/
 │   ├── functiongraph/       函数代码（index.js / logic.js / index.html）
 │   ├── symptom-triage-function.zip  可直传函数的上传包
 │   └── local-server.js      本地模拟云端，无需账号即可验证
+├── cloudbase/               腾讯云 CloudBase（国内可直连的静态托管 + 云函数）
+│   ├── README.md            5 步部署说明
+│   ├── cloudbaserc.json     环境 ID 用 ${ENV_ID} 占位
+│   └── functions/feedback/  反馈云函数（index.js / stats.js / package.json）
 ├── deploy/                  CodeArts 流水线部署到 ECS
 │   ├── README.md            CodeArts 逐步操作（Repo → Build → Deploy）
 │   ├── nginx-symptom.conf   Nginx 配置（8080 端口，免备案）
@@ -41,7 +46,9 @@ symptom-checker/
 │   ├── gen-cloud-logic.js   Web 数据 → 云函数 logic.js 生成器
 │   ├── test-nlu.js          自然语言识别自测（node tools/test-nlu.js）
 │   ├── test-profile.js      用户档案提醒规则自测（node tools/test-profile.js）
-│   └── test-bodymap.js      人体部位图自测（node tools/test-bodymap.js）
+│   ├── test-bodymap.js      人体部位图自测（node tools/test-bodymap.js）
+│   ├── pack-cloudbase.js    打包 site/ 为 dist-cloudbase.zip（静态托管上传）
+│   └── test-cloudbase-fn.js CloudBase 反馈云函数自测（假 DB，不依赖云环境）
 ├── serve-site.js            本地静态服务器（预览用，Node 自带模块，无依赖）
 └── 启动公网地址.ps1          备用：临时公网隧道（Windows）
 ```
@@ -247,6 +254,18 @@ const SYMPTOMS = {
 
 本项目线上的部署方式：Netlify，站点名 `symptom-self-check`。
 更新内容：把 `site/` 文件夹拖到 Netlify 的 Deploys 面板，几秒生效，网址不变。
+
+### 腾讯云 CloudBase（国内可直连）
+
+Cloudflare 的 `workers.dev` 在国内可能打不开，可用 CloudBase 静态托管 + 云函数替代。完整步骤见 `cloudbase/README.md`：
+
+1. 新建 CloudBase 环境（免费版即可），记下环境 ID
+2. `node tools/pack-cloudbase.js` → 上传 `dist-cloudbase.zip` 到静态网站托管
+3. 部署 `cloudbase/functions/feedback`（Nodejs16.13），数据库新建集合 `feedback`
+4. HTTP 访问服务把 `/api` 指向 feedback 函数
+5. 云函数设置环境变量 `ADMIN_KEY`；把 `site/config.example.js` 复制为 `config.js`，填 `https://<env-id>.tcloudbaseapp.com/api/feedback`
+
+原 Cloudflare 方案（`worker/`）保持不动，两套可并存；前端通过 `site/config.js` 里的 `window.__FEEDBACK_API__` 切换接口地址。
 
 ## 已知限制
 
