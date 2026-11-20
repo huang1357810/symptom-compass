@@ -332,6 +332,16 @@
   .care-banner.advise p{color:#7a2b20}
   .care-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
   .care-actions .btn{padding:9px 15px; font-size:13px}
+
+  /* ---------- PWA 安装引导 ---------- */
+  .pwa-bar{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:0 0 14px; padding:14px 16px; border:1px solid #cdeae5; border-radius:14px; background:linear-gradient(135deg,#effaf8,#e6f6f3)}
+  .pwa-bar .pwa-text{flex:1; min-width:200px}
+  .pwa-bar b{display:block; font-size:13.5px; color:#0b5f58}
+  .pwa-bar span{font-size:12.5px; color:#5d7b78; line-height:1.6}
+  .pwa-bar .btn{padding:9px 14px; font-size:13px}
+  .pwa-close{margin-left:auto; border:none; background:transparent; color:#87a3a1; font-size:18px; line-height:1; cursor:pointer; padding:2px 6px}
+  .pwa-ios{display:none; width:100%; font-size:12.5px; color:#41615f; background:#fff; border:1px dashed #cdeae5; border-radius:10px; padding:10px 12px; line-height:1.7}
+  .pwa-bar.ios .pwa-ios{display:block}
   .modal{
     position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center;
     padding:18px; background:rgba(9,38,36,.45);
@@ -648,7 +658,17 @@
 
 <div class="wrap">
 
-  <div class="care-banner hidden" id="careBanner" role="status" aria-live="polite"></div>
+<div class="care-banner hidden" id="careBanner" role="status" aria-live="polite"></div>
+
+  <div class="pwa-bar hidden" id="pwaBar">
+    <div class="pwa-text">
+      <b>装到桌面，离线也能用</b>
+      <span>添加后从桌面一键打开，断网时也能查看症状与分诊建议。</span>
+    </div>
+    <button class="btn primary" id="pwaInstall" type="button">添加到桌面</button>
+    <button class="pwa-close" id="pwaDismiss" type="button" aria-label="不再提示">×</button>
+    <div class="pwa-ios" id="pwaIosTip">iPhone / iPad：点浏览器底部的「分享」按钮 → 选择「添加到主屏幕」。</div>
+  </div>
 
   <section class="card notice" id="notice">
     <p>
@@ -4426,6 +4446,69 @@ if (typeof module !== 'undefined' && module.exports){
       navigator.serviceWorker.register('sw.js').catch(function () {});
     });
   }
+
+  /* PWA 安装引导：Chrome/Edge 走 beforeinstallprompt，iOS 给文字指引 */
+  (function initPwaInstall(){
+    if (location.protocol.indexOf('http') !== 0) return;
+
+    const KEY = 'mingbian.pwa.dismissed';
+    let deferred = null;
+
+    const bar = document.getElementById('pwaBar');
+    const btn = document.getElementById('pwaInstall');
+    const close = document.getElementById('pwaDismiss');
+    if (!bar || !btn) return;
+
+    const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+      (window.navigator && window.navigator.standalone === true);
+    let dismissed = false;
+    try { dismissed = localStorage.getItem(KEY) === '1'; } catch (e) {}
+    if (standalone || dismissed) return;
+
+    const show = mode => {
+      bar.classList.remove('hidden');
+      bar.classList.toggle('ios', mode === 'ios');
+      btn.textContent = mode === 'ios' ? '查看添加方法' : '添加到桌面';
+    };
+
+    const hide = persist => {
+      bar.classList.add('hidden');
+      if (persist){
+        try { localStorage.setItem(KEY, '1'); } catch (e) {}
+      }
+    };
+
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      deferred = e;
+      show('prompt');
+    });
+
+    window.addEventListener('appinstalled', () => {
+      deferred = null;
+      hide(true);
+    });
+
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent || '')){
+      show('ios');
+    }
+
+    btn.addEventListener('click', async () => {
+      if (!deferred){
+        bar.classList.add('ios');
+        return;
+      }
+      const p = deferred;
+      deferred = null;
+      try {
+        p.prompt();
+        const choice = await p.userChoice;
+        if (choice && choice.outcome === 'accepted') hide(true);
+      } catch (e) {}
+    });
+
+    if (close) close.addEventListener('click', () => hide(true));
+  })();
 </script>
 </body>
 </html>

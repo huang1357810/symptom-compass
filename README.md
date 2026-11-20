@@ -1,5 +1,7 @@
 # 明辨康途
 
+[![CI](https://github.com/huang1357810/symptom-compass/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/huang1357810/symptom-compass/actions/workflows/ci.yml)
+
 一个纯前端的健康科普小工具：勾选症状 → 按吻合度给出可能的方向 → 每个方向附自我照护、常用药物（通用名 + 注意事项）、何时必须就医，并对危险信号做强制拦截。
 
 - 线上地址：<https://symptom-self-check.netlify.app>
@@ -197,6 +199,26 @@ const SYMPTOMS = {
 - 同一组症状 10 分钟内重复查看只记一次，历史最多保留 200 条，超出后丢弃最早的
 
 规则常量集中在 `PROFILE_RULES`（`days` / `times` / `careDays`），自测：`node tools/test-profile.js`。
+
+## PWA 安装引导
+
+- 浏览器触发 `beforeinstallprompt` 时，页面顶部出现「装到桌面，离线也能用」引导条；点「添加到桌面」直接拉起安装
+- iOS Safari 不触发该事件，改为展开文字指引（分享 → 添加到主屏幕）
+- 已安装（standalone）或点过「不再提示」（`mingbian.pwa.dismissed`）后不再出现
+- `file://` 直接打开时与 Service Worker 一样跳过
+- 自测：`node tools/test-pwa.js`
+
+## 结果反馈与统计
+
+结果页底部可给本次分析打分（1–5 星）、选标签、写建议，提交时附带本次 Top3 方向与症状名称（不含年龄、用药、照片）。
+
+- 提交到 `POST /api/feedback`（Cloudflare Worker + KV）；未配置后端时降级为本地保存
+- 本地记录在 `mingbian.feedback.v1`，「我的档案」可查看最近反馈与改进状态
+- 管理端 `/api/feedback/list?key=ADMIN_KEY` 汇总页包含：
+  - **评分分布**条形图（1–5 星数量与占比）
+  - **低分病症 Top5**（1–2 星按病症聚合，含低分数、总数、均分）
+  - 每条反馈的对应病症、改进状态与标记操作
+- 统计逻辑在 `worker/feedback-stats.mjs`；自测：`node tools/test-feedback-stats.js`
 
 ## 如何新增一种疾病
 

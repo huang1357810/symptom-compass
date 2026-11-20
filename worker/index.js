@@ -9,6 +9,8 @@
  * 存储：KV 绑定 FEEDBACK_KV（未配置时接口返回 503，前端会降级为本地保存）
  */
 
+import { summarizeFeedback } from './feedback-stats.mjs';
+
 const MAX_TEXT = 300;
 const MAX_TAGS = 5;
 
@@ -193,9 +195,7 @@ async function handleList(url, env) {
   }
   items.sort((a, b) => b.ts - a.ts);
 
-  const avg = items.length ? (items.reduce((s, i) => s + i.rating, 0) / items.length).toFixed(2) : '-';
-  const dist = [0, 0, 0, 0, 0];
-  items.forEach(i => { dist[i.rating - 1]++; });
+  const stats = summarizeFeedback(items);
 
   const rows = items.map(i => {
     const d = new Date(i.ts + 8 * 3600 * 1000).toISOString().replace('T', ' ').slice(0, 16);
@@ -224,6 +224,20 @@ async function handleList(url, env) {
     </tr>`;
   }).join('');
 
+  const distRows = [5, 4, 3, 2, 1].map(star => {
+    const n = stats.dist[star - 1];
+    const pct = stats.total ? Math.round(n / stats.total * 100) : 0;
+    return `<div class="drow"><span class="dstar">${star}★</span>` +
+      `<span class="dbar"><i style="width:${pct}%"></i></span>` +
+      `<span class="dnum">${n}</span></div>`;
+  }).join('');
+
+  const lowRows = stats.lowTop.length
+    ? stats.lowTop.map(g =>
+        `<tr><td>${escapeHtml(g.name)}</td><td>${g.low}</td><td>${g.total}</td><td>${g.avg}</td></tr>`
+      ).join('')
+    : '<tr><td colspan="4">还没有 1–2 星的低分反馈</td></tr>';
+
   const html = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
 <title>明辨康途 · 反馈（${items.length} 条）</title>
 <style>
@@ -236,9 +250,33 @@ th{background:#eaf7f4} td:nth-child(1){white-space:nowrap;color:#5d7b78}
 form{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:0}
 select,input{font-size:12px;padding:2px 4px;border:1px solid #dde9e7;border-radius:4px}
 button{font-size:12px;padding:3px 8px;border:1px solid #b9ded8;background:#eaf8f5;color:#0b6f68;border-radius:4px;cursor:pointer}
+
+.dash{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 18px}
+@media (max-width:760px){.dash{grid-template-columns:1fr}}
+.panel{background:#fff;border:1px solid #dde9e7;border-radius:10px;padding:12px 14px}
+.panel h2{font-size:14px;margin:0 0 10px}
+.drow{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;color:#5d7b78}
+.dstar{width:26px;text-align:right;color:#8a5a00}
+.dbar{flex:1;height:10px;background:#eef6f4;border-radius:6px;overflow:hidden}
+.dbar i{display:block;height:100%;background:linear-gradient(90deg,#7fd0c6,#0e8f86);border-radius:6px}
+.dnum{width:34px;text-align:right;color:#103b38}
+table.small{font-size:12px}
+table.small th,table.small td{padding:6px 8px}
 </style></head><body>
 <h1>明辨康途 · 反馈汇总</h1>
-<p class="stat">共 ${items.length} 条 ｜ 平均 ${avg} 分 ｜ 分布 5★${dist[4]} 4★${dist[3]} 3★${dist[2]} 2★${dist[1]} 1★${dist[0]}</p>
+<p class="stat">共 ${stats.total} 条 ｜ 平均 ${stats.total ? stats.avg.toFixed(2) : '-'} 分 ｜ 待改进 ${items.filter(i => i.status !== 'improved').length} 条 ｜ 已改进 ${items.filter(i => i.status === 'improved').length} 条</p>
+
+<div class="dash">
+  <div class="panel">
+    <h2>评分分布</h2>
+    ${distRows}
+  </div>
+  <div class="panel">
+    <h2>低分病症 Top5（1–2 星）</h2>
+    <table class="small"><thead><tr><th>病症</th><th>低分</th><th>总数</th><th>均分</th></tr></thead>
+    <tbody>${lowRows}</tbody></table>
+  </div>
+</div>
 <table><thead><tr><th>时间</th><th>评分</th><th>标签</th><th>建议</th><th>对应病症</th><th>改进</th><th>操作</th></tr></thead>
 <tbody>${rows || '<tr><td colspan="7">还没有反馈</td></tr>'}</tbody></table>
 </body></html>`;
