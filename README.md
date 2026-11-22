@@ -45,6 +45,8 @@ symptom-checker/
 ├── tools/
 │   ├── gen-harmony-data.js  Web 数据 → Data.ets 生成器（含校验）
 │   ├── gen-cloud-logic.js   Web 数据 → 云函数 logic.js 生成器
+│   ├── run-evals.js         评测跑批：生成 docs/evals-latest.json 与 worker/evals-seed.json
+│   ├── test-backend.js      后端可展示能力自测（文档/评测/接口/匿名）
 │   ├── test-nlu.js          自然语言识别自测（node tools/test-nlu.js）
 │   ├── test-profile.js      用户档案提醒规则自测（node tools/test-profile.js）
 │   ├── test-bodymap.js      人体部位图自测（node tools/test-bodymap.js）
@@ -55,7 +57,10 @@ symptom-checker/
 │   ├── pack-cloudbase.js    打包 site/ 为 dist-cloudbase.zip（静态托管上传）
 │   └── test-cloudbase-fn.js CloudBase 反馈云函数自测（假 DB，不依赖云环境）
 ├── docs/
-│   └── 危险信号评测表.md    CI 自动生成：15 条危险信号判红 + 负样本误报
+│   ├── 架构图.md            三层结构 / 数据流 / 部署拓扑（Mermaid）
+│   ├── API设计.md           所有接口、参数、错误码与隐私边界
+│   ├── evals-latest.json    评测产物（15/15 判红，0 误报）
+│   └── 危险信号评测表.md    人读表格版评测结果
 ├── serve-site.js            本地静态服务器（预览用，Node 自带模块，无依赖）
 └── 启动公网地址.ps1          备用：临时公网隧道（Windows）
 ```
@@ -310,6 +315,19 @@ Cloudflare 的 `workers.dev` 在国内可能打不开，可用 CloudBase 静态�
 一条数据改三端：字段写在 `site/index.html` 的 `CONDITIONS` 里，`gen-harmony-data.js` 透传到 `Data.ets`，`gen-cloud-logic.js` 抽出的 `logic.js` 自动携带；`tools/test-content-meta.js` 校验三端一致。
 
 新增疾病时按 `tools/add-content-meta.js` 的字段格式补齐（该脚本可重复执行，已有字段会跳过）。
+
+## 后端可展示能力
+
+不做定时推送与审核工作流，只做「能纠错、能召回、能证明」的展示层：
+
+- **架构与接口文档**：`docs/架构图.md`（Mermaid 三层 + 数据流 + 部署拓扑）、`docs/API设计.md`（全部接口、入参出参、错误码）
+- **评测跑批**：`node tools/run-evals.js` 跑 15 条危险信号 + 4 组负样本，输出 `docs/evals-latest.json` 与 `worker/evals-seed.json`；CI 在自测后执行并校验产物已提交
+- **评测展示**：`GET /api/evals/latest`（KV 优先、打包 seed 兜底）；`POST /api/evals/publish?key=` 可发布新结果；后台「评测」板块显示判红率、误报数、最近运行
+- **版本闭环**：反馈记录带 `contentVersion`；后台明细表有「内容版本」列，标记已改进时可填 `fixedVersion`，显示为「已改进（v1）」
+- **匿名运营**：`POST /api/metrics/event` 只收 `{ symptomCount, level }`，按日聚合为 `{ total, red, yellow, green }`；后台「运营」板块显示今日查询量与判红率；前端失败静默
+- 自测：`node tools/test-backend.js`；全量 `tools/test-*.js` 仍全绿
+
+> 匿名口径：运营事件不含症状名称、方向、身份；反馈只在用户主动提交时携带方向与症状名。详见 `site/privacy.html`。
 
 ## 已知限制
 

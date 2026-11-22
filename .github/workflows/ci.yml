@@ -24,12 +24,16 @@ jobs:
             node "$f"
           done
 
+      - name: 评测跑批
+        run: |
+          node tools/run-evals.js
+
       - name: 生成物一致性
         run: |
           node tools/gen-cloud-logic.js
           node tools/gen-harmony-data.js
           if [ -n "$(git status --porcelain)" ]; then
-            echo "::error::生成物与源不一致，请本地运行 tools/gen-*.js 并提交"
+            echo "::error::生成物或评测产物与源不一致，请本地运行 tools/run-evals.js 与 tools/gen-*.js 并提交"
             git status --porcelain
             git diff --stat
             exit 1

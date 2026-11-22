@@ -6,6 +6,11 @@
 
 
 
+/* 内容版本与接口地址（可被 config.js 覆盖；未配置时走同源） */
+const CONTENT_VERSION = 'v1';
+const FEEDBACK_API = (typeof window !== 'undefined' && window.__FEEDBACK_API__) || '/api/feedback';
+const METRICS_API = (typeof window !== 'undefined' && window.__METRICS_API__) || '/api/metrics/event';
+
 /* =========================================================
    数据层
    ========================================================= */
@@ -2668,6 +2673,24 @@ const FB_KEY = 'mingbian.feedback.v1';
 let fbRating = 0;
 const fbTags = new Set();
 
+/* 匿名运营事件：仅症状数量 + 判红等级；失败静默，不影响分诊 */
+let lastMetricKey = '';
+function trackEvent(level){
+  try {
+    if (!level) return;
+    const key = level + ':' + selected.size;
+    if (key === lastMetricKey) return;
+    lastMetricKey = key;
+    const body = JSON.stringify({ symptomCount: selected.size, level: level });
+    fetch(METRICS_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: body,
+      keepalive: true
+    }).catch(function () {});
+  } catch (e) {}
+}
+
 /* 反馈上下文：记录这次分析对应的方向与症状，便于定位是哪条评估出了问题 */
 function fbContext(){
   const list = (lastResults || []).slice(0, 3).map(r => ({
@@ -2732,6 +2755,7 @@ async function fbSubmit(){
     tags: Array.from(fbTags),
     text: (textEl && textEl.value || '').trim(),
     page: 'result',
+    contentVersion: CONTENT_VERSION,
     context: fbContext()
   };
 
@@ -2739,7 +2763,7 @@ async function fbSubmit(){
   let ok = false;
   let serverId = '';
   try {
-    const res = await fetch('/api/feedback', {
+    const res = await fetch(FEEDBACK_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -3235,6 +3259,7 @@ async function showResults(){
   const triage = computeTriage(results, flags);
   lastResults = results;
   lastTriage = triage;
+  trackEvent(triage.level);
 
   /* 记到本机档案，用于就医提醒与康复关心（不会上传）；回到首页时再展示横幅 */
   const topResult = results[0];

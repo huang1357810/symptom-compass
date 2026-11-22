@@ -10,6 +10,7 @@
  */
 
 import { summarizeFeedback } from './feedback-stats.mjs';
+import evalsSeed from './evals-seed.json';
 
 const MAX_TEXT = 300;
 const MAX_TAGS = 5;
@@ -64,12 +65,12 @@ function normalizeContext(ctx) {
   return { top, results, symptoms, triage: str(ctx.triage, 10) };
 }
 
-/* 极简限流：同一 IP 每分钟最多 5 条（依赖 KV，未配置时跳过） */
-async function rateLimited(env, ip) {
+/* 极简限流：默认同一 IP 每分钟最多 5 条（依赖 KV，未配置时跳过） */
+async function rateLimited(env, ip, limit = 5) {
   if (!env.FEEDBACK_KV) return false;
   const bucket = 'rl:' + ip + ':' + Math.floor(Date.now() / 60000);
   const cur = Number(await env.FEEDBACK_KV.get(bucket)) || 0;
-  if (cur >= 5) return true;
+  if (cur >= limit) return true;
   await env.FEEDBACK_KV.put(bucket, String(cur + 1), { expirationTtl: 120 });
   return false;
 }
@@ -114,6 +115,7 @@ async function handleFeedback(request, env) {
     tags,
     text,
     page: typeof body.page === 'string' ? body.page.slice(0, 40) : '',
+    contentVersion: str(body.contentVersion, 20),
     context,
     status: 'open',
     improveNote: '',
@@ -152,6 +154,7 @@ async function handleStatus(request, url, env) {
   const id = str(form.get('id'), 60);
   const status = form.get('status') === 'improved' ? 'improved' : 'open';
   const note = str(form.get('note'), 200);
+  const fixedVersionInput = str(form.get('fixedVersion'), 20);
   if (!id) return json({ ok: false, error: 'missing_id' }, 400);
 
   const list = await env.FEEDBACK_KV.list({ prefix: 'fb:', limit: 500 });
@@ -163,6 +166,9 @@ async function handleStatus(request, url, env) {
   try { rec = raw ? JSON.parse(raw) : {}; } catch (e) { rec = {}; }
   rec.status = status;
   rec.improveNote = note;
+  rec.fixedVersion = status === 'improved'
+    ? (fixedVersionInput || str(rec.contentVersion, 20))
+    : '';
   rec.updatedAt = Date.now();
 
   await env.FEEDBACK_KV.put(hit.name, JSON.stringify(rec), {
@@ -170,6 +176,109 @@ async function handleStatus(request, url, env) {
   });
 
   return Response.redirect(url.origin + '/api/feedback/list?key=' + encodeURIComponent(key), 303);
+}
+
+/* ---------- 评测 / 运营统计 ---------- */
+
+function todayKey() {
+  return new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
+async function readEvals(env) {
+  if (env.FEEDBACK_KV) {
+    const raw = await env.FEEDBACK_KV.get('evals:latest');
+    if (raw) {
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        /* 损坏时回退 seed */
+      }
+    }
+  }
+  return evalsSeed;
+}
+
+async function readMetrics(env, day) {
+  const empty = { total: 0, red: 0, yellow: 0, green: 0 };
+  if (!env.FEEDBACK_KV) return empty;
+  const raw = await env.FEEDBACK_KV.get('metrics:' + day);
+  if (!raw) return empty;
+  try {
+    return Object.assign(empty, JSON.parse(raw));
+  } catch (e) {
+    return empty;
+  }
+}
+
+/* GET /api/evals/latest：KV 优先，否则用打包内置的 seed */
+async function handleEvals(env) {
+  return json(await readEvals(env));
+}
+
+/* POST /api/evals/publish?key=ADMIN_KEY：把评测结果写入 KV */
+async function handleEvalsPublish(request, url, env) {
+  const key = url.searchParams.get('key') || '';
+  if (!env.ADMIN_KEY || key !== env.ADMIN_KEY) {
+    return json({ ok: false, error: 'unauthorized' }, 401);
+  }
+  if (request.method !== 'POST') {
+    return json({ ok: false, error: 'method_not_allowed' }, 405);
+  }
+  if (!env.FEEDBACK_KV) return json({ ok: false, error: 'no_store' }, 503);
+
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return json({ ok: false, error: 'bad_json' }, 400);
+  }
+  if (!body || !Number.isFinite(Number(body.total)) || !Number.isFinite(Number(body.red))) {
+    return json({ ok: false, error: 'bad_evals' }, 400);
+  }
+
+  await env.FEEDBACK_KV.put('evals:latest', JSON.stringify(body));
+  return json({ ok: true });
+}
+
+/*
+ * POST /api/metrics/event：匿名运营事件
+ * 只接收 { symptomCount, level }，按日聚合计数；
+ * 不存症状名、方向、身份，也不写逐条记录。
+ */
+async function handleMetrics(request, env) {
+  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
+
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return json({ ok: false, error: 'bad_json' }, 400);
+  }
+
+  const level = (body && (body.level === 'red' || body.level === 'yellow' || body.level === 'green'))
+    ? body.level
+    : '';
+  const count = Number(body && body.symptomCount);
+  if (!level || !Number.isInteger(count) || count < 0 || count > 40) {
+    return json({ ok: false, error: 'bad_event' }, 400);
+  }
+  if (!env.FEEDBACK_KV) return json({ ok: false, error: 'no_store' }, 503);
+
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  if (await rateLimited(env, 'm:' + ip, 60)) {
+    return json({ ok: false, error: 'too_many' }, 429);
+  }
+
+  const day = todayKey();
+  const cur = await readMetrics(env, day);
+  cur.total += 1;
+  cur[level] += 1;
+  await env.FEEDBACK_KV.put('metrics:' + day, JSON.stringify(cur), {
+    expirationTtl: 90 * 24 * 3600
+  });
+
+  return json({ ok: true });
 }
 
 async function handleList(url, env) {
@@ -196,6 +305,10 @@ async function handleList(url, env) {
   items.sort((a, b) => b.ts - a.ts);
 
   const stats = summarizeFeedback(items);
+  const evals = await readEvals(env);
+  const day = todayKey();
+  const metrics = await readMetrics(env, day);
+  const redPct = metrics.total ? Math.round(metrics.red / metrics.total * 100) : 0;
 
   const rows = items.map(i => {
     const d = new Date(i.ts + 8 * 3600 * 1000).toISOString().replace('T', ' ').slice(0, 16);
@@ -203,13 +316,17 @@ async function handleList(url, env) {
     const top = ctx.top && ctx.top.name ? ctx.top.name : '—';
     const syms = (ctx.symptoms || []).map(s => s.label || s.id).slice(0, 5).join('、');
     const improved = i.status === 'improved';
+    const fixLabel = improved
+      ? ('已改进' + (i.fixedVersion ? '（' + escapeHtml(i.fixedVersion) + '）' : ''))
+      : '待改进';
     return `<tr>
       <td>${d}</td>
       <td>${'★'.repeat(i.rating)}${'☆'.repeat(5 - i.rating)}</td>
       <td>${escapeHtml((i.tags || []).join('、'))}</td>
       <td>${escapeHtml(i.text || '')}</td>
       <td class="ctx"><b>${escapeHtml(top)}</b>${syms ? '<br><span class="sym">' + escapeHtml(syms) + '</span>' : ''}</td>
-      <td class="st">${improved ? '已改进' : '待改进'}${i.improveNote ? '<br><span class="sym">' + escapeHtml(i.improveNote) + '</span>' : ''}</td>
+      <td>${escapeHtml(i.contentVersion || '—')}</td>
+      <td class="st">${fixLabel}${i.improveNote ? '<br><span class="sym">' + escapeHtml(i.improveNote) + '</span>' : ''}</td>
       <td>
         <form method="post" action="/api/feedback/status?key=${encodeURIComponent(key)}">
           <input type="hidden" name="id" value="${escapeHtml(i.id)}">
@@ -217,6 +334,7 @@ async function handleList(url, env) {
             <option value="open"${improved ? '' : ' selected'}>待改进</option>
             <option value="improved"${improved ? ' selected' : ''}>已改进</option>
           </select>
+          <input name="fixedVersion" placeholder="修正版本" size="6" value="${escapeHtml(i.fixedVersion || i.contentVersion || '')}">
           <input name="note" placeholder="改进说明" value="${escapeHtml(i.improveNote || '')}">
           <button type="submit">保存</button>
         </form>
@@ -262,6 +380,8 @@ button{font-size:12px;padding:3px 8px;border:1px solid #b9ded8;background:#eaf8f
 .dnum{width:34px;text-align:right;color:#103b38}
 table.small{font-size:12px}
 table.small th,table.small td{padding:6px 8px}
+.kv{font-size:12.5px;color:#5d7b78;margin:4px 0}
+.kv b{color:#103b38;font-size:13px}
 </style></head><body>
 <h1>明辨康途 · 反馈汇总</h1>
 <p class="stat">共 ${stats.total} 条 ｜ 平均 ${stats.total ? stats.avg.toFixed(2) : '-'} 分 ｜ 待改进 ${items.filter(i => i.status !== 'improved').length} 条 ｜ 已改进 ${items.filter(i => i.status === 'improved').length} 条</p>
@@ -276,9 +396,21 @@ table.small th,table.small td{padding:6px 8px}
     <table class="small"><thead><tr><th>病症</th><th>低分</th><th>总数</th><th>均分</th></tr></thead>
     <tbody>${lowRows}</tbody></table>
   </div>
+  <div class="panel">
+    <h2>评测（${escapeHtml(evals.version || 'eval')}）</h2>
+    <div class="kv">判红率 <b>${Math.round((evals.redRate || 0) * 100)}%</b>（${evals.red || 0}/${evals.total || 0}）</div>
+    <div class="kv">误报 <b>${evals.falsePositive || 0}</b> / 负样本 ${evals.negatives || 0}</div>
+    <div class="kv">最近运行：${escapeHtml(evals.generatedAt || '—')}</div>
+  </div>
+  <div class="panel">
+    <h2>运营（今日 ${day}）</h2>
+    <div class="kv">查询量 <b>${metrics.total}</b></div>
+    <div class="kv">判红率 <b>${redPct}%</b>（红 ${metrics.red} / 黄 ${metrics.yellow} / 绿 ${metrics.green}）</div>
+    <div class="kv sym">仅症状数与判红等级，不含身份</div>
+  </div>
 </div>
-<table><thead><tr><th>时间</th><th>评分</th><th>标签</th><th>建议</th><th>对应病症</th><th>改进</th><th>操作</th></tr></thead>
-<tbody>${rows || '<tr><td colspan="7">还没有反馈</td></tr>'}</tbody></table>
+<table><thead><tr><th>时间</th><th>评分</th><th>标签</th><th>建议</th><th>对应病症</th><th>内容版本</th><th>改进</th><th>操作</th></tr></thead>
+<tbody>${rows || '<tr><td colspan="8">还没有反馈</td></tr>'}</tbody></table>
 </body></html>`;
 
   return new Response(html, {
@@ -293,6 +425,9 @@ export default {
     if (url.pathname === '/api/feedback') return handleFeedback(request, env);
     if (url.pathname === '/api/feedback/list') return handleList(url, env);
     if (url.pathname === '/api/feedback/status') return handleStatus(request, url, env);
+    if (url.pathname === '/api/evals/latest') return handleEvals(env);
+    if (url.pathname === '/api/evals/publish') return handleEvalsPublish(request, url, env);
+    if (url.pathname === '/api/metrics/event') return handleMetrics(request, env);
 
     /* 其余请求交给静态资源 */
     return env.ASSETS.fetch(request);

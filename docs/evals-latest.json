@@ -1,0 +1,124 @@
+{
+  "version": "eval-v1",
+  "generatedAt": "2026-11-22",
+  "total": 15,
+  "red": 15,
+  "redRate": 1,
+  "negatives": 4,
+  "falsePositive": 0,
+  "falsePositiveRate": 0,
+  "cases": [
+    {
+      "title": "胸痛",
+      "input": "胸痛",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "呼吸困难",
+      "input": "气短/呼吸困难",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "咯血",
+      "input": "咯血",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "呕血 / 黑便",
+      "input": "呕血/黑便",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "单侧肢体无力",
+      "input": "单侧肢体无力",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "言语不清",
+      "input": "言语不清",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "抽搐",
+      "input": "抽搐",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "意识模糊",
+      "input": "意识模糊",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "高热 + 颈部僵硬",
+      "input": "颈部僵硬 + 高热 ≥39℃",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "剧烈腹痛",
+      "input": "剧烈腹痛",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "明显脱水",
+      "input": "口干/少尿",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "孕期出血 / 腹痛",
+      "input": "孕期出血/腹痛",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "眼痛 + 视力下降",
+      "input": "眼痛 + 视物模糊",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "高热 + 皮疹",
+      "input": "高热 ≥39℃ + 皮疹",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "高温暴露 + 意识改变",
+      "input": "高温环境暴露 + 意识模糊",
+      "level": "red",
+      "ok": true
+    }
+  ],
+  "negativeCases": [
+    {
+      "input": "乏力",
+      "level": "yellow",
+      "falsePositive": false
+    },
+    {
+      "input": "咽痛 + 流涕",
+      "level": "yellow",
+      "falsePositive": false
+    },
+    {
+      "input": "头痛",
+      "level": "yellow",
+      "falsePositive": false
+    },
+    {
+      "input": "腹泻 + 腹痛",
+      "level": "yellow",
+      "falsePositive": false
+    }
+  ]
+}
