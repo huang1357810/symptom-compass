@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>隐私与数据说明 · 明辨康途</title>
+<style>
+  :root{--teal:#0e8f86;--teal-d:#0b6f68;--ink:#103b38;--muted:#5d7b78;--line:#e2eeec;--bg:#f2f8f8}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.75}
+  .wrap{max-width:760px;margin:0 auto;padding:28px 18px 48px}
+  h1{font-size:22px;color:var(--teal-d);margin:0 0 6px}
+  .meta{font-size:12.5px;color:#87a3a1;margin-bottom:18px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  h2{font-size:16px;color:var(--teal-d);margin:0 0 8px}
+  h3{font-size:14px;margin:14px 0 6px;color:#26514e}
+  p,li{font-size:14px;color:#33504e}
+  ul{margin:6px 0 0;padding-left:20px}
+  li{margin:4px 0}
+  code{background:#f4fbf9;border:1px solid #e2eeec;border-radius:5px;padding:1px 5px;font-size:12.5px;color:#0b6f68}
+  .table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch; margin-top:8px}
+    .table-wrap table{min-width:560px; margin-top:0}
+    table{border-collapse:collapse;width:100%;font-size:13px;margin-top:8px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:#f4fbf9;color:#26514e}
+  .tag{display:inline-block;font-size:11.5px;background:#eaf8f5;color:var(--teal-d);
+    border:1px solid #cdeae5;border-radius:999px;padding:1px 8px;margin-right:6px}
+  .warn{background:#fffaf0;border-color:#f0dcae}
+  a{color:var(--teal-d)}
+  .back{display:inline-block;margin-top:6px;font-size:13.5px;text-decoration:none;
+    border:1px solid #cdeae5;border-radius:999px;padding:8px 14px;background:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>隐私与数据说明</h1>
+  <p class="meta">明辨康途 · 版本 1.0 ｜ 最后更新：2026-11-22</p>
+
+  <div class="card">
+    <h2>先说结论</h2>
+    <ul>
+      <li><b>症状分诊、拍照分析、档案、时间轴全部在你的设备上完成</b>，不上传。</li>
+      <li><b>只有「结果反馈」会上传</b>，且只包含评分、标签、建议文字、本次分析的方向与症状名称。</li>
+      <li><b>不收集</b>姓名、手机号、身份证、精确位置、通讯录；<b>不上传</b>照片、年龄、长期用药记录。</li>
+      <li>本工具是健康科普与就医参考，<b>不做诊断，也不替代医生面诊</b>。</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>一、保存在你设备上的数据</h2>
+    <p>以下数据写入浏览器的 <code>localStorage</code>，只存在当前设备，不上传服务器。</p>
+    <div class="table-wrap">
+<table>
+      <thead><tr><th>键名</th><th>内容</th><th>用途</th></tr></thead>
+      <tbody>
+        <tr><td><code>mingbian.profile.v1</code></td><td>查看过的方向、时间、症状组合、分诊等级</td><td>「我的档案」、就医提醒、康复关心</td></tr>
+        <tr><td><code>mingbian.timeline.v1</code></td><td>按天的症状严重度与打卡</td><td>14 天症状时间轴</td></tr>
+        <tr><td><code>mingbian.feedback.v1</code></td><td>你在本机提交过的反馈副本</td><td>「我的反馈」与改进状态</td></tr>
+        <tr><td><code>mingbian.pwa.dismissed</code></td><td>是否关闭过「添加到桌面」提示</td><td>避免重复打扰</td></tr>
+      </tbody>
+    </table>
+</div>
+    <h3>如何删除</h3>
+    <ul>
+      <li>在「我的档案」里点「清除全部记录」，会删除档案、时间轴与本地反馈副本。</li>
+      <li>也可以清除浏览器站点数据，或卸载 PWA（主屏幕图标）。</li>
+    </ul>
+  </div>
+
+  <div class="card warn">
+    <h2>二、会上传的数据（仅限反馈）</h2>
+    <p>只有你主动点击「提交反馈」时才会发送，内容为：</p>
+    <ul>
+      <li><span class="tag">评分</span>1–5 星</li>
+      <li><span class="tag">标签</span>最多 5 个（如「不够准」「太笼统」）</li>
+      <li><span class="tag">建议文字</span>你填写的改进建议，最多 300 字</li>
+      <li><span class="tag">分析上下文</span>本次结果的前 3 个可能方向（名称与吻合度）、症状名称、分诊等级</li>
+      <li><span class="tag">技术信息</span>浏览器 UA；服务端另存 IP 的哈希值，仅用于限流（同一 IP 每分钟最多 5 条）</li>
+    </ul>
+    <p><b>不包含</b>：年龄、长期用药、照片、姓名、手机号、精确位置。</p>
+    <p>用途：定位「哪条判断需要改进」，以及统计评分分布与低分病症，用于修订内容与权重。反馈可由管理员标记为「已改进」并填写改进说明。</p>
+    <p>上传目标：项目部署的反馈接口（Cloudflare Worker 或腾讯云 CloudBase 云函数，取决于你访问的站点）。</p>
+  </div>
+
+  <div class="card">
+    <h2>三、明确不上传的数据</h2>
+    <ul>
+      <li><b>皮肤照片</b>：只在浏览器内缩放并统计颜色/纹理，不上传、不保存；关闭页面即消失。</li>
+      <li><b>年龄与长期用药</b>：只参与本机分诊与用药提示，不上传。</li>
+      <li><b>档案与时间轴</b>：只存本机，不上传。</li>
+      <li><b>自由输入的症状描述</b>：只在本机做词典匹配，不上传。</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>四、第三方与日志</h2>
+    <ul>
+      <li>页面由静态托管服务提供（如 Netlify / 腾讯云 CloudBase / 华为云 FunctionGraph），服务器可能记录常规访问日志（IP、UA、时间），用于安全与防滥用。</li>
+      <li>反馈接口可能使用 Cloudflare Workers KV 或腾讯云 CloudBase 云数据库存储反馈；数据仅用于改进产品，不出售、不用于广告画像。</li>
+      <li>页面不接入第三方统计、广告或社交插件。</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>五、保留期限与你的权利</h2>
+    <ul>
+      <li>本机数据：保留到你主动清除或卸载。</li>
+      <li>反馈记录：保留至管理员删除；如需删除某条反馈，请通过下方联系方式说明提交时间与内容特征。</li>
+      <li>你可以随时停止使用、清除本机数据，或不再提交反馈。</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>六、未成年人</h2>
+    <p>本工具面向一般健康科普。未满 18 岁请在监护人陪同下使用；涉及儿童用药与就医判断时，务必由监护人或医生决定。</p>
+  </div>
+
+  <div class="card">
+    <h2>七、医疗边界</h2>
+    <ul>
+      <li>结果是基于人工设定权重的<b>启发式匹配</b>，不是诊断、不是概率预测。</li>
+      <li>用药信息只给通用名与注意事项，<b>刻意不写剂量</b>；处方药必须由医生开具。</li>
+      <li>出现危险信号（如胸痛、呼吸困难、意识改变、大出血等）请立即就医或拨打 120。</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>八、联系方式</h2>
+    <p>隐私相关问题或删除反馈请求，可通过项目仓库提交 Issue：<br>
+      <a href="https://github.com/huang1357810/symptom-compass/issues" target="_blank" rel="noopener">github.com/huang1357810/symptom-compass/issues</a>
+    </p>
+    <p class="meta">本说明会随功能变化更新；如有重大变更，会在页面内提示。</p>
+    <a class="back" href="./">← 返回明辨康途</a>
+  </div>
+</div>
+</body>
+</html>

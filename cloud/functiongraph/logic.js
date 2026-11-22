@@ -116,7 +116,7 @@ const SYMPTOMS = {
 
 const CONDITIONS = [
   {
-    id:'cold', name:'普通感冒', dept:'呼吸内科 / 全科', tag:'最常见',
+    id:'cold', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'普通感冒', dept:'呼吸内科 / 全科', tag:'最常见',
     summary:'以鼻塞、流涕、咽部不适为主，多由病毒引起，通常 1 周左右自行好转。',
     symptoms:{runny_nose:1, congestion:0.9, sneeze:0.8, sore_throat:0.7, dry_cough:0.6, fever:0.4, fatigue:0.5, headache:0.4, myalgia:0.3, smell_loss:0.3},
     core:['runny_nose','congestion','sneeze','sore_throat'],
@@ -129,7 +129,7 @@ const CONDITIONS = [
     see:'超过 10 天不缓解、高热不退、出现耳痛/气短/咳黄脓痰，或婴幼儿精神差时就医。'
   },
   {
-    id:'flu', name:'流行性感冒', dept:'呼吸内科', tag:'起病急',
+    id:'flu', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'流行性感冒', dept:'呼吸内科', tag:'起病急',
     summary:'起病急，高热伴明显肌肉酸痛、乏力，传染性强，冬春季多见。',
     symptoms:{fever:1, myalgia:0.9, fatigue:0.9, chills:0.7, headache:0.7, dry_cough:0.6, sore_throat:0.5, poor_appetite:0.5, congestion:0.3},
     core:['fever','myalgia'],
@@ -141,7 +141,7 @@ const CONDITIONS = [
     see:'高热超过 3 天、呼吸困难、胸痛、意识改变，或属于高危人群，应尽快就医。'
   },
   {
-    id:'allergic_rhinitis', name:'过敏性鼻炎', dept:'耳鼻喉科 / 变态反应科', tag:'反复发作',
+    id:'allergic_rhinitis', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'过敏性鼻炎', dept:'耳鼻喉科 / 变态反应科', tag:'反复发作',
     summary:'接触花粉、尘螨后出现阵发性喷嚏、清水样鼻涕，常伴眼痒，脱离环境可缓解。',
     symptoms:{sneeze:1, runny_nose:1, congestion:0.9, eye_itch:0.7, itch:0.3, dry_cough:0.2, smell_loss:0.3},
     core:['sneeze','runny_nose'],
@@ -153,7 +153,7 @@ const CONDITIONS = [
     see:'症状影响睡眠和工作、出现喘息胸闷，或需要长期用药时，到耳鼻喉科/过敏科评估。'
   },
   {
-    id:'pharyngitis', name:'急性咽炎 / 扁桃体炎', dept:'耳鼻喉科', tag:'',
+    id:'pharyngitis', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'急性咽炎 / 扁桃体炎', dept:'耳鼻喉科', tag:'',
     summary:'咽部疼痛、吞咽时加重，可为病毒感染，也可为细菌性扁桃体炎。',
     symptoms:{sore_throat:1, dysphagia:0.7, fever:0.6, fatigue:0.4, headache:0.3, congestion:0.2},
     core:['sore_throat'],
@@ -165,7 +165,7 @@ const CONDITIONS = [
     see:'高热、张口困难、单侧扁桃体明显肿大、颈部肿块，或症状超过 1 周。是否用抗生素须医生判断，不要自行服用。'
   },
   {
-    id:'bronchitis', name:'急性支气管炎', dept:'呼吸内科', tag:'',
+    id:'bronchitis', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'急性支气管炎', dept:'呼吸内科', tag:'',
     summary:'感冒后咳嗽加重、可有痰，多由病毒引起，咳嗽可能持续 2–3 周。',
     symptoms:{dry_cough:1, sputum:0.9, chest_tight:0.5, wheeze:0.4, fever:0.4, fatigue:0.4, sore_throat:0.3},
     core:['dry_cough','sputum'],
@@ -177,7 +177,7 @@ const CONDITIONS = [
     see:'咯血、气短、高热不退、咳嗽超过 3 周，或原有心肺疾病者，需就医。'
   },
   {
-    id:'pneumonia', name:'肺炎', dept:'呼吸内科 / 急诊', tag:'需就医',
+    id:'pneumonia', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'肺炎', dept:'呼吸内科 / 急诊', tag:'需就医',
     summary:'发热伴咳嗽咳痰、气短，可能为肺部感染，需要医生听诊和胸片/CT 评估。',
     symptoms:{fever:0.9, high_fever:0.85, sputum:0.9, dry_cough:0.7, dyspnea:0.8, chest_tight:0.7, chills:0.6, fatigue:0.6, poor_appetite:0.4},
     core:['dyspnea','sputum','high_fever'],
@@ -188,7 +188,7 @@ const CONDITIONS = [
     see:'出现气短、呼吸急促、口唇发紫、意识改变或高热不退，请立即就医或拨打 120。'
   },
   {
-    id:'tb', name:'肺结核（需排查）', dept:'呼吸内科 / 结核病定点医院', tag:'需筛查',
+    id:'tb', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'肺结核（需排查）', dept:'呼吸内科 / 结核病定点医院', tag:'需筛查',
     summary:'咳嗽咳痰超过 2 周，伴午后低热、夜间盗汗、体重下降，需排查肺结核。',
     symptoms:{dry_cough:0.9, sputum:0.8, fever:0.7, night_sweat:0.9, weight_loss:0.9, fatigue:0.6, poor_appetite:0.6, hemoptysis:0.7, chest_pain:0.3, dyspnea:0.3},
     core:['night_sweat','weight_loss','hemoptysis'],
@@ -199,7 +199,7 @@ const CONDITIONS = [
     see:'咳嗽咳痰超过 2 周、痰中带血、盗汗消瘦，请到呼吸科或结核病防治机构就诊；确诊后需按规范隔离治疗。'
   },
   {
-    id:'gerd', name:'胃食管反流', dept:'消化内科', tag:'',
+    id:'gerd', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'胃食管反流', dept:'消化内科', tag:'',
     summary:'反酸、烧心，餐后或平卧时加重，可伴慢性干咳和咽部不适。',
     symptoms:{heartburn:1, nausea:0.3, dry_cough:0.4, sore_throat:0.3, bloating:0.4, chest_tight:0.3, dysphagia:0.3},
     core:['heartburn'],
@@ -211,7 +211,7 @@ const CONDITIONS = [
     see:'吞咽困难、体重下降、黑便、贫血，或症状每周多次影响生活；40 岁以上新发症状建议胃镜评估。'
   },
   {
-    id:'gastroenteritis', name:'急性胃肠炎', dept:'消化内科', tag:'多可自愈',
+    id:'gastroenteritis', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'急性胃肠炎', dept:'消化内科', tag:'多可自愈',
     summary:'进食不洁后出现腹泻、呕吐、腹痛，多为病毒或细菌感染，关键是防脱水。',
     symptoms:{diarrhea:1, nausea:0.9, vomiting:0.9, abdominal_pain:0.8, fever:0.5, poor_appetite:0.5, dehydration:0.4},
     core:['diarrhea','vomiting'],
@@ -224,7 +224,7 @@ const CONDITIONS = [
     see:'血便、高热、剧烈腹痛、明显脱水（口干、少尿、头晕），或持续超过 3 天；婴幼儿、老人、孕妇应更早就医。'
   },
   {
-    id:'dyspepsia', name:'功能性消化不良', dept:'消化内科', tag:'',
+    id:'dyspepsia', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'功能性消化不良', dept:'消化内科', tag:'',
     summary:'餐后饱胀、早饱、上腹不适，检查常无明显器质性病变，与饮食和压力相关。',
     symptoms:{bloating:0.9, belching:0.7, poor_appetite:0.7, nausea:0.6, abdominal_pain:0.6, heartburn:0.5, constipation:0.2},
     core:['bloating'],
@@ -236,7 +236,7 @@ const CONDITIONS = [
     see:'体重下降、贫血、黑便、吞咽困难、反复呕吐，或 40 岁以上新发、症状持续加重，需胃镜等检查。'
   },
   {
-    id:'constipation', name:'便秘', dept:'消化内科', tag:'',
+    id:'constipation', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'便秘', dept:'消化内科', tag:'',
     summary:'排便次数减少、粪便干硬或排便费力，多与饮水、膳食纤维和活动量不足有关。',
     symptoms:{constipation:1, bloating:0.7, abdominal_pain:0.4, poor_appetite:0.2},
     core:['constipation'],
@@ -249,7 +249,7 @@ const CONDITIONS = [
     see:'便血、体重下降、贫血、新发便秘超过 2 周（尤其 50 岁以上），或排便习惯明显改变。'
   },
   {
-    id:'migraine', name:'偏头痛', dept:'神经内科', tag:'',
+    id:'migraine', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'偏头痛', dept:'神经内科', tag:'',
     summary:'单侧搏动性头痛，伴恶心、畏光，活动后加重，可持续 4–72 小时。',
     symptoms:{headache:1, nausea:0.7, photophobia:0.6, vomiting:0.5, vision_blur:0.4, dizziness:0.3},
     core:['headache'],
@@ -262,7 +262,7 @@ const CONDITIONS = [
     see:'突发“一生最剧烈”的头痛、伴发热颈强、肢体无力或言语不清，须立即急诊；每月用止痛药超过 10 天应就诊。'
   },
   {
-    id:'tension_headache', name:'紧张性头痛', dept:'神经内科 / 全科', tag:'最常见',
+    id:'tension_headache', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'紧张性头痛', dept:'神经内科 / 全科', tag:'最常见',
     summary:'双侧紧箍样压迫性头痛，常与压力、久坐、睡眠不足和颈肩紧张有关。',
     symptoms:{headache:1, neck_pain:0.6, anxious:0.5, insomnia:0.4, fatigue:0.3, dizziness:0.2},
     core:['headache'],
@@ -273,7 +273,7 @@ const CONDITIONS = [
     see:'头痛性质改变、进行性加重、伴神经症状，或每月止痛药使用超过 10 天。'
   },
   {
-    id:'uti', name:'尿路感染', dept:'泌尿外科 / 肾内科', tag:'',
+    id:'uti', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'尿路感染', dept:'泌尿外科 / 肾内科', tag:'',
     summary:'尿频、尿急、尿痛，多为细菌感染，女性更常见。',
     symptoms:{urinary_freq:1, dysuria:1, hematuria:0.6, flank_pain:0.5, fever:0.4, abdominal_pain:0.3},
     core:['dysuria','urinary_freq'],
@@ -284,7 +284,7 @@ const CONDITIONS = [
     see:'发热、寒战、腰侧痛（可能为上尿路感染）、血尿，男性或孕期出现症状，应尽快就医。'
   },
   {
-    id:'kidney_stone', name:'泌尿系结石', dept:'泌尿外科 / 急诊', tag:'疼痛剧烈',
+    id:'kidney_stone', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'泌尿系结石', dept:'泌尿外科 / 急诊', tag:'疼痛剧烈',
     summary:'突发腰侧绞痛，可向会阴部放射，常伴血尿、恶心呕吐。',
     symptoms:{flank_pain:1, hematuria:0.7, nausea:0.5, abdominal_pain:0.5, urinary_freq:0.4, vomiting:0.3},
     core:['flank_pain'],
@@ -296,7 +296,7 @@ const CONDITIONS = [
     see:'疼痛剧烈无法缓解、发热寒战、无尿、呕吐无法进水，请立即急诊。'
   },
   {
-    id:'dysmenorrhea', name:'痛经', dept:'妇科', tag:'',
+    id:'dysmenorrhea', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'痛经', dept:'妇科', tag:'',
     summary:'经期下腹痉挛性疼痛，原发性多见；进行性加重需排除子宫内膜异位症等。',
     symptoms:{dysmenorrhea:1, back_pain:0.6, nausea:0.4, headache:0.2, diarrhea:0.2, fatigue:0.3},
     core:['dysmenorrhea'],
@@ -307,7 +307,7 @@ const CONDITIONS = [
     see:'疼痛逐年加重、经量过多、非经期也痛、备孕困难，或止痛药无效，需妇科检查。'
   },
   {
-    id:'vaginitis', name:'阴道炎', dept:'妇科', tag:'',
+    id:'vaginitis', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'阴道炎', dept:'妇科', tag:'',
     summary:'白带增多、性状或气味改变，可伴外阴瘙痒，常见为细菌性、霉菌性或滴虫性。',
     symptoms:{vaginal_discharge:1, itch:0.6, dysuria:0.3, abdominal_pain:0.3},
     core:['vaginal_discharge'],
@@ -318,7 +318,7 @@ const CONDITIONS = [
     see:'首次出现、反复发作、伴下腹痛或发热、孕期出现症状，需妇科检查；不要自行长期使用栓剂。'
   },
   {
-    id:'anemia', name:'缺铁性贫血', dept:'血液科 / 全科', tag:'',
+    id:'anemia', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'缺铁性贫血', dept:'血液科 / 全科', tag:'',
     summary:'乏力、头晕、面色苍白、活动后心悸气短，可能与缺铁或慢性失血有关。',
     symptoms:{fatigue:1, dizziness:0.8, palpitation:0.7, pallor:0.7, dyspnea:0.5, headache:0.3},
     core:['fatigue','pallor'],
@@ -329,7 +329,7 @@ const CONDITIONS = [
     see:'必须先查血常规明确贫血类型；男性或绝经后女性贫血，要排查消化道出血。'
   },
   {
-    id:'eczema', name:'湿疹 / 皮炎', dept:'皮肤科', tag:'',
+    id:'eczema', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'湿疹 / 皮炎', dept:'皮肤科', tag:'',
     summary:'皮肤干燥、红斑、丘疹伴瘙痒，容易反复发作。',
     symptoms:{itch:1, rash:1, dry_skin:0.8, blister:0.3},
     core:['itch','rash'],
@@ -341,7 +341,7 @@ const CONDITIONS = [
     see:'皮损渗液、脓疱、发热（可能继发感染），或大面积反复发作影响睡眠。'
   },
   {
-    id:'urticaria', name:'荨麻疹', dept:'皮肤科', tag:'',
+    id:'urticaria', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'荨麻疹', dept:'皮肤科', tag:'',
     summary:'突然出现风团、剧烈瘙痒，单个皮损多在 24 小时内消退，可反复成批出现。',
     symptoms:{hives:1, itch:0.9, rash:0.6, dyspnea:0.2},
     core:['hives'],
@@ -352,7 +352,7 @@ const CONDITIONS = [
     see:'出现口唇/眼睑肿胀、呼吸困难、声音嘶哑、头晕（警惕过敏性休克），请立即急诊。'
   },
   {
-    id:'conjunctivitis', name:'结膜炎', dept:'眼科', tag:'',
+    id:'conjunctivitis', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'结膜炎', dept:'眼科', tag:'',
     summary:'眼红、分泌物增多或眼痒，可为过敏性，也可为细菌/病毒感染。',
     symptoms:{eye_red:1, eye_discharge:0.8, eye_itch:0.8, eye_pain:0.4, vision_blur:0.2},
     core:['eye_red'],
@@ -364,7 +364,7 @@ const CONDITIONS = [
     see:'视力下降、剧烈眼痛、明显畏光、角膜混浊，或佩戴隐形眼镜期间发生，请尽快眼科就诊。'
   },
   {
-    id:'otitis', name:'急性中耳炎', dept:'耳鼻喉科', tag:'儿童多见',
+    id:'otitis', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'急性中耳炎', dept:'耳鼻喉科', tag:'儿童多见',
     summary:'耳痛、听力下降，常继发于感冒，儿童更常见。',
     symptoms:{ear_pain:1, fever:0.6, hearing_loss:0.5, tinnitus:0.4, headache:0.3},
     core:['ear_pain'],
@@ -375,7 +375,7 @@ const CONDITIONS = [
     see:'儿童、症状超过 48–72 小时、耳流脓、高热或耳后红肿，需耳鼻喉科评估是否使用抗生素。'
   },
   {
-    id:'dental', name:'牙痛 / 智齿冠周炎', dept:'口腔科', tag:'',
+    id:'dental', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'牙痛 / 智齿冠周炎', dept:'口腔科', tag:'',
     summary:'牙痛、咬合痛或智齿周围红肿，多为龋齿、牙髓炎或冠周炎。',
     symptoms:{toothache:1, facial_pain:0.6, fever:0.4, dysphagia:0.3, headache:0.2},
     core:['toothache'],
@@ -387,7 +387,7 @@ const CONDITIONS = [
     see:'面部肿胀、张口受限、发热、吞咽或呼吸困难，请尽快口腔科或急诊处理。'
   },
   {
-    id:'low_back', name:'腰肌劳损 / 腰椎问题', dept:'骨科 / 康复科', tag:'',
+    id:'low_back', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'腰肌劳损 / 腰椎问题', dept:'骨科 / 康复科', tag:'',
     summary:'久坐或负重后腰背酸痛，活动后可能加重，休息可缓解。',
     symptoms:{back_pain:1, myalgia:0.4, numbness:0.4, neck_pain:0.2},
     core:['back_pain'],
@@ -399,7 +399,7 @@ const CONDITIONS = [
     see:'下肢放射痛/麻木无力、大小便功能障碍（需急诊）、发热、外伤后疼痛，或超过 6 周不缓解。'
   },
   {
-    id:'cervical', name:'颈椎病', dept:'骨科 / 康复科', tag:'',
+    id:'cervical', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'颈椎病', dept:'骨科 / 康复科', tag:'',
     summary:'颈肩僵硬疼痛，可伴手臂麻木、头晕，与长期低头、姿势不良有关。',
     symptoms:{neck_pain:1, numbness:0.7, headache:0.5, dizziness:0.5, myalgia:0.3},
     core:['neck_pain'],
@@ -411,7 +411,7 @@ const CONDITIONS = [
     see:'手臂麻木无力加重、走路不稳、手精细动作变差，需骨科/神经科评估。'
   },
   {
-    id:'gout', name:'痛风', dept:'风湿免疫科', tag:'夜间突发',
+    id:'gout', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'痛风', dept:'风湿免疫科', tag:'夜间突发',
     summary:'突发单关节（多见于大脚趾）红、肿、热、剧痛，常在夜间或饮酒后发作。',
     symptoms:{joint_pain:1, joint_swelling:1, fever:0.3},
     core:['joint_pain','joint_swelling'],
@@ -423,7 +423,7 @@ const CONDITIONS = [
     see:'首次发作需查血尿酸并排除感染性关节炎；发热伴关节红肿需急诊排除化脓性关节炎。'
   },
   {
-    id:'sleep_anxiety', name:'失眠 / 焦虑状态', dept:'精神心理科 / 睡眠门诊', tag:'',
+    id:'sleep_anxiety', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'失眠 / 焦虑状态', dept:'精神心理科 / 睡眠门诊', tag:'',
     summary:'入睡困难、易醒或紧张不安，常与压力、作息紊乱和情绪有关。',
     symptoms:{insomnia:1, anxious:0.9, low_mood:0.6, palpitation:0.5, fatigue:0.5, headache:0.3, dizziness:0.2},
     core:['insomnia','anxious'],
@@ -435,7 +435,7 @@ const CONDITIONS = [
     see:'持续超过 1 个月影响工作生活，或出现明显情绪低落、兴趣减退，建议精神心理科/睡眠门诊。'
   },
   {
-    id:'hemorrhoids', name:'痔疮', dept:'肛肠科', tag:'',
+    id:'hemorrhoids', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'痔疮', dept:'肛肠科', tag:'',
     summary:'便血（鲜红色）、肛门疼痛或肿物脱出，常与便秘、久坐、久蹲有关。',
     symptoms:{rectal_bleeding:1, anal_pain:0.8, constipation:0.5, itch:0.3},
     core:['rectal_bleeding','anal_pain'],
@@ -447,7 +447,7 @@ const CONDITIONS = [
     see:'便血持续或量大、贫血、体重下降、40 岁以上新发便血，需排查结直肠疾病。'
   },
   {
-    id:'sinusitis', name:'急性鼻窦炎', dept:'耳鼻喉科', tag:'',
+    id:'sinusitis', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'急性鼻窦炎', dept:'耳鼻喉科', tag:'',
     summary:'鼻塞、脓涕超过 10 天，伴面部胀痛或压痛，多为鼻窦的细菌感染。',
     symptoms:{purulent_discharge:1, facial_pain:1, congestion:0.9, headache:0.6, smell_loss:0.5, fever:0.3, toothache:0.2, dry_cough:0.2},
     core:['purulent_discharge','facial_pain'],
@@ -460,7 +460,7 @@ const CONDITIONS = [
     see:'高热、面部肿胀、视力改变或剧烈头痛，需警惕眶内/颅内并发症，立即就医；症状超过 10 天不缓解也需耳鼻喉科评估。'
   },
   {
-    id:'aphthous', name:'口腔溃疡', dept:'口腔科', tag:'',
+    id:'aphthous', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'口腔溃疡', dept:'口腔科', tag:'',
     summary:'口腔黏膜出现单个或多个疼痛性溃疡，进食、说话时加重，常与疲劳、压力有关。',
     symptoms:{oral_ulcer:1, sore_throat:0.4, poor_appetite:0.4, dysphagia:0.3, fever:0.2},
     core:['oral_ulcer'],
@@ -473,7 +473,7 @@ const CONDITIONS = [
     see:'溃疡超过 2 周不愈合、反复发作、伴发热或皮疹，需口腔科排查白塞病等其他疾病。'
   },
   {
-    id:'tinea_pedis', name:'足癣 / 皮肤真菌感染', dept:'皮肤科', tag:'',
+    id:'tinea_pedis', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'足癣 / 皮肤真菌感染', dept:'皮肤科', tag:'',
     summary:'趾间或足底脱屑、瘙痒、水疱，潮湿闷热环境易发，具有传染性。',
     symptoms:{itch:1, dry_skin:0.8, rash:0.7, blister:0.3},
     core:['itch','dry_skin'],
@@ -484,7 +484,7 @@ const CONDITIONS = [
     see:'局部红肿热痛、流脓（可能继发细菌感染），或糖尿病患者出现足部问题，需尽快就诊；规范用药 2 周无改善也应就医。'
   },
   {
-    id:'gastritis', name:'急性胃炎 / 消化性溃疡', dept:'消化内科', tag:'',
+    id:'gastritis', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'急性胃炎 / 消化性溃疡', dept:'消化内科', tag:'',
     summary:'上腹隐痛或烧灼感，常与进食相关，可能为胃炎或消化性溃疡。',
     symptoms:{epigastric_pain:1, heartburn:0.6, nausea:0.6, bloating:0.6, belching:0.5, poor_appetite:0.5, gi_bleed:0.2},
     core:['epigastric_pain'],
@@ -496,7 +496,7 @@ const CONDITIONS = [
     see:'黑便、呕血、体重下降、吞咽困难，或疼痛剧烈、持续加重，需尽快胃镜检查；幽门螺杆菌检测需到医院完成。'
   },
   {
-    id:'hfmd', name:'手足口病', dept:'儿科 / 感染科', tag:'儿童多见',
+    id:'hfmd', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'手足口病', dept:'儿科 / 感染科', tag:'儿童多见',
     summary:'儿童多见，发热伴口腔疱疹和手足皮疹，多数为自限性，少数可发展为重症。',
     symptoms:{hand_foot_rash:1, oral_ulcer:0.9, fever:0.8, sore_throat:0.5, poor_appetite:0.5, fatigue:0.3},
     core:['hand_foot_rash','oral_ulcer'],
@@ -507,7 +507,7 @@ const CONDITIONS = [
     see:'持续高热、精神差、嗜睡、抽搐、肢体抖动、呼吸心率明显增快，是重症信号，需立即就医。'
   },
   {
-    id:'heat_illness', name:'中暑', dept:'急诊科', tag:'夏季高发',
+    id:'heat_illness', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'中暑', dept:'急诊科', tag:'夏季高发',
     summary:'高温高湿环境下出现头晕、乏力、恶心，严重时可出现高热和意识障碍。',
     symptoms:{heat_exposure:1, dizziness:0.9, nausea:0.7, headache:0.6, fatigue:0.6, vomiting:0.4, palpitation:0.4},
     core:['heat_exposure'],
@@ -519,7 +519,7 @@ const CONDITIONS = [
     see:'体温超过 40℃、意识模糊、抽搐、无汗或皮肤湿冷，可能是热射病，立即拨打 120。'
   },
   {
-    id:'costochondritis', name:'肋软骨炎 / 胸壁疼痛', dept:'骨科 / 胸外科', tag:'需排除心脏问题',
+    id:'costochondritis', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'肋软骨炎 / 胸壁疼痛', dept:'骨科 / 胸外科', tag:'需排除心脏问题',
     summary:'胸壁局部按压痛，深呼吸、咳嗽或转身时加重，多为肋软骨或胸壁肌肉的良性炎症。',
     symptoms:{rib_pain:1, chest_wall_pain:1, chest_pain:0.4, dyspnea:0.2, myalgia:0.2},
     core:['rib_pain','chest_wall_pain'],
@@ -3355,6 +3355,9 @@ function renderCondition(c, i, openFirst){
     '</summary>' +
     '<div class="cbody">' +
       '<p class="sum">' + c.summary + '</p>' +
+      '<p class="meta-src">来源：' + esc(c.source || '未标注') +
+        ' · 审核：' + esc(c.reviewer || '待审核') +
+        ' · 更新：' + esc(c.updated || '未标注') + '</p>' +
       '<div class="mrow"><span class="k">你提到的症状：</span>' + matched + '</div>' +
       '<div class="cols">' +
         '<div class="block"><h4>自我照护</h4><ul>' + care + '</ul></div>' +

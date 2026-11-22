@@ -55,6 +55,9 @@ const conditionLines = CONDITIONS.map(c => {
     `    dept: ${q(c.dept)},`,
     `    tag: ${q(c.tag || '')},`,
     `    summary: ${q(c.summary)},`,
+    `    source: ${q(c.source || '')},`,
+    `    reviewer: ${q(c.reviewer || '')},`,
+    `    updated: ${q(c.updated || '')},`,
     `    symptoms: { ${sym} },`,
     `    core: [${c.core.map(q).join(', ')}],`,
     `    care: [${c.care.map(q).join(', ')}],`,
@@ -96,6 +99,9 @@ export interface ConditionDef {
   dept: string;
   tag: string;
   summary: string;
+  source: string;
+  reviewer: string;
+  updated: string;
   symptoms: Record<string, number>;
   core: string[];
   care: string[];

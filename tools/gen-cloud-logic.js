@@ -33,7 +33,16 @@ const header = `/**
 `;
 fs.writeFileSync(path.join(OUT_DIR, 'logic.js'), header + m[1], 'utf8');
 
-// 3. 3D 资源（模型 + three.js 模块）一并同步，云端页面才能打开 3D 视图
+// 3. 静态附属页（隐私与数据说明）
+const EXTRA_FILES = ['privacy.html'];
+EXTRA_FILES.forEach(name => {
+  const src = path.join(ROOT, 'site', name);
+  if (fs.existsSync(src)) {
+    fs.copyFileSync(src, path.join(OUT_DIR, name));
+  }
+});
+
+// 4. 3D 资源（模型 + three.js 模块）一并同步，云端页面才能打开 3D 视图
 const ASSET_DIRS = [
   [path.join(ROOT, 'site', 'models'), path.join(OUT_DIR, 'models')],
   [path.join(ROOT, 'site', 'vendor'), path.join(OUT_DIR, 'vendor')]

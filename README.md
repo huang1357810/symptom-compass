@@ -19,6 +19,7 @@ symptom-checker/
 ├── README.md                本文件
 ├── site/
 │   ├── index.html           Web 版：整个应用（HTML + CSS + JS + 数据）
+│   ├── privacy.html         隐私与数据说明（本机存储、上传字段、删除方式）
 │   ├── config.example.js    反馈接口地址示例（复制为 config.js 后生效）
 │   └── preview.png          分享卡片图（og:image）
 ├── harmony/                 HarmonyOS 版（ArkTS + ArkUI，参加华为开发者大赛用）
@@ -47,8 +48,14 @@ symptom-checker/
 │   ├── test-nlu.js          自然语言识别自测（node tools/test-nlu.js）
 │   ├── test-profile.js      用户档案提醒规则自测（node tools/test-profile.js）
 │   ├── test-bodymap.js      人体部位图自测（node tools/test-bodymap.js）
+│   ├── test-redflags.js     危险信号评测（生成 docs/危险信号评测表.md）
+│   ├── test-privacy.js      隐私页与入口/缓存校验
+│   ├── test-content-meta.js 内容来源/审核字段三端一致性
+│   ├── add-content-meta.js  为疾病批量补来源/审核字段（可重复执行）
 │   ├── pack-cloudbase.js    打包 site/ 为 dist-cloudbase.zip（静态托管上传）
 │   └── test-cloudbase-fn.js CloudBase 反馈云函数自测（假 DB，不依赖云环境）
+├── docs/
+│   └── 危险信号评测表.md    CI 自动生成：15 条危险信号判红 + 负样本误报
 ├── serve-site.js            本地静态服务器（预览用，Node 自带模块，无依赖）
 └── 启动公网地址.ps1          备用：临时公网隧道（Windows）
 ```
@@ -266,6 +273,43 @@ Cloudflare 的 `workers.dev` 在国内可能打不开，可用 CloudBase 静态�
 5. 云函数设置环境变量 `ADMIN_KEY`；把 `site/config.example.js` 复制为 `config.js`，填 `https://<env-id>.tcloudbaseapp.com/api/feedback`
 
 原 Cloudflare 方案（`worker/`）保持不动，两套可并存；前端通过 `site/config.js` 里的 `window.__FEEDBACK_API__` 切换接口地址。
+
+## 隐私与数据说明
+
+独立页面 `site/privacy.html`，页脚与「我的档案」都有入口，离线也可访问（Service Worker 已预缓存）。
+
+内容覆盖：
+
+- **本机存储**：`mingbian.profile.v1` / `mingbian.timeline.v1` / `mingbian.feedback.v1` / `mingbian.pwa.dismissed` 各存什么、怎么删
+- **仅反馈会上传**：评分、标签、建议文字、本次 Top3 方向与症状名称、UA；IP 只存哈希用于限流
+- **明确不上传**：照片、年龄、长期用药、档案、时间轴、自由描述
+- **第三方与保留期**、未成年人提示、医疗边界、联系方式与更新日期
+
+自测：`node tools/test-privacy.js`（校验章节、入口、SW 缓存与云端副本）。
+
+## 危险信号评测（进 CI）
+
+`tools/test-redflags.js` 从页面抽取 `RED_FLAGS` 与分诊函数，逐条验证「一票判红」并统计负样本误报：
+
+- 15 条危险信号：按 `mode` 组合触发，要求 `flagsFor` 命中且 `computeTriage` 返回 `red`
+- 4 组常见轻症负样本：要求不判红
+- 结果自动写入 `docs/危险信号评测表.md`（固定内容，CI 重跑不产生 diff）
+
+随 CI 的 `tools/test-*.js` 循环执行；当前结果：**15/15 判红，负样本 0 误报**。
+
+## 内容来源与审核
+
+35 条疾病都带三个字段，结果卡片底部直接展示「来源 · 审核 · 更新」：
+
+| 字段 | 含义 | 当前值 |
+| --- | --- | --- |
+| `source` | 内容依据 | 公开教材与诊疗指南综合整理（《内科学》《外科学》《皮肤性病学》等） |
+| `reviewer` | 审核人/状态 | 明辨康途内容组（待执业医师复核）——诚实标注，不冒充已审核 |
+| `updated` | 版本日期 | 2026-11-22 |
+
+一条数据改三端：字段写在 `site/index.html` 的 `CONDITIONS` 里，`gen-harmony-data.js` 透传到 `Data.ets`，`gen-cloud-logic.js` 抽出的 `logic.js` 自动携带；`tools/test-content-meta.js` 校验三端一致。
+
+新增疾病时按 `tools/add-content-meta.js` 的字段格式补齐（该脚本可重复执行，已有字段会跳过）。
 
 ## 已知限制
 
