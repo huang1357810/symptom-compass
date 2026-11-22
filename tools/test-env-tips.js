@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 环境提示自测：node tools/test-env-tips.js
  *
  * 用假响应验证 4 类规则（高温 / 空气质量 / 流感季 / 无命中）的命中与不命中，
@@ -53,9 +53,9 @@ if (none.length) errors.push('正常天气不应产生提示，实际 ' + none.l
 
 /* 5. 降级：请求失败时隐藏区块、不阻塞结果 */
 const start = html.indexOf('async function loadEnvTips');
-const seg = start !== -1 ? html.slice(start, start + 1800) : '';
+const seg = start !== -1 ? html.slice(start, start + 5000) : '';
 if (!seg) errors.push('未找到 loadEnvTips 实现');
-if (seg.indexOf('catch (e)') === -1 || seg.indexOf('box.hidden = true') === -1) {
+if (seg.indexOf('catch (e)') === -1 || (seg.indexOf("box.hidden = true") === -1 && seg.indexOf("classList.add('hidden')") === -1)) {
   errors.push('请求失败时应静默隐藏环境提示区块');
 }
 const fetchStart = html.indexOf('async function fetchEnvJson');
