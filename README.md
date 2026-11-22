@@ -7,7 +7,8 @@
 - 线上地址：<https://mingbian-kangtu.huang-1357810.workers.dev>（Cloudflare Workers）
 - 版本：v2.10
 - 零依赖、零构建、零后端：整个应用就是一个 `index.html`
-- 所有计算在浏览器本地完成，**不收集、不上传任何用户数据**
+- 所有分诊计算在浏览器本地完成，**不上传症状、年龄、用药等健康数据**
+- 天气健康提示（可选）：输入城市查看高温 / 寒冷 / 空气质量 / 流感季 / 闷热提醒，可一键勾选相关症状（只发送城市名，失败自动隐藏）
 
 > ⚠️ 这是一个科普工具，不是诊断工具。它不能替代医生面诊，也不能用于自我确诊或自行用药决策。
 
@@ -52,7 +53,7 @@ symptom-checker/
 │   ├── test-privacy.js      隐私页与入口/缓存校验
 │   ├── test-content-meta.js 内容来源/审核字段三端一致性
 │   ├── test-regression.js   8 个典型输入的症状 id 与 top1 回归
-│   ├── test-env-tips.js     环境提示规则（假响应）与静默降级
+│   ├── test-weather-tips.js 天气健康提示规则（假响应）与点击勾选症状
 │   ├── test-drugs-meta.js   药品来源/核对字段校验（生成 docs/药品核对表.md）
 │   ├── add-content-meta.js  为疾病批量补来源/审核字段（可重复执行）
 

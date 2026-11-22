@@ -3044,19 +3044,21 @@ function bindEvents(){
 
   document.getElementById('toResults').addEventListener('click', showResults);
 
-  /* 环境提示：保存城市后立即按新城市查询，只存本机 */
+  /* 天气提示：保存城市后立即查询；点「看相关症状」勾选并滚到症状区 */
   const envSave = document.getElementById('envCitySave');
-  if (envSave){
-    envSave.addEventListener('click', () => {
-      const inp = document.getElementById('envCityInput');
-      const v = inp ? inp.value.trim() : '';
-      try {
-        if (v) localStorage.setItem(ENV_CITY_KEY, v);
-        else localStorage.removeItem(ENV_CITY_KEY);
-      } catch (e) { /* 隐私模式等场景忽略 */ }
-      loadEnvTips();
+  if (envSave) envSave.addEventListener('click', saveEnvCity);
+
+  const envList = document.getElementById('envTipList');
+  if (envList){
+    envList.addEventListener('click', e => {
+      const btn = e.target && e.target.closest ? e.target.closest('.env-see') : null;
+      if (!btn) return;
+      selectSymptomForTip(btn.getAttribute('data-sym'));
     });
   }
+
+  /* 已有城市时页面加载即请求，不阻塞主流程 */
+  initWeatherTips();
 
   const restartBtn = document.getElementById('restart');
   if (restartBtn) restartBtn.addEventListener('click', restartAll);
@@ -3559,8 +3561,6 @@ async function showResults(){
   } catch (e) { /* file:// 等环境可能不允许，忽略 */ }
   document.getElementById('shareHint').classList.toggle('hidden', !shareable);
 
-  /* 环境提示异步加载，失败静默，不影响结果展示 */
-  loadEnvTips();
 
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
@@ -3613,52 +3613,95 @@ function renderCondition(c, i, openFirst){
 }
 
 /* =========================================================
-   环境提示（可选）：城市名 → Open-Meteo 天气/空气质量
+   天气健康提示（可选）：城市名 → Open-Meteo 天气/空气质量
    不请求定位；任一请求失败静默隐藏，不阻塞分诊
    ========================================================= */
 const ENV_CITY_KEY = 'mingbian.envCity.v1';
+const ENV_CACHE_KEY = 'mingbian.weatherCache.v1';
+const ENV_CACHE_MS = 60 * 60 * 1000;
 
-/* 纯函数：根据温度、PM2.5、月份与已选症状返回提示，便于测试 */
-function envTipsFor(input){
+/* 纯函数：按天气/空气/月份生成提示卡（与是否选症状无关），最多 3 张。
+   每张卡带 1–2 个相关症状按钮，点击后由 selectSymptomForTip 勾选。 */
+function weatherTipsFor(input){
   const src = input || {};
   const tempC = typeof src.tempC === 'number' && !isNaN(src.tempC) ? src.tempC : null;
   const pm25 = typeof src.pm25 === 'number' && !isNaN(src.pm25) ? src.pm25 : null;
+  const humidity = typeof src.humidity === 'number' && !isNaN(src.humidity) ? src.humidity : null;
   const month = typeof src.month === 'number' ? src.month : new Date().getMonth() + 1;
-  const sel = src.selected instanceof Set ? src.selected : new Set(src.selected || []);
   const tips = [];
 
-  const heatRelated = sel.has('heat_exposure') || sel.has('dehydration') || sel.has('high_fever');
-  if (tempC !== null && tempC >= 35 && heatRelated){
+  if (tempC !== null && tempC >= 35){
     tips.push({
       id: 'heat',
-      title: '高温天气',
-      text: '当前气温约 ' + Math.round(tempC) + '℃，与你选择的高温/脱水相关症状叠加，注意补水、避免正午外出，症状加重及时就医。'
+      title: '高温 · 注意中暑与脱水',
+      data: Math.round(tempC) + '℃',
+      text: '气温偏高，注意补水、减少正午户外活动；出现头晕、恶心、少尿等情况需要留意。',
+      symptoms: ['heat_exposure', 'dehydration']
     });
   }
 
-  const airRelated = sel.has('dry_cough') || sel.has('sputum') || sel.has('wheeze') || sel.has('chest_tight');
-  if (pm25 !== null && pm25 >= 75 && airRelated){
+  if (tempC !== null && tempC <= 5){
+    tips.push({
+      id: 'cold',
+      title: '寒冷 · 呼吸道与心脑血管风险',
+      data: Math.round(tempC) + '℃',
+      text: '气温较低，注意保暖；冷空气可能加重咳嗽、胸闷，心脑血管人群需要留意。',
+      symptoms: ['dry_cough', 'chest_tight']
+    });
+  }
+
+  if (pm25 !== null && pm25 >= 75){
     tips.push({
       id: 'air',
-      title: '空气质量',
-      text: '当前 PM2.5 约 ' + Math.round(pm25) + ' μg/m³，空气质量较差，呼吸道症状可能加重，外出建议戴口罩并减少户外活动。'
+      title: '空气质量 · 呼吸道症状可能加重',
+      data: 'PM2.5 ' + Math.round(pm25),
+      text: '空气质量较差，咳嗽、喘息等呼吸道症状可能加重，外出建议戴口罩并减少户外活动。',
+      symptoms: ['dry_cough', 'wheeze']
     });
   }
 
-  const fluSeason = month >= 11 || month <= 3;
-  if (fluSeason && (sel.has('fever') || sel.has('high_fever'))){
+  if (month >= 11 || month <= 3){
     tips.push({
       id: 'flu',
-      title: '流感季',
-      text: '当前处于流感高发季节，发热伴咽痛、肌肉酸痛时注意休息与隔离，老人、儿童、孕妇及有基础病者尽早就医。'
+      title: '流感高发季',
+      data: (month >= 11 ? month : month + 12) + ' 月',
+      text: '当前为流感高发季，注意休息与手卫生；发热、咽痛、肌肉酸痛时建议尽早就医。',
+      symptoms: ['fever', 'sore_throat']
     });
   }
 
-  return tips;
+  if (humidity !== null && tempC !== null && humidity >= 85 && tempC >= 28){
+    tips.push({
+      id: 'muggy',
+      title: '闷热 · 皮肤不适',
+      data: '湿度 ' + Math.round(humidity) + '% · ' + Math.round(tempC) + '℃',
+      text: '闷热潮湿，皮肤容易出汗不透气，注意清洁与通风；皮疹、瘙痒加重时需要留意。',
+      symptoms: ['itch', 'rash']
+    });
+  }
+
+  return tips.slice(0, 3);
 }
 
 function envCityName(){
   try { return localStorage.getItem(ENV_CITY_KEY) || ''; } catch (e) { return ''; }
+}
+
+/* 同一城市 1 小时内不重复请求 */
+function readWeatherCache(city){
+  try {
+    const raw = JSON.parse(localStorage.getItem(ENV_CACHE_KEY) || 'null');
+    if (raw && raw.city === city && typeof raw.t === 'number' && Date.now() - raw.t < ENV_CACHE_MS){
+      return raw.data || null;
+    }
+  } catch (e) { /* 缓存损坏时忽略 */ }
+  return null;
+}
+
+function writeWeatherCache(city, data){
+  try {
+    localStorage.setItem(ENV_CACHE_KEY, JSON.stringify({ city, t: Date.now(), data }));
+  } catch (e) { /* 隐私模式等场景忽略 */ }
 }
 
 async function fetchEnvJson(url){
@@ -3673,54 +3716,119 @@ async function fetchEnvJson(url){
   }
 }
 
-async function loadEnvTips(){
+/* 把提示卡渲染到首页区块；无提示或失败时整块隐藏 */
+function renderWeatherTips(tips){
   const box = document.getElementById('envTips');
-  if (!box) return;
-  const city = envCityName();
-  const input = document.getElementById('envCityInput');
-  if (input && !input.value) input.value = city;
+  const list = document.getElementById('envTipList');
+  const meta = document.getElementById('envMeta');
+  if (!box || !list) return;
 
-  /* 没有城市：只展示折叠入口，不发起任何请求 */
-  if (!city){
-    box.classList.remove('hidden');
-    box.open = false;
-    const empty = document.getElementById('envTipList');
-    if (empty) empty.innerHTML = '';
+  if (!tips.length){
+    list.innerHTML = '';
+    if (meta){ meta.textContent = ''; meta.classList.add('hidden'); }
+    box.hidden = true;
     return;
   }
 
-  try {
-    const geo = await fetchEnvJson('https://geocoding-api.open-meteo.com/v1/search?name=' +
-      encodeURIComponent(city) + '&count=1&language=zh');
-    const hit = geo && Array.isArray(geo.results) ? geo.results[0] : null;
-    if (!hit) throw new Error('city not found');
+  if (meta){
+    meta.textContent = '数据来自 Open-Meteo，仅供参考';
+    meta.classList.remove('hidden');
+  }
+  list.innerHTML = tips.map(t =>
+    '<div class="env-tip">' +
+      '<div class="env-tip-head"><b>' + esc(t.title) + '</b>' +
+        '<span class="env-data">' + esc(t.data) + '</span></div>' +
+      '<p>' + esc(t.text) + '</p>' +
+      '<div class="env-links">' + (t.symptoms || []).map(id =>
+        '<button type="button" class="env-see" data-sym="' + esc(id) + '">看相关症状：' +
+          esc(SYMPTOMS[id] ? SYMPTOMS[id].label : id) + '</button>'
+      ).join('') + '</div>' +
+    '</div>'
+  ).join('');
+  box.hidden = false;
+}
 
-    const lat = hit.latitude, lon = hit.longitude;
-    const [weather, air] = await Promise.all([
-      fetchEnvJson('https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current=temperature_2m'),
-      fetchEnvJson('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=pm2_5')
-    ]);
-
-    const tempC = weather && weather.current ? weather.current.temperature_2m : null;
-    const pm25 = air && air.current ? air.current.pm2_5 : null;
-    const tips = envTipsFor({ tempC, pm25, month: new Date().getMonth() + 1, selected: [...selected] });
-
-    const list = document.getElementById('envTipList');
-    if (!tips.length){
-      if (list) list.innerHTML = '';
-      box.classList.add('hidden');
-      return;
-    }
-    if (list){
-      list.innerHTML = tips.map(t =>
-        '<div class="env-tip"><b>' + esc(t.title) + '</b>：' + esc(t.text) + '</div>'
-      ).join('');
-    }
-    box.classList.remove('hidden');
+/* 点击「看相关症状」：勾选对应症状并滚到症状区，不自动出结果 */
+function selectSymptomForTip(id){
+  if (!SYMPTOMS[id]) return false;
+  if (!selected.has(id)) toggle(id);
+  if (typeof setPager === 'function') setPager(0, false);
+  const box = document.getElementById('allSymptomsBox');
+  if (box){
     box.open = true;
+    if (box.scrollIntoView) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  highlightChips([id]);
+  return true;
+}
+
+async function fetchWeatherData(city, force){
+  if (!force){
+    const cached = readWeatherCache(city);
+    if (cached) return cached;
+  }
+  const geo = await fetchEnvJson('https://geocoding-api.open-meteo.com/v1/search?name=' +
+    encodeURIComponent(city) + '&count=1&language=zh');
+  const hit = geo && Array.isArray(geo.results) ? geo.results[0] : null;
+  if (!hit) throw new Error('city not found');
+
+  const lat = hit.latitude, lon = hit.longitude;
+  const [weather, air] = await Promise.all([
+    fetchEnvJson('https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
+      '&current=temperature_2m,relative_humidity_2m'),
+    fetchEnvJson('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon +
+      '&current=pm2_5')
+  ]);
+
+  const data = {
+    tempC: weather && weather.current ? weather.current.temperature_2m : null,
+    humidity: weather && weather.current ? weather.current.relative_humidity_2m : null,
+    pm25: air && air.current ? air.current.pm2_5 : null,
+    month: new Date().getMonth() + 1
+  };
+  writeWeatherCache(city, data);
+  return data;
+}
+
+/* 页面加载时调用：有城市才请求（优先 1 小时缓存），失败静默隐藏整块 */
+async function initWeatherTips(){
+  const box = document.getElementById('envTips');
+  if (!box) return;
+  const input = document.getElementById('envCityInput');
+  const city = envCityName();
+  if (input && !input.value) input.value = city;
+  if (!city) return;
+
+  try {
+    const data = await fetchWeatherData(city, false);
+    renderWeatherTips(weatherTipsFor(data));
   } catch (e) {
-    /* 请求失败静默隐藏，不影响分诊结果 */
-    box.classList.add('hidden');
+    box.hidden = true;
+  }
+}
+
+/* 保存城市后立即请求（跳过缓存） */
+async function saveEnvCity(){
+  const input = document.getElementById('envCityInput');
+  const city = input ? input.value.trim() : '';
+  try {
+    if (city) localStorage.setItem(ENV_CITY_KEY, city);
+    else localStorage.removeItem(ENV_CITY_KEY);
+    localStorage.removeItem(ENV_CACHE_KEY);
+  } catch (e) { /* 隐私模式等场景忽略 */ }
+
+  const box = document.getElementById('envTips');
+  if (!city){
+    if (box) box.hidden = true;
+    return;
+  }
+  if (box) box.hidden = false;
+
+  try {
+    const data = await fetchWeatherData(city, true);
+    renderWeatherTips(weatherTipsFor(data));
+  } catch (e) {
+    if (box) box.hidden = true;
   }
 }
 
@@ -3748,5 +3856,5 @@ if (typeof document !== 'undefined'){
   document.addEventListener('DOMContentLoaded', init);
 }
 if (typeof module !== 'undefined' && module.exports){
-  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, mergeRedFlags, scoreConditions, gradeOf, SKIN_SYMPTOMS, analyzeSkinPixels, describeSkinFeatures, skinAdvice, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline, envTipsFor, ENV_CITY_KEY };
+  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, mergeRedFlags, scoreConditions, gradeOf, SKIN_SYMPTOMS, analyzeSkinPixels, describeSkinFeatures, skinAdvice, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline, weatherTipsFor, selectSymptomForTip, ENV_CITY_KEY, ENV_CACHE_KEY, ENV_CACHE_MS };
 }
