@@ -3682,7 +3682,7 @@ async function loadEnvTips(){
 
   /* 没有城市：只展示折叠入口，不发起任何请求 */
   if (!city){
-    box.hidden = false;
+    box.classList.remove('hidden');
     box.open = false;
     const empty = document.getElementById('envTipList');
     if (empty) empty.innerHTML = '';
@@ -3708,7 +3708,7 @@ async function loadEnvTips(){
     const list = document.getElementById('envTipList');
     if (!tips.length){
       if (list) list.innerHTML = '';
-      box.hidden = true;
+      box.classList.add('hidden');
       return;
     }
     if (list){
@@ -3716,11 +3716,11 @@ async function loadEnvTips(){
         '<div class="env-tip"><b>' + esc(t.title) + '</b>：' + esc(t.text) + '</div>'
       ).join('');
     }
-    box.hidden = false;
+    box.classList.remove('hidden');
     box.open = true;
   } catch (e) {
     /* 请求失败静默隐藏，不影响分诊结果 */
-    box.hidden = true;
+    box.classList.add('hidden');
   }
 }
 
