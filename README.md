@@ -51,12 +51,16 @@ symptom-checker/
 │   ├── test-redflags.js     危险信号评测（生成 docs/危险信号评测表.md）
 │   ├── test-privacy.js      隐私页与入口/缓存校验
 │   ├── test-content-meta.js 内容来源/审核字段三端一致性
+│   ├── test-regression.js   8 个典型输入的症状 id 与 top1 回归
+│   ├── test-env-tips.js     环境提示规则（假响应）与静默降级
+│   ├── test-drugs-meta.js   药品来源/核对字段校验（生成 docs/药品核对表.md）
 │   ├── add-content-meta.js  为疾病批量补来源/审核字段（可重复执行）
 
 ├── docs/
 │   ├── 架构图.md            三层结构 / 数据流 / 部署拓扑（Mermaid）
 │   ├── API设计.md           所有接口、参数、错误码与隐私边界
-│   ├── evals-latest.json    评测产物（18/18 判红，42 条用例，0 误报）
+│   ├── evals-latest.json    评测产物（19/19 判红，48 条用例，0 误报）
+│   ├── 药品核对表.md        药名库来源/核对状态（NMPA 列待人工填写）
 │   └── 危险信号评测表.md    人读表格版评测结果
 ├── serve-site.js            本地静态服务器（预览用，Node 自带模块，无依赖）
 └── 启动公网地址.ps1          备用：临时公网隧道（Windows）
@@ -296,11 +300,11 @@ const SYMPTOMS = {
 
 `tools/test-redflags.js` 从页面抽取 `RED_FLAGS` 与分诊函数，逐条验证「一票判红」并统计负样本误报：
 
-- 18 条危险信号：按 `mode` 组合触发，要求 `flagsFor` 命中且 `computeTriage` 返回 `red`
+- 20 条危险信号：19 条按 `mode` 组合触发，要求 `flagsFor` 命中且 `computeTriage` 返回 `red`；1 条为条件黄牌（发热超过 5 天）
 - 4 组常见轻症负样本：要求不判红
 - 结果自动写入 `docs/危险信号评测表.md`（固定内容，CI 重跑不产生 diff）
 
-随 CI 的 `tools/test-*.js` 循环执行；当前结果：**18/18 判红，负样本 0 误报**。
+随 CI 的 `tools/test-*.js` 循环执行；当前结果：**19/19 判红，条件黄牌 1/1，负样本 0 误报**。
 
 ## 内容来源与审核
 
@@ -321,7 +325,7 @@ const SYMPTOMS = {
 不做定时推送与审核工作流，只做「能纠错、能召回、能证明」的展示层：
 
 - **架构与接口文档**：`docs/架构图.md`（Mermaid 三层 + 数据流 + 部署拓扑）、`docs/API设计.md`（全部接口、入参出参、错误码）
-- **评测跑批**：`node tools/run-evals.js` 跑 42 条用例（18 条危险信号 + 8 组加权 + 3 条年龄分支 + 5 条用药冲突 + 8 组负样本），按类别汇总输出 `docs/evals-latest.json` 与 `worker/evals-seed.json`；CI 在自测后执行并校验产物已提交
+- **评测跑批**：`node tools/run-evals.js` 跑 48 条用例（20 条危险信号含 1 条条件黄牌 + 8 组加权 + 4 条条件规则 + 3 条年龄分支 + 5 条用药冲突 + 8 组负样本），按类别汇总输出 `docs/evals-latest.json` 与 `worker/evals-seed.json`；CI 在自测后执行并校验产物已提交
 - **评测展示**：`GET /api/evals/latest`（KV 优先、打包 seed 兜底）；`POST /api/evals/publish?key=` 可发布新结果；后台「评测」板块显示判红率、误报数、最近运行
 - **版本闭环**：反馈记录带 `contentVersion`；后台明细表有「内容版本」列，标记已改进时可填 `fixedVersion`，显示为「已改进（v1）」
 - **匿名运营**：`POST /api/metrics/event` 只收 `{ symptomCount, level }`，按日聚合为 `{ total, red, yellow, green }`；后台「运营」板块显示今日查询量与判红率；前端失败静默

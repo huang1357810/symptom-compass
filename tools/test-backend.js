@@ -42,13 +42,13 @@ try {
   errors.push('docs/evals-latest.json 不是合法 JSON');
 }
 if (evals) {
-  must(evals.version === 'eval-v2', '评测版本应为 eval-v2');
-  must(evals.total === 18 && evals.red === 18, '危险信号应为 18/18 判红');
+  must(/^eval-v\d+$/.test(String(evals.version)), '评测版本应为 eval-vN');
+  must(evals.total > 0 && evals.red === evals.total, '危险信号应全部判红');
   must(evals.redRate === 1, '判红率应为 1');
   must(evals.negatives === 8 && evals.falsePositive === 0, '负样本应为 8 组、0 误报');
   must(evals.caseTotal >= 40, '用例总数应 >= 40');
-  must(Array.isArray(evals.categories) && evals.categories.length >= 5, '缺少按类别汇总');
-  must(Array.isArray(evals.cases) && evals.cases.length === 18, '红旗用例应为 18');
+  must(Array.isArray(evals.categories) && evals.categories.length >= 6, '缺少按类别汇总');
+  must(Array.isArray(evals.cases) && evals.cases.length === evals.total + (evals.yellow || 0), '红旗用例数量不符');
   must(Array.isArray(evals.negativeCases) && evals.negativeCases.length === 8, '负样本应为 8');
 }
 const seed = path.join(ROOT, 'worker', 'evals-seed.json');

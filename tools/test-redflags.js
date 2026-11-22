@@ -36,25 +36,43 @@ vm.runInContext('patientAge = 30;', sandbox);
 
 const labelOf = id => (SYMPTOMS[id] ? SYMPTOMS[id].label : id);
 const comboOf = f => (f.mode === 'all' ? f.ids.slice() : [f.ids[0]]);
+/* 条件红旗：用刚好满足条件的最小上下文调用 */
+const ctxOf = f => {
+  const ctx = {};
+  if (f.when && typeof f.when.ageMax === 'number') ctx.age = f.when.ageMax - 0.01;
+  if (f.when && typeof f.when.durationDaysMin === 'number') ctx.durationDays = f.when.durationDaysMin;
+  return ctx;
+};
+const condText = f => {
+  if (!f.when) return '';
+  const parts = [];
+  if (typeof f.when.ageMax === 'number') parts.push('年龄 < ' + f.when.ageMax + ' 岁');
+  if (typeof f.when.durationDaysMin === 'number') parts.push('病程 ≥ ' + f.when.durationDaysMin + ' 天');
+  return parts.join('，');
+};
 
 const rows = [];
 let hit = 0;
+let yellowOk = 0;
 RED_FLAGS.forEach((f, i) => {
   const combo = comboOf(f);
   const set = new Set(combo);
-  const hits = flagsFor(set);
+  const hits = flagsFor(set, ctxOf(f));
   const triage = computeTriage([], hits);
   const matched = hits.some(h => h.title === f.title);
-  const isRed = triage.level === 'red';
-  if (matched && isRed) hit += 1;
+  const expectLevel = f.level === 'yellow' ? 'yellow' : 'red';
+  const ok = matched && triage.level === expectLevel;
+  if (ok && expectLevel === 'red') hit += 1;
+  if (ok && expectLevel === 'yellow') yellowOk += 1;
   rows.push({
     index: i + 1,
     title: f.title,
     input: combo.map(labelOf).join(' + '),
+    cond: condText(f),
+    expectLevel,
     level: triage.level,
-    ok: matched && isRed,
-    matched,
-    isRed
+    ok,
+    matched
   });
 });
 
@@ -86,19 +104,21 @@ const md = [
   '',
   '> 由 `tools/test-redflags.js` 自动生成，随 CI 每次重跑；请勿手工修改。',
   '',
-  '- 评测集版本：v1（2026-11-22）',
-  '- 危险信号：' + RED_FLAGS.length + ' 条',
-  '- 命中并判红：' + hit + ' 条（' + hit + ' / ' + RED_FLAGS.length + '）',
+  '- 评测集版本：v3（2026-11-22）',
+  '- 危险信号：' + RED_FLAGS.length + ' 条（其中条件规则 ' + RED_FLAGS.filter(f => f.when).length + ' 条）',
+  '- 命中并判红：' + hit + ' 条（' + hit + ' / ' + RED_FLAGS.filter(f => f.level !== 'yellow').length + '）',
+  '- 条件黄牌命中：' + yellowOk + ' 条',
   '- 负样本：' + negatives.length + ' 组',
   '- 误判为红：' + falsePositive + ' 组',
   '',
   '## 危险信号',
   '',
-  '| # | 危险信号 | 触发输入 | 判定 | 结果 |',
-  '| --- | --- | --- | --- | --- |',
+  '| # | 危险信号 | 触发输入 | 生效条件 | 期望 | 判定 | 结果 |',
+  '| --- | --- | --- | --- | --- | --- | --- |',
   ...rows.map(r =>
-    '| ' + r.index + ' | ' + r.title + ' | ' + r.input + ' | ' + r.level + ' | ' +
-    (r.ok ? '通过' : (r.matched ? '未判红' : '未命中')) + ' |'
+    '| ' + r.index + ' | ' + r.title + ' | ' + r.input + ' | ' + (r.cond || '—') + ' | ' +
+    r.expectLevel + ' | ' + r.level + ' | ' +
+    (r.ok ? '通过' : (r.matched ? '等级不符' : '未命中')) + ' |'
   ),
   '',
   '## 负样本（不应判红）',
@@ -116,11 +136,16 @@ fs.writeFileSync(DOC, md, 'utf8');
 
 /* 断言 */
 const errors = [];
-if (hit !== RED_FLAGS.length) {
-  errors.push('危险信号命中不足：' + hit + ' / ' + RED_FLAGS.length);
+const redTotal = RED_FLAGS.filter(f => f.level !== 'yellow').length;
+const yellowTotal = RED_FLAGS.filter(f => f.level === 'yellow').length;
+if (hit !== redTotal) {
+  errors.push('危险信号命中不足：' + hit + ' / ' + redTotal);
+}
+if (yellowOk !== yellowTotal) {
+  errors.push('条件黄牌命中不足：' + yellowOk + ' / ' + yellowTotal);
 }
 rows.filter(r => !r.ok).forEach(r => {
-  errors.push('未正确判红：' + r.title + '（matched=' + r.matched + ', level=' + r.level + '）');
+  errors.push('未按预期判级：' + r.title + '（期望 ' + r.expectLevel + '，matched=' + r.matched + ', level=' + r.level + '）');
 });
 if (falsePositive > 0) {
   errors.push('负样本被误判为红：' + falsePositive + ' 组');
@@ -138,5 +163,5 @@ if (errors.length) {
   console.error('危险信号评测失败：\n  ' + errors.join('\n  '));
   process.exit(1);
 }
-console.log('危险信号 ' + hit + '/' + RED_FLAGS.length + ' 全部判红；负样本 ' +
-  negatives.length + ' 组，误报 ' + falsePositive + '；已更新 docs/危险信号评测表.md');
+console.log('危险信号 ' + hit + '/' + redTotal + ' 全部判红；条件黄牌 ' + yellowOk + '/' + yellowTotal +
+  '；负样本 ' + negatives.length + ' 组，误报 ' + falsePositive + '；已更新 docs/危险信号评测表.md');

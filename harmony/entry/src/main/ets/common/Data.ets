@@ -673,7 +673,9 @@ export const RED_FLAGS: RedFlagDef[] = [
   { ids: ["heat_exposure", "confusion"], mode: "all", title: "高温暴露 + 意识改变", msg: "可能是热射病，致死率高，请立即拨打 120 并开始物理降温。" },
   { ids: ["thunderclap_headache"], mode: 'any', title: "雷击样剧烈头痛", msg: "突发“这辈子最剧烈”的头痛，需要立即排除蛛网膜下腔出血，请拨打 120。" },
   { ids: ["persistent_high_fever"], mode: 'any', title: "持续高热超过 3 天", msg: "高热持续 3 天以上不退，需尽快就医查因，不要继续自行退烧观察。" },
-  { ids: ["syncope"], mode: 'any', title: "意识丧失 / 晕厥", msg: "突然晕倒或短暂失去意识，需尽快排查心脑血管原因；若未清醒立即拨打 120。" }
+  { ids: ["syncope"], mode: 'any', title: "意识丧失 / 晕厥", msg: "突然晕倒或短暂失去意识，需尽快排查心脑血管原因；若未清醒立即拨打 120。" },
+  { ids: ["fever"], mode: 'any', title: "3 个月以下婴儿发热", msg: "3 个月以下婴儿发热可能提示严重感染，请立即就医，不要在家观察。" },
+  { ids: ["fever"], mode: 'any', title: "发热超过 5 天", msg: "发热持续 5 天以上仍未缓解，建议尽快就医查找原因，不要继续只靠退烧药观察。" }
 ];
 
 export const PRESETS: Record<string, string[]> = {

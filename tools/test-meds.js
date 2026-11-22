@@ -18,7 +18,8 @@ const errors = [];
 const cats = new Set(CHRONIC_MEDS.map(c => c.id));
 const names = new Set();
 
-MED_DICT.forEach(([name, cat]) => {
+MED_DICT.forEach(m => {
+  const name = m.n, cat = m.cat;
   if (!name) errors.push('药名为空');
   if (!cats.has(cat)) errors.push(name + ' 的类别不存在：' + cat);
   if (names.has(name)) errors.push('药名重复：' + name);

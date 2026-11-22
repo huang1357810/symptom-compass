@@ -146,23 +146,26 @@ id=<反馈 id>&status=improved&fixedVersion=v1&note=已补充病程判断
 
 ```json
 {
-  "version": "eval-v2",
+  "version": "eval-v3",
   "generatedAt": "2026-11-22",
-  "total": 18,
-  "red": 18,
+  "total": 19,
+  "red": 19,
   "redRate": 1,
+  "yellow": 1,
   "negatives": 8,
   "falsePositive": 0,
   "falsePositiveRate": 0,
-  "caseTotal": 42,
+  "caseTotal": 48,
   "categories": [
-    { "id": "redflags", "label": "危险信号", "total": 18, "pass": 18, "red": 18, "fp": 0 },
-    { "id": "weighted", "label": "问卷加权", "total": 8, "pass": 8, "red": 1, "fp": 0 }
+    { "id": "redflags", "label": "危险信号", "total": 20, "pass": 20, "red": 19, "yellow": 1, "fp": 0 },
+    { "id": "weighted", "label": "问卷加权", "total": 8, "pass": 8, "red": 1, "fp": 0 },
+    { "id": "conditions", "label": "条件规则", "total": 4, "pass": 4, "red": 1, "fp": 0 }
   ],
   "cases": [{ "title": "胸痛", "input": "胸痛", "level": "red", "ok": true }],
   "negativeCases": [{ "input": "乏力", "level": "yellow", "falsePositive": false }],
   "weightedCases": [{ "name": "高热 + 卧床", "score": { "duration": 0, "fever": 3, "activity": 2 }, "expect": "yellow", "level": "yellow", "ok": true }],
   "ageCases": [{ "name": "6 个月发热", "age": 0.5, "expect": "red", "level": "red", "ok": true }],
+  "condCases": [{ "name": "发热 6 天（条件黄牌）", "age": 30, "durationDays": 8, "expect": "yellow", "expectFlag": "发热超过 5 天", "level": "yellow", "ok": true }],
   "medsCases": [{ "name": "18 岁以下 + 阿司匹林", "expect": "red", "hits": 2, "ok": true }]
 }
 ```

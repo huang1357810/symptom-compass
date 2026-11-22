@@ -89,7 +89,8 @@ cases.push({
   name: 'matched 对未知症状回退显示 id',
   run() {
     return html.indexOf('SYMPTOMS[id] && SYMPTOMS[id].label ? SYMPTOMS[id].label : String(id)') !== -1 &&
-      html.indexOf('mergeRedFlags(flagsFor(selected), data.flags)') !== -1;
+      html.indexOf('mergeRedFlags(flagsFor(selected') !== -1 &&
+      html.indexOf('data.flags)') !== -1;
   }
 });
 

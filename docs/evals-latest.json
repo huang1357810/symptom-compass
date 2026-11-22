@@ -1,20 +1,22 @@
 {
-  "version": "eval-v2",
+  "version": "eval-v3",
   "generatedAt": "2026-11-22",
-  "total": 18,
-  "red": 18,
+  "total": 19,
+  "red": 19,
   "redRate": 1,
+  "yellow": 1,
   "negatives": 8,
   "falsePositive": 0,
   "falsePositiveRate": 0,
-  "caseTotal": 42,
+  "caseTotal": 48,
   "categories": [
     {
       "id": "redflags",
       "label": "危险信号",
-      "total": 18,
-      "pass": 18,
-      "red": 18,
+      "total": 20,
+      "pass": 20,
+      "red": 19,
+      "yellow": 1,
       "fp": 0
     },
     {
@@ -23,6 +25,14 @@
       "total": 8,
       "pass": 8,
       "red": 1,
+      "fp": 0
+    },
+    {
+      "id": "conditions",
+      "label": "条件规则",
+      "total": 4,
+      "pass": 4,
+      "red": 2,
       "fp": 0
     },
     {
@@ -54,109 +64,161 @@
     {
       "title": "胸痛",
       "input": "胸痛",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "呼吸困难",
       "input": "气短/呼吸困难",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "咯血",
       "input": "咯血",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "呕血 / 黑便",
       "input": "呕血/黑便",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "单侧肢体无力",
       "input": "单侧肢体无力",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "言语不清",
       "input": "言语不清",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "抽搐",
       "input": "抽搐",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "意识模糊",
       "input": "意识模糊",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "高热 + 颈部僵硬",
       "input": "颈部僵硬 + 高热 ≥39℃",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "剧烈腹痛",
       "input": "剧烈腹痛",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "明显脱水",
       "input": "口干/少尿",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "孕期出血 / 腹痛",
       "input": "孕期出血/腹痛",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "眼痛 + 视力下降",
       "input": "眼痛 + 视物模糊",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "高热 + 皮疹",
       "input": "高热 ≥39℃ + 皮疹",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "高温暴露 + 意识改变",
       "input": "高温环境暴露 + 意识模糊",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "雷击样剧烈头痛",
       "input": "雷击样剧烈头痛",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "持续高热超过 3 天",
       "input": "持续高热超过 3 天",
+      "cond": "",
+      "expect": "red",
       "level": "red",
       "ok": true
     },
     {
       "title": "意识丧失 / 晕厥",
       "input": "意识丧失 / 晕厥",
+      "cond": "",
+      "expect": "red",
       "level": "red",
+      "ok": true
+    },
+    {
+      "title": "3 个月以下婴儿发热",
+      "input": "发热",
+      "cond": "年龄 < 0.25 岁",
+      "expect": "red",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "发热超过 5 天",
+      "input": "发热",
+      "cond": "病程 ≥ 5 天",
+      "expect": "yellow",
+      "level": "yellow",
       "ok": true
     }
   ],
@@ -312,6 +374,44 @@
       "age": 10,
       "expect": "yellow",
       "level": "yellow",
+      "ok": true
+    }
+  ],
+  "condCases": [
+    {
+      "name": "2 个月发热（条件红旗）",
+      "age": 0.16,
+      "durationDays": null,
+      "expect": "red",
+      "expectFlag": "3 个月以下婴儿发热",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "name": "6 个月发热（不命中 3 月红旗）",
+      "age": 0.5,
+      "durationDays": null,
+      "expect": "red",
+      "expectFlag": null,
+      "level": "red",
+      "ok": true
+    },
+    {
+      "name": "发热 6 天（条件黄牌）",
+      "age": 30,
+      "durationDays": 8,
+      "expect": "yellow",
+      "expectFlag": "发热超过 5 天",
+      "level": "yellow",
+      "ok": true
+    },
+    {
+      "name": "发热 3 天（不触发条件黄牌）",
+      "age": 30,
+      "durationDays": 1,
+      "expect": "green",
+      "expectFlag": null,
+      "level": "green",
       "ok": true
     }
   ],
