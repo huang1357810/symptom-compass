@@ -9,9 +9,10 @@
     "not_found_handling": "none",
     "run_worker_first": true
   },
-  "vars": {
-    "ADMIN_KEY": "mbkt-admin-2026"
-  },
+  // 管理密钥不写入仓库：部署前执行
+  //   wrangler secret put ADMIN_KEY
+  // 生成建议：openssl rand -hex 32（32 位以上随机串），不要复用旧值。
+  // 旧版明文 ADMIN_KEY 已轮换，如仍在使用请立即更换。
   "kv_namespaces": [
     { "binding": "FEEDBACK_KV", "id": "1de22f39cfe24e09979c5bc44ad3c288" }
   ]

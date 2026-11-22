@@ -1,0 +1,11 @@
+{
+  "name": "mingbian-kangtu",
+  "version": "2.10.0",
+  "private": true,
+  "description": "明辨康途 · 健康科普与就医参考（Web / HarmonyOS / Cloudflare Workers）",
+  "scripts": {
+    "test": "node tools/run-all-tests.js",
+    "evals": "node tools/run-evals.js",
+    "deploy": "wrangler deploy"
+  }
+}

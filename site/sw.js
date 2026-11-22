@@ -4,7 +4,7 @@
  *   - 静态资源：缓存优先（图标、manifest 这类不常变的）
  *   - /api/ 请求：永不缓存
  */
-const CACHE = 'mingbian-kangtu-v10';
+const CACHE = 'mingbian-kangtu-v11';
 const SHELL = [
   './',
   './index.html',
@@ -47,10 +47,12 @@ self.addEventListener('fetch', (event) => {
   /* 页面导航：网络优先。这样每次发版刷新一次就能拿到新版，
      断网时才用缓存兜底（离线可用的承诺仍然成立）。 */
   if (request.mode === 'navigate') {
+    /* 只有首页才写入 index.html 缓存键，其它页面不能被当成首页覆盖 */
+    const isHome = url.pathname === '/' || url.pathname.endsWith('/index.html');
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response && response.status === 200) {
+          if (response && response.status === 200 && isHome) {
             const copy = response.clone();
             caches.open(CACHE).then((cache) => cache.put('./index.html', copy));
           }

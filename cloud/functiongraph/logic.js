@@ -22,6 +22,7 @@ const SYMPTOMS = {
   high_fever:{label:'高热 ≥39℃',group:'全身'},
   chills:{label:'畏寒/寒战',group:'全身'},
   fatigue:{label:'乏力',group:'全身'},
+  persistent_high_fever:{label:'持续高热超过 3 天',group:'全身'},
   night_sweat:{label:'夜间盗汗',group:'全身'},
   weight_loss:{label:'体重下降',group:'全身'},
   poor_appetite:{label:'食欲不振',group:'全身'},
@@ -30,6 +31,7 @@ const SYMPTOMS = {
 
   /* 头面 */
   headache:{label:'头痛',group:'头面'},
+  thunderclap_headache:{label:'雷击样剧烈头痛',group:'头面'},
   dizziness:{label:'头晕',group:'头面'},
   sore_throat:{label:'咽痛',group:'头面'},
   congestion:{label:'鼻塞',group:'头面'},
@@ -104,6 +106,7 @@ const SYMPTOMS = {
   speech_diff:{label:'言语不清',group:'神经与情绪'},
   seizure:{label:'抽搐',group:'神经与情绪'},
   confusion:{label:'意识模糊',group:'神经与情绪'},
+  syncope:{label:'意识丧失 / 晕厥',group:'神经与情绪'},
   stiff_neck:{label:'颈部僵硬',group:'神经与情绪'},
 
   /* 补充症状 */
@@ -553,7 +556,10 @@ const RED_FLAGS = [
   {ids:['pregnancy_bleed'], title:'孕期出血 / 腹痛', msg:'孕期出现阴道出血或腹痛，请立即到产科急诊。'},
   {ids:['eye_pain','vision_blur'], mode:'all', title:'眼痛 + 视力下降', msg:'可能为急性青光眼等眼科急症，需立即就诊。'},
   {ids:['high_fever','rash'], mode:'all', title:'高热 + 皮疹', msg:'需急诊排查严重感染或药物反应。'},
-  {ids:['heat_exposure','confusion'], mode:'all', title:'高温暴露 + 意识改变', msg:'可能是热射病，致死率高，请立即拨打 120 并开始物理降温。'}
+  {ids:['heat_exposure','confusion'], mode:'all', title:'高温暴露 + 意识改变', msg:'可能是热射病，致死率高，请立即拨打 120 并开始物理降温。'},
+  {ids:['thunderclap_headache'], title:'雷击样剧烈头痛', msg:'突发“这辈子最剧烈”的头痛，需要立即排除蛛网膜下腔出血，请拨打 120。'},
+  {ids:['persistent_high_fever'], title:'持续高热超过 3 天', msg:'高热持续 3 天以上不退，需尽快就医查因，不要继续自行退烧观察。'},
+  {ids:['syncope'], title:'意识丧失 / 晕厥', msg:'突然晕倒或短暂失去意识，需尽快排查心脑血管原因；若未清醒立即拨打 120。'}
 ];
 
 const PRESETS = {
@@ -570,7 +576,7 @@ const BODY_PARTS = [
   {
     id: 'head', label: '头部', view: 'front',
     groups: [
-      { name: '头面', ids: ['headache', 'dizziness', 'facial_pain', 'photophobia', 'vision_blur'] },
+      { name: '头面', ids: ['headache', 'thunderclap_headache', 'dizziness', 'syncope', 'facial_pain', 'photophobia', 'vision_blur'] },
       { name: '眼', ids: ['eye_pain', 'eye_red', 'eye_itch', 'eye_discharge'] },
       { name: '耳鼻', ids: ['ear_pain', 'tinnitus', 'hearing_loss', 'congestion', 'runny_nose', 'sneeze', 'smell_loss', 'purulent_discharge'] },
       { name: '口腔咽喉', ids: ['sore_throat', 'toothache', 'oral_ulcer', 'dysphagia'] }
@@ -624,7 +630,7 @@ const BODY_PARTS = [
     id: 'skin', label: '全身 / 皮肤', view: 'all',
     groups: [
       { name: '皮肤', ids: ['rash', 'itch', 'hives', 'blister', 'dry_skin'] },
-      { name: '全身', ids: ['fever', 'high_fever', 'chills', 'fatigue', 'night_sweat', 'weight_loss', 'poor_appetite', 'pallor', 'dehydration', 'heat_exposure'] },
+      { name: '全身', ids: ['fever', 'high_fever', 'persistent_high_fever', 'chills', 'fatigue', 'night_sweat', 'weight_loss', 'poor_appetite', 'pallor', 'dehydration', 'heat_exposure'] },
       { name: '情绪与睡眠', ids: ['insomnia', 'anxious', 'low_mood'] }
     ]
   },
@@ -711,6 +717,7 @@ const RED_SET = new Set(RED_FLAGS.flatMap(f => f.ids));
 const SYMPTOM_ALIASES = {
   /* 全身 */
   fever: ['发烧', '低烧', '有点烧', '体温高', '体温升高'],
+  persistent_high_fever: ['持续高热', '高热三天不退', '连续几天高烧', '高烧超过三天'],
   high_fever: ['高烧', '高热', '烧得很厉害', '体温很高', '持续高烧'],
   chills: ['怕冷', '发冷', '畏寒', '寒战', '打寒战', '浑身发冷'],
   fatigue: ['乏力', '没力气', '没有力气', '浑身无力', '疲劳', '疲惫', '很累', '没精神', '浑身没劲'],
@@ -722,6 +729,7 @@ const SYMPTOM_ALIASES = {
 
   /* 头面 */
   headache: ['头痛', '头疼', '脑袋疼', '头胀', '偏头痛', '头很痛'],
+  thunderclap_headache: ['雷击样头痛', '炸裂样头痛', '突发剧烈头痛', '这辈子最痛的头痛'],
   dizziness: ['头晕', '眩晕', '头昏', '天旋地转', '晕得厉害', '站不稳'],
   sore_throat: ['咽痛', '嗓子疼', '嗓子痛', '喉咙痛', '咽喉痛', '嗓子不舒服', '喉咙疼'],
   congestion: ['鼻塞', '鼻子不通', '鼻子堵', '鼻子塞'],
@@ -796,6 +804,7 @@ const SYMPTOM_ALIASES = {
   speech_diff: ['言语不清', '说话不清', '说话含糊', '大舌头', '吐字不清', '说不清楚话'],
   seizure: ['抽搐', '抽风', '抽过去', '翻白眼抽'],
   confusion: ['意识模糊', '神志不清', '迷迷糊糊', '叫不醒', '胡言乱语', '反应迟钝'],
+  syncope: ['晕厥', '晕倒', '昏倒', '失去意识', '眼前一黑倒下', '短暂意识丧失'],
   stiff_neck: ['颈部僵硬', '脖子硬', '脖子僵硬', '低头困难', '脖子发挺'],
 
   /* 补充症状 */
@@ -1033,6 +1042,31 @@ function flagsFor(selected){
     const mode = f.mode || 'any';
     return mode === 'all' ? f.ids.every(id => selected.has(id)) : f.ids.some(id => selected.has(id));
   });
+}
+
+/**
+ * 远端分诊只提供线索，安全判定以本地为准：
+ * 本地危险信号与远端取并集，本地优先，按 id/title 去重。
+ */
+function mergeRedFlags(localFlags, remoteFlags){
+  const out = [];
+  const seen = new Set();
+
+  const push = f => {
+    if (!f || typeof f !== 'object') return;
+    const title = typeof f.title === 'string' ? f.title : '';
+    const id = typeof f.id === 'string' ? f.id : '';
+    if (!title && !id) return;
+    /* title 与 id 任一命中即视为同一条，保证远端同义项不会重复触发 */
+    if ((title && seen.has(title)) || (id && seen.has(id))) return;
+    if (title) seen.add(title);
+    if (id) seen.add(id);
+    out.push(f);
+  };
+
+  (Array.isArray(localFlags) ? localFlags : []).forEach(push);
+  (Array.isArray(remoteFlags) ? remoteFlags : []).forEach(push);
+  return out;
 }
 
 function scoreConditions(selectedIds){
@@ -1668,6 +1702,11 @@ async function detectCloud(){
 /* 问卷答案：{ 问题id: 选项下标 } */
 const answers = {};
 
+/* 修改症状 / 返回首页时清空问卷，避免沿用上一次答案 */
+function resetAnswers(){
+  Object.keys(answers).forEach(k => delete answers[k]);
+}
+
 function showTriage(){
   if (!selected.size) return;
   /* 命中危险信号时跳过问卷，直接给出急诊提示——不能让人先答三个问题才看到警告 */
@@ -1808,6 +1847,7 @@ function init(){
 
   renderGroups();
   bindEvents();
+  initLargeText();
   bindBodyMap();
   bindPager();
   applyBodyLayers();
@@ -1910,7 +1950,7 @@ function clearAll(){
   if (nluBox) nluBox.classList.add('hidden');
   const nluInput = document.getElementById('nluInput');
   if (nluInput) nluInput.value = '';
-  if (typeof answers === 'object' && answers) Object.keys(answers).forEach(k => delete answers[k]);
+  if (typeof answers === 'object' && answers) resetAnswers();
   Object.values(chipMap).forEach(c => {
     c.classList.remove('on');
     c.setAttribute('aria-pressed', 'false');
@@ -2830,10 +2870,34 @@ function initFeedback(){
   submit.addEventListener('click', fbSubmit);
 }
 
+/* ---------------- 大字模式 ---------------- */
+const LARGE_TEXT_KEY = 'mingbian.largeText';
+
+function applyLargeText(on){
+  if (typeof document === 'undefined') return;
+  document.documentElement.classList.toggle('large-text', !!on);
+}
+
+function initLargeText(){
+  let on = false;
+  try { on = localStorage.getItem(LARGE_TEXT_KEY) === '1'; } catch (e) {}
+
+  const toggle = document.getElementById('largeTextToggle');
+  applyLargeText(on);
+  if (!toggle) return;
+
+  toggle.checked = on;
+  toggle.addEventListener('change', () => {
+    applyLargeText(toggle.checked);
+    try { localStorage.setItem(LARGE_TEXT_KEY, toggle.checked ? '1' : '0'); } catch (e) {}
+  });
+}
+
 function bindEvents(){
   document.getElementById('go').addEventListener('click', showTriage);
   document.getElementById('clear').addEventListener('click', clearAll);
   document.getElementById('back').addEventListener('click', () => {
+    resetAnswers();
     document.getElementById('results').classList.add('hidden');
     document.getElementById('triage').classList.add('hidden');
     document.getElementById('intake').classList.remove('hidden');
@@ -2844,6 +2908,7 @@ function bindEvents(){
   });
 
   document.getElementById('triageBack').addEventListener('click', () => {
+    resetAnswers();
     document.getElementById('triage').classList.add('hidden');
     document.getElementById('intake').classList.remove('hidden');
     document.getElementById('notice').classList.remove('hidden');
@@ -3225,22 +3290,38 @@ async function showResults(){
 
   /* 部署在华为云 FunctionGraph 上时，优先走云端分诊 API；失败自动回退本地 */
   if (CLOUD.enabled){
+    const goBtn = document.getElementById('go');
+    if (goBtn){
+      goBtn.disabled = true;
+      goBtn.textContent = '分析中…';
+    }
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 10000);
     try {
       const resp = await fetch(CLOUD.endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symptoms: [...selected] })
+        body: JSON.stringify({ symptoms: [...selected] }),
+        signal: ctrl.signal
       });
       if (resp.ok){
         const data = await resp.json();
         if (Array.isArray(data.results) && Array.isArray(data.flags)){
           results = data.results;
-          flags = data.flags;
+          /* 远端可能漏报危险信号：必须与本地并集，本地优先 */
+          flags = mergeRedFlags(flagsFor(selected), data.flags);
           mode = '云端分析';
         }
       }
     } catch (e) {
+      /* 超时或网络失败都回退本地计算，不向用户报错 */
       CLOUD.enabled = false;
+    } finally {
+      clearTimeout(timer);
+      if (goBtn){
+        goBtn.disabled = false;
+        goBtn.textContent = '查看可能情况';
+      }
     }
   }
 
@@ -3274,19 +3355,7 @@ async function showResults(){
   recordTimeline([...selected], triage.level);
 
   const levelLabel = { red: '高风险 · 需急诊', yellow: '中风险 · 需就医', green: '低风险 · 可观察' };
-  document.getElementById('urgent').innerHTML =
-    '<div class="triage ' + triage.level + ' fade">' +
-      '<span class="lv">' + (levelLabel[triage.level] || '分诊结果') + '</span>' +
-      '<h3>' + triage.title + '</h3>' +
-      '<p>' + triage.advice + '</p>' +
-      (triage.reasons.length
-        ? '<div class="reasons">' + triage.reasons.map(r => '<span>' + r + '</span>').join('') + '</div>'
-        : '') +
-      (triage.level === 'red' && flags.length
-        ? '<ul>' + flags.map(f => '<li><b>' + f.title + '</b>：' + f.msg + '</li>').join('') + '</ul>' +
-          '<a class="call" href="tel:120">📞 立即拨打 120</a>'
-        : '') +
-    '</div>';
+  document.getElementById('urgent').innerHTML = renderUrgent(triage, flags);
 
   const meta = document.getElementById('printMeta');
   if (meta){
@@ -3354,10 +3423,15 @@ async function showResults(){
 function renderCondition(c, i, openFirst){
   const pct = Math.round(c.score * 100);
   const [grade, gradeCls] = gradeOf(c.score);
-  const matched = c.matched.map(id => '<span class="m">' + SYMPTOMS[id].label + '</span>').join('');
+  const matched = (Array.isArray(c.matched) ? c.matched : []).map(id => {
+    const label = SYMPTOMS[id] && SYMPTOMS[id].label ? SYMPTOMS[id].label : String(id);
+    return '<span class="m">' + esc(label) + '</span>';
+  }).join('');
 
-  const care = c.care.map(t => '<li>' + t + '</li>').join('');
-  const meds = c.meds.map(m => '<li><b>' + m.n + '</b><span>' + m.note + '</span></li>').join('');
+  const care = (Array.isArray(c.care) ? c.care : []).map(t => '<li>' + esc(t) + '</li>').join('');
+  const meds = (Array.isArray(c.meds) ? c.meds : []).map(m =>
+    '<li><b>' + esc(m && m.n) + '</b><span>' + esc(m && m.note) + '</span></li>'
+  ).join('');
   const isOpen = openFirst !== false && i === 0;
 
   return '' +
@@ -3365,11 +3439,11 @@ function renderCondition(c, i, openFirst){
     '<summary>' +
       '<span class="rank">' + (i + 1) + '</span>' +
       '<div>' +
-        '<div class="cname">' + c.name + '</div>' +
+        '<div class="cname">' + esc(c.name || '') + '</div>' +
         '<div class="ctags">' +
-          '<span>' + c.dept + '</span>' +
+          '<span>' + esc(c.dept || '') + '</span>' +
           '<span class="' + gradeCls + '">' + grade + '</span>' +
-          (c.tag ? '<span>' + c.tag + '</span>' : '') +
+          (c.tag ? '<span>' + esc(c.tag) + '</span>' : '') +
         '</div>' +
       '</div>' +
       '<div class="matchbox">' +
@@ -3379,7 +3453,7 @@ function renderCondition(c, i, openFirst){
       '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>' +
     '</summary>' +
     '<div class="cbody">' +
-      '<p class="sum">' + c.summary + '</p>' +
+      '<p class="sum">' + esc(c.summary || '') + '</p>' +
       '<p class="meta-src">来源：' + esc(c.source || '未标注') +
         ' · 审核：' + esc(c.reviewer || '待审核') +
         ' · 更新：' + esc(c.updated || '未标注') + '</p>' +
@@ -3388,14 +3462,34 @@ function renderCondition(c, i, openFirst){
         '<div class="block"><h4>自我照护</h4><ul>' + care + '</ul></div>' +
         '<div class="block"><h4>常用药物（通用名）</h4><ul class="meds">' + meds + '</ul></div>' +
       '</div>' +
-      '<div class="warn"><b>何时就医</b>' + c.see + '</div>' +
+      '<div class="warn"><b>何时就医</b>' + esc(c.see || '') + '</div>' +
     '</div>' +
   '</details>';
+}
+
+/* 急症横幅：所有来自远端/计算结果的字符串统一转义 */
+function renderUrgent(triage, flags){
+  const levelLabel = { red: '高风险 · 需急诊', yellow: '中风险 · 需就医', green: '低风险 · 可观察' };
+  const reasons = Array.isArray(triage.reasons) ? triage.reasons : [];
+  const flagList = Array.isArray(flags) ? flags : [];
+
+  return '<div class="triage ' + esc(triage.level) + ' fade">' +
+    '<span class="lv">' + esc(levelLabel[triage.level] || '分诊结果') + '</span>' +
+    '<h3>' + esc(triage.title || '') + '</h3>' +
+    '<p>' + esc(triage.advice || '') + '</p>' +
+    (reasons.length
+      ? '<div class="reasons">' + reasons.map(r => '<span>' + esc(r) + '</span>').join('') + '</div>'
+      : '') +
+    (triage.level === 'red' && flagList.length
+      ? '<ul>' + flagList.map(f => '<li><b>' + esc(f.title) + '</b>：' + esc(f.msg) + '</li>').join('') + '</ul>' +
+        '<a class="call" href="tel:120">📞 立即拨打 120</a>'
+      : '') +
+  '</div>';
 }
 
 if (typeof document !== 'undefined'){
   document.addEventListener('DOMContentLoaded', init);
 }
 if (typeof module !== 'undefined' && module.exports){
-  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, scoreConditions, gradeOf, SKIN_SYMPTOMS, analyzeSkinPixels, describeSkinFeatures, skinAdvice, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline };
+  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, mergeRedFlags, scoreConditions, gradeOf, SKIN_SYMPTOMS, analyzeSkinPixels, describeSkinFeatures, skinAdvice, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline };
 }

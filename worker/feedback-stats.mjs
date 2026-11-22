@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 反馈统计（纯函数，供 Worker 汇总页使用）
  * 输入：feedback records（含 rating / context.top.name）
  * 输出：总数、平均分、1–5 星分布、低分病症 Top5

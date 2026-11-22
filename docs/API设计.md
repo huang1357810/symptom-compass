@@ -1,6 +1,6 @@
 # 明辨康途 · API 设计
 
-> 最后更新：2026-11-22 ｜ 对应内容版本：v1
+> 文档版本：v2.10 ｜ 最后更新：2026-11-22 ｜ 对应内容版本：v1
 
 ## 接口总览
 
@@ -8,20 +8,27 @@
 | --- | --- | --- | --- | --- |
 | POST | `/api/triage` | FunctionGraph | 无 | 可选云端分诊（前端未启用时走本地） |
 | GET | `/api/triage/health` | FunctionGraph | 无 | 健康检查，用于判断是否启用云端分诊 |
-| POST | `/api/feedback` | Cloudflare Worker / CloudBase | 无 | 提交结果反馈 |
-| GET | `/api/feedback/list?key=` | Cloudflare Worker / CloudBase | `ADMIN_KEY` | 反馈汇总页（HTML） |
-| POST | `/api/feedback/status?key=` | Cloudflare Worker / CloudBase | `ADMIN_KEY` | 标记已改进并填写修正版本 |
+| POST | `/api/feedback` | Cloudflare Worker | 无 | 提交结果反馈 |
+| GET | `/api/feedback/list` | Cloudflare Worker | Header / key | 反馈汇总页（HTML） |
+| POST | `/api/feedback/status` | Cloudflare Worker | Header / key | 标记已改进并填写修正版本 |
 | GET | `/api/evals/latest` | Cloudflare Worker | 无 | 最近一次评测结果（JSON） |
-| POST | `/api/evals/publish?key=` | Cloudflare Worker | `ADMIN_KEY` | 发布评测结果到 KV |
+| POST | `/api/evals/publish` | Cloudflare Worker | Header / key | 发布评测结果到 KV |
 | POST | `/api/metrics/event` | Cloudflare Worker | 无 | 匿名运营事件（症状数 + 判红等级） |
 
-> CloudBase 侧目前只实现三条 feedback 路由；`/api/evals/*` 与 `/api/metrics/event` 由 Cloudflare Worker 提供。
+> 当前只保留 Cloudflare Worker；腾讯云 CloudBase 方案已移除，相关文件不再在仓库中。
 
 ## 通用约定
 
 - 请求/响应均为 UTF-8；JSON 接口返回 `Content-Type: application/json; charset=utf-8`。
 - 反馈与统计接口允许跨域：`Access-Control-Allow-Origin: *`，方法 `GET, POST, OPTIONS`。
 - 所有外发接口失败时，前端必须静默降级，不影响分诊。
+
+### 管理鉴权
+
+- **优先使用 Header**：`X-Admin-Key: <ADMIN_KEY>`
+- **兼容 query**：`?key=<ADMIN_KEY>`，已 **deprecated**（后台页表单仍使用，便于直接打开链接）
+- 密钥只放 Wrangler Secret（`wrangler secret put ADMIN_KEY`），不写入仓库；旧版明文密钥已轮换
+- 未配置 `ADMIN_KEY` 或密钥不匹配：401
 
 ### 错误码
 
@@ -139,16 +146,24 @@ id=<反馈 id>&status=improved&fixedVersion=v1&note=已补充病程判断
 
 ```json
 {
-  "version": "eval-v1",
+  "version": "eval-v2",
   "generatedAt": "2026-11-22",
-  "total": 15,
-  "red": 15,
+  "total": 18,
+  "red": 18,
   "redRate": 1,
-  "negatives": 4,
+  "negatives": 8,
   "falsePositive": 0,
   "falsePositiveRate": 0,
+  "caseTotal": 42,
+  "categories": [
+    { "id": "redflags", "label": "危险信号", "total": 18, "pass": 18, "red": 18, "fp": 0 },
+    { "id": "weighted", "label": "问卷加权", "total": 8, "pass": 8, "red": 1, "fp": 0 }
+  ],
   "cases": [{ "title": "胸痛", "input": "胸痛", "level": "red", "ok": true }],
-  "negativeCases": [{ "input": "乏力", "level": "green", "falsePositive": false }]
+  "negativeCases": [{ "input": "乏力", "level": "yellow", "falsePositive": false }],
+  "weightedCases": [{ "name": "高热 + 卧床", "score": { "duration": 0, "fever": 3, "activity": 2 }, "expect": "yellow", "level": "yellow", "ok": true }],
+  "ageCases": [{ "name": "6 个月发热", "age": 0.5, "expect": "red", "level": "red", "ok": true }],
+  "medsCases": [{ "name": "18 岁以下 + 阿司匹林", "expect": "red", "hits": 2, "ok": true }]
 }
 ```
 
@@ -158,9 +173,11 @@ id=<反馈 id>&status=improved&fixedVersion=v1&note=已补充病程判断
 
 **请求**：与 `/api/evals/latest` 响应同结构的 JSON。
 
+**服务端校验**（`worker/evals-schema.mjs`）：`version` 为非空字符串且 ≤40 字符；`total`、`red`、`negatives`、`falsePositive` 为非负整数；`red ≤ total`。任一项不满足返回 400。
+
 **响应 200**：`{ "ok": true }`
 
-**错误**：400（缺 total/red）、401、503。
+**错误**：400（schema 不合法）、401、503。
 
 ---
 

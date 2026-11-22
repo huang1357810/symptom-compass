@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 明辨康途 · Cloudflare Worker
  *
  * 职责：
@@ -10,6 +10,7 @@
  */
 
 import { summarizeFeedback } from './feedback-stats.mjs';
+import { validateEvals } from './evals-schema.mjs';
 import evalsSeed from './evals-seed.json';
 
 const MAX_TEXT = 300;
@@ -40,6 +41,18 @@ function str(v, max) {
   return typeof v === 'string' ? v.slice(0, max) : '';
 }
 
+/* 管理密钥：Header X-Admin-Key 优先，?key= 兼容但 deprecated */
+function adminKeyFrom(request, url) {
+  const header = request.headers.get('X-Admin-Key');
+  if (header) return header.trim();
+  return (url.searchParams.get('key') || '').trim();
+}
+
+function isAdmin(request, url, env) {
+  const provided = adminKeyFrom(request, url);
+  return !!env.ADMIN_KEY && provided === env.ADMIN_KEY;
+}
+
 /* 反馈上下文：记录这次分析对应的可能方向与症状，便于定位问题 */
 function normalizeContext(ctx) {
   if (!ctx || typeof ctx !== 'object') return { top: null, results: [], symptoms: [], triage: '' };
@@ -65,10 +78,22 @@ function normalizeContext(ctx) {
   return { top, results, symptoms, triage: str(ctx.triage, 10) };
 }
 
+/* IP 只用于限流：加盐 SHA-256 前 16 位；不保存明文，也不用于识别个人 */
+async function hashIp(ip, env) {
+  const salt = (env && env.IP_SALT) || 'mingbian-kangtu-ip-v1';
+  const data = new TextEncoder().encode(salt + '|' + ip);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(digest))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+    .slice(0, 16);
+}
+
 /* 极简限流：默认同一 IP 每分钟最多 5 条（依赖 KV，未配置时跳过） */
 async function rateLimited(env, ip, limit = 5) {
   if (!env.FEEDBACK_KV) return false;
-  const bucket = 'rl:' + ip + ':' + Math.floor(Date.now() / 60000);
+  const hashed = await hashIp(ip, env);
+  const bucket = 'rl:' + hashed + ':' + Math.floor(Date.now() / 60000);
   const cur = Number(await env.FEEDBACK_KV.get(bucket)) || 0;
   if (cur >= limit) return true;
   await env.FEEDBACK_KV.put(bucket, String(cur + 1), { expirationTtl: 120 });
@@ -133,8 +158,8 @@ async function handleFeedback(request, env) {
 
 /* 标记反馈是否已改进（管理端表单提交） */
 async function handleStatus(request, url, env) {
-  const key = url.searchParams.get('key') || '';
-  if (!env.ADMIN_KEY || key !== env.ADMIN_KEY) {
+  const key = (url.searchParams.get('key') || '').trim();
+  if (!isAdmin(request, url, env)) {
     return json({ ok: false, error: 'unauthorized' }, 401);
   }
   if (request.method !== 'POST') {
@@ -217,8 +242,7 @@ async function handleEvals(env) {
 
 /* POST /api/evals/publish?key=ADMIN_KEY：把评测结果写入 KV */
 async function handleEvalsPublish(request, url, env) {
-  const key = url.searchParams.get('key') || '';
-  if (!env.ADMIN_KEY || key !== env.ADMIN_KEY) {
+  if (!isAdmin(request, url, env)) {
     return json({ ok: false, error: 'unauthorized' }, 401);
   }
   if (request.method !== 'POST') {
@@ -232,11 +256,12 @@ async function handleEvalsPublish(request, url, env) {
   } catch (e) {
     return json({ ok: false, error: 'bad_json' }, 400);
   }
-  if (!body || !Number.isFinite(Number(body.total)) || !Number.isFinite(Number(body.red))) {
-    return json({ ok: false, error: 'bad_evals' }, 400);
+  const checked = validateEvals(body);
+  if (!checked.ok) {
+    return json({ ok: false, error: checked.error }, 400);
   }
 
-  await env.FEEDBACK_KV.put('evals:latest', JSON.stringify(body));
+  await env.FEEDBACK_KV.put('evals:latest', JSON.stringify(checked.value));
   return json({ ok: true });
 }
 
@@ -281,10 +306,10 @@ async function handleMetrics(request, env) {
   return json({ ok: true });
 }
 
-async function handleList(url, env) {
-  const key = url.searchParams.get('key') || '';
-  if (!env.ADMIN_KEY || key !== env.ADMIN_KEY) {
-    return new Response('需要管理密钥：/api/feedback/list?key=你的ADMIN_KEY', {
+async function handleList(request, url, env) {
+  const key = (url.searchParams.get('key') || '').trim();
+  if (!isAdmin(request, url, env)) {
+    return new Response('需要管理密钥：用 Header X-Admin-Key 或 /api/feedback/list?key=（已 deprecated）', {
       status: 401,
       headers: { 'Content-Type': 'text/plain; charset=utf-8' }
     });
@@ -296,13 +321,35 @@ async function handleList(url, env) {
     });
   }
 
-  const list = await env.FEEDBACK_KV.list({ prefix: 'fb:', limit: 500 });
+  /* 最多读取 2000 条；坏记录跳过并计数，避免一条脏数据拖垮后台 */
   const items = [];
-  for (const k of list.keys) {
-    const v = await env.FEEDBACK_KV.get(k.name);
-    if (v) items.push(JSON.parse(v));
+  let badRecords = 0;
+  let cursor = undefined;
+  let pages = 0;
+
+  while (pages < 4 && items.length < 2000) {
+    const opts = { prefix: 'fb:', limit: 500 };
+    if (cursor) opts.cursor = cursor;
+    const page = await env.FEEDBACK_KV.list(opts);
+    for (const k of page.keys) {
+      const v = await env.FEEDBACK_KV.get(k.name);
+      if (!v) continue;
+      try {
+        const rec = JSON.parse(v);
+        if (rec && typeof rec === 'object') {
+          items.push(rec);
+        } else {
+          badRecords += 1;
+        }
+      } catch (e) {
+        badRecords += 1;
+      }
+    }
+    pages += 1;
+    if (page.list_complete || !page.cursor) break;
+    cursor = page.cursor;
   }
-  items.sort((a, b) => b.ts - a.ts);
+  items.sort((a, b) => (b.ts || 0) - (a.ts || 0));
 
   const stats = summarizeFeedback(items);
   const evals = await readEvals(env);
@@ -384,7 +431,7 @@ table.small th,table.small td{padding:6px 8px}
 .kv b{color:#103b38;font-size:13px}
 </style></head><body>
 <h1>明辨康途 · 反馈汇总</h1>
-<p class="stat">共 ${stats.total} 条 ｜ 平均 ${stats.total ? stats.avg.toFixed(2) : '-'} 分 ｜ 待改进 ${items.filter(i => i.status !== 'improved').length} 条 ｜ 已改进 ${items.filter(i => i.status === 'improved').length} 条</p>
+<p class="stat">共 ${stats.total} 条 ｜ 平均 ${stats.total ? stats.avg.toFixed(2) : '-'} 分 ｜ 待改进 ${items.filter(i => i.status !== 'improved').length} 条 ｜ 已改进 ${items.filter(i => i.status === 'improved').length} 条 ｜ 坏记录 ${badRecords} 条</p>
 
 <div class="dash">
   <div class="panel">
@@ -398,8 +445,8 @@ table.small th,table.small td{padding:6px 8px}
   </div>
   <div class="panel">
     <h2>评测（${escapeHtml(evals.version || 'eval')}）</h2>
-    <div class="kv">判红率 <b>${Math.round((evals.redRate || 0) * 100)}%</b>（${evals.red || 0}/${evals.total || 0}）</div>
-    <div class="kv">误报 <b>${evals.falsePositive || 0}</b> / 负样本 ${evals.negatives || 0}</div>
+    <div class="kv">危险信号 <b>${evals.red || 0}/${evals.total || 0}</b>（判红率 ${Math.round((evals.redRate || 0) * 100)}%）</div>
+    <div class="kv">用例 <b>${evals.caseTotal || evals.total || 0}</b> 条 ｜ 误报 ${evals.falsePositive || 0}/${evals.negatives || 0}</div>
     <div class="kv">最近运行：${escapeHtml(evals.generatedAt || '—')}</div>
   </div>
   <div class="panel">
@@ -423,7 +470,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/api/feedback') return handleFeedback(request, env);
-    if (url.pathname === '/api/feedback/list') return handleList(url, env);
+    if (url.pathname === '/api/feedback/list') return handleList(request, url, env);
     if (url.pathname === '/api/feedback/status') return handleStatus(request, url, env);
     if (url.pathname === '/api/evals/latest') return handleEvals(env);
     if (url.pathname === '/api/evals/publish') return handleEvalsPublish(request, url, env);

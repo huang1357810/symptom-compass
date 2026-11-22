@@ -45,12 +45,14 @@ export const SYMPTOMS: Record<string, SymptomDef> = {
   "high_fever": { label: "高热 ≥39℃", group: "全身" },
   "chills": { label: "畏寒/寒战", group: "全身" },
   "fatigue": { label: "乏力", group: "全身" },
+  "persistent_high_fever": { label: "持续高热超过 3 天", group: "全身" },
   "night_sweat": { label: "夜间盗汗", group: "全身" },
   "weight_loss": { label: "体重下降", group: "全身" },
   "poor_appetite": { label: "食欲不振", group: "全身" },
   "pallor": { label: "面色苍白", group: "全身" },
   "dehydration": { label: "口干/少尿", group: "全身" },
   "headache": { label: "头痛", group: "头面" },
+  "thunderclap_headache": { label: "雷击样剧烈头痛", group: "头面" },
   "dizziness": { label: "头晕", group: "头面" },
   "sore_throat": { label: "咽痛", group: "头面" },
   "congestion": { label: "鼻塞", group: "头面" },
@@ -113,6 +115,7 @@ export const SYMPTOMS: Record<string, SymptomDef> = {
   "speech_diff": { label: "言语不清", group: "神经与情绪" },
   "seizure": { label: "抽搐", group: "神经与情绪" },
   "confusion": { label: "意识模糊", group: "神经与情绪" },
+  "syncope": { label: "意识丧失 / 晕厥", group: "神经与情绪" },
   "stiff_neck": { label: "颈部僵硬", group: "神经与情绪" },
   "purulent_discharge": { label: "脓涕/黄绿鼻涕", group: "头面" },
   "oral_ulcer": { label: "口腔溃疡/疱疹", group: "头面" },
@@ -667,7 +670,10 @@ export const RED_FLAGS: RedFlagDef[] = [
   { ids: ["pregnancy_bleed"], mode: 'any', title: "孕期出血 / 腹痛", msg: "孕期出现阴道出血或腹痛，请立即到产科急诊。" },
   { ids: ["eye_pain", "vision_blur"], mode: "all", title: "眼痛 + 视力下降", msg: "可能为急性青光眼等眼科急症，需立即就诊。" },
   { ids: ["high_fever", "rash"], mode: "all", title: "高热 + 皮疹", msg: "需急诊排查严重感染或药物反应。" },
-  { ids: ["heat_exposure", "confusion"], mode: "all", title: "高温暴露 + 意识改变", msg: "可能是热射病，致死率高，请立即拨打 120 并开始物理降温。" }
+  { ids: ["heat_exposure", "confusion"], mode: "all", title: "高温暴露 + 意识改变", msg: "可能是热射病，致死率高，请立即拨打 120 并开始物理降温。" },
+  { ids: ["thunderclap_headache"], mode: 'any', title: "雷击样剧烈头痛", msg: "突发“这辈子最剧烈”的头痛，需要立即排除蛛网膜下腔出血，请拨打 120。" },
+  { ids: ["persistent_high_fever"], mode: 'any', title: "持续高热超过 3 天", msg: "高热持续 3 天以上不退，需尽快就医查因，不要继续自行退烧观察。" },
+  { ids: ["syncope"], mode: 'any', title: "意识丧失 / 晕厥", msg: "突然晕倒或短暂失去意识，需尽快排查心脑血管原因；若未清醒立即拨打 120。" }
 ];
 
 export const PRESETS: Record<string, string[]> = {

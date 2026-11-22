@@ -4,7 +4,8 @@
 
 一个纯前端的健康科普小工具：勾选症状 → 按吻合度给出可能的方向 → 每个方向附自我照护、常用药物（通用名 + 注意事项）、何时必须就医，并对危险信号做强制拦截。
 
-- 线上地址：<https://symptom-self-check.netlify.app>
+- 线上地址：<https://mingbian-kangtu.huang-1357810.workers.dev>（Cloudflare Workers）
+- 版本：v2.10
 - 零依赖、零构建、零后端：整个应用就是一个 `index.html`
 - 所有计算在浏览器本地完成，**不收集、不上传任何用户数据**
 
@@ -20,7 +21,7 @@ symptom-checker/
 ├── site/
 │   ├── index.html           Web 版：整个应用（HTML + CSS + JS + 数据）
 │   ├── privacy.html         隐私与数据说明（本机存储、上传字段、删除方式）
-│   ├── config.example.js    反馈接口地址示例（复制为 config.js 后生效）
+
 │   └── preview.png          分享卡片图（og:image）
 ├── harmony/                 HarmonyOS 版（ArkTS + ArkUI，参加华为开发者大赛用）
 │   ├── README.md            鸿蒙端说明：环境、打开方式、已知问题
@@ -34,10 +35,7 @@ symptom-checker/
 │   ├── functiongraph/       函数代码（index.js / logic.js / index.html）
 │   ├── symptom-triage-function.zip  可直传函数的上传包
 │   └── local-server.js      本地模拟云端，无需账号即可验证
-├── cloudbase/               腾讯云 CloudBase（国内可直连的静态托管 + 云函数）
-│   ├── README.md            5 步部署说明
-│   ├── cloudbaserc.json     环境 ID 用 ${ENV_ID} 占位
-│   └── functions/feedback/  反馈云函数（index.js / stats.js / package.json）
+
 ├── deploy/                  CodeArts 流水线部署到 ECS
 │   ├── README.md            CodeArts 逐步操作（Repo → Build → Deploy）
 │   ├── nginx-symptom.conf   Nginx 配置（8080 端口，免备案）
@@ -54,12 +52,11 @@ symptom-checker/
 │   ├── test-privacy.js      隐私页与入口/缓存校验
 │   ├── test-content-meta.js 内容来源/审核字段三端一致性
 │   ├── add-content-meta.js  为疾病批量补来源/审核字段（可重复执行）
-│   ├── pack-cloudbase.js    打包 site/ 为 dist-cloudbase.zip（静态托管上传）
-│   └── test-cloudbase-fn.js CloudBase 反馈云函数自测（假 DB，不依赖云环境）
+
 ├── docs/
 │   ├── 架构图.md            三层结构 / 数据流 / 部署拓扑（Mermaid）
 │   ├── API设计.md           所有接口、参数、错误码与隐私边界
-│   ├── evals-latest.json    评测产物（15/15 判红，0 误报）
+│   ├── evals-latest.json    评测产物（18/18 判红，42 条用例，0 误报）
 │   └── 危险信号评测表.md    人读表格版评测结果
 ├── serve-site.js            本地静态服务器（预览用，Node 自带模块，无依赖）
 └── 启动公网地址.ps1          备用：临时公网隧道（Windows）
@@ -262,22 +259,25 @@ const SYMPTOMS = {
 
 ## 部署
 
-把 `site/` 目录整个上传到任意静态托管即可（Netlify / Cloudflare Pages / GitHub Pages / OSS）。
+当前线上：**Cloudflare Workers** — <https://mingbian-kangtu.huang-1357810.workers.dev>
 
-本项目线上的部署方式：Netlify，站点名 `symptom-self-check`。
-更新内容：把 `site/` 文件夹拖到 Netlify 的 Deploys 面板，几秒生效，网址不变。
+- Worker 同时托管 `site/` 静态资源与 `/api/*`（反馈、评测、匿名统计）
+- 更新：`npx wrangler deploy`；改了 `site/` 后需要重新部署
+- 需要独立部署时，`site/` 也可作为纯静态站点上传（GitHub Pages / OSS），但 `/api/*` 仍需要 Worker
 
-### 腾讯云 CloudBase（国内可直连）
+历史方案（仅保留说明，不作为当前线上）：Netlify 站点 `symptom-self-check`，详见 `docs/部署说明.md`。
 
-Cloudflare 的 `workers.dev` 在国内可能打不开，可用 CloudBase 静态托管 + 云函数替代。完整步骤见 `cloudbase/README.md`：
+### 管理密钥（已改为 Secret）
 
-1. 新建 CloudBase 环境（免费版即可），记下环境 ID
-2. `node tools/pack-cloudbase.js` → 上传 `dist-cloudbase.zip` 到静态网站托管
-3. 部署 `cloudbase/functions/feedback`（Nodejs16.13），数据库新建集合 `feedback`
-4. HTTP 访问服务把 `/api` 指向 feedback 函数
-5. 云函数设置环境变量 `ADMIN_KEY`；把 `site/config.example.js` 复制为 `config.js`，填 `https://<env-id>.tcloudbaseapp.com/api/feedback`
+- 仓库不再保存明文密钥；部署前执行：`wrangler secret put ADMIN_KEY`
+- 生成建议：`openssl rand -hex 32`（32 位以上随机串），不要复用旧值
+- **旧版明文 ADMIN_KEY 已轮换**，如仍在使用请立即更换
+- 后台访问：Header `X-Admin-Key` 优先；`?key=` 兼容但已 deprecated
 
-原 Cloudflare 方案（`worker/`）保持不动，两套可并存；前端通过 `site/config.js` 里的 `window.__FEEDBACK_API__` 切换接口地址。
+### 版本
+
+- 当前版本：**v2.10**（见 `package.json`）；文档与包版本保持一致，发布前同步更新
+- 腾讯云 CloudBase 方案已移除（相关目录与打包脚本不再包含）
 
 ## 隐私与数据说明
 
@@ -296,11 +296,11 @@ Cloudflare 的 `workers.dev` 在国内可能打不开，可用 CloudBase 静态�
 
 `tools/test-redflags.js` 从页面抽取 `RED_FLAGS` 与分诊函数，逐条验证「一票判红」并统计负样本误报：
 
-- 15 条危险信号：按 `mode` 组合触发，要求 `flagsFor` 命中且 `computeTriage` 返回 `red`
+- 18 条危险信号：按 `mode` 组合触发，要求 `flagsFor` 命中且 `computeTriage` 返回 `red`
 - 4 组常见轻症负样本：要求不判红
 - 结果自动写入 `docs/危险信号评测表.md`（固定内容，CI 重跑不产生 diff）
 
-随 CI 的 `tools/test-*.js` 循环执行；当前结果：**15/15 判红，负样本 0 误报**。
+随 CI 的 `tools/test-*.js` 循环执行；当前结果：**18/18 判红，负样本 0 误报**。
 
 ## 内容来源与审核
 
@@ -321,7 +321,7 @@ Cloudflare 的 `workers.dev` 在国内可能打不开，可用 CloudBase 静态�
 不做定时推送与审核工作流，只做「能纠错、能召回、能证明」的展示层：
 
 - **架构与接口文档**：`docs/架构图.md`（Mermaid 三层 + 数据流 + 部署拓扑）、`docs/API设计.md`（全部接口、入参出参、错误码）
-- **评测跑批**：`node tools/run-evals.js` 跑 15 条危险信号 + 4 组负样本，输出 `docs/evals-latest.json` 与 `worker/evals-seed.json`；CI 在自测后执行并校验产物已提交
+- **评测跑批**：`node tools/run-evals.js` 跑 42 条用例（18 条危险信号 + 8 组加权 + 3 条年龄分支 + 5 条用药冲突 + 8 组负样本），按类别汇总输出 `docs/evals-latest.json` 与 `worker/evals-seed.json`；CI 在自测后执行并校验产物已提交
 - **评测展示**：`GET /api/evals/latest`（KV 优先、打包 seed 兜底）；`POST /api/evals/publish?key=` 可发布新结果；后台「评测」板块显示判红率、误报数、最近运行
 - **版本闭环**：反馈记录带 `contentVersion`；后台明细表有「内容版本」列，标记已改进时可填 `fixedVersion`，显示为「已改进（v1）」
 - **匿名运营**：`POST /api/metrics/event` 只收 `{ symptomCount, level }`，按日聚合为 `{ total, red, yellow, green }`；后台「运营」板块显示今日查询量与判红率；前端失败静默
@@ -333,7 +333,7 @@ Cloudflare 的 `workers.dev` 在国内可能打不开，可用 CloudBase 静态�
 
 - 匹配是**启发式**的，基于人工设定的症状权重，不是临床预测模型
 - 自然语言输入是本地词典匹配，常见口语说法可以识别；非常规表述可能漏识别，需要手动补充
-- 内容以常见病为主，覆盖 35 种情况、81 个症状，不能覆盖复杂或罕见病
+- 内容以常见病为主，覆盖 35 种情况、84 个症状，不能覆盖复杂或罕见病
 - 提醒依赖本机记录，只在下次打开页面时检查；换设备或清除浏览器数据后记录会丢失，纯前端也做不到后台定时推送
 - 人体图是示意图，点位只能帮助定位大致区域，不能替代查体；同一部位可能对应多种情况
 - 药物只给通用名与注意事项，**刻意不写剂量**——剂量必须由医生/药师按个体情况决定

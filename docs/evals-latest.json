@@ -1,12 +1,55 @@
 {
-  "version": "eval-v1",
+  "version": "eval-v2",
   "generatedAt": "2026-11-22",
-  "total": 15,
-  "red": 15,
+  "total": 18,
+  "red": 18,
   "redRate": 1,
-  "negatives": 4,
+  "negatives": 8,
   "falsePositive": 0,
   "falsePositiveRate": 0,
+  "caseTotal": 42,
+  "categories": [
+    {
+      "id": "redflags",
+      "label": "危险信号",
+      "total": 18,
+      "pass": 18,
+      "red": 18,
+      "fp": 0
+    },
+    {
+      "id": "weighted",
+      "label": "问卷加权",
+      "total": 8,
+      "pass": 8,
+      "red": 1,
+      "fp": 0
+    },
+    {
+      "id": "age",
+      "label": "年龄分支",
+      "total": 3,
+      "pass": 3,
+      "red": 1,
+      "fp": 0
+    },
+    {
+      "id": "meds",
+      "label": "用药冲突",
+      "total": 5,
+      "pass": 5,
+      "red": 0,
+      "fp": 0
+    },
+    {
+      "id": "negatives",
+      "label": "负样本",
+      "total": 8,
+      "pass": 8,
+      "red": 0,
+      "fp": 0
+    }
+  ],
   "cases": [
     {
       "title": "胸痛",
@@ -97,6 +140,24 @@
       "input": "高温环境暴露 + 意识模糊",
       "level": "red",
       "ok": true
+    },
+    {
+      "title": "雷击样剧烈头痛",
+      "input": "雷击样剧烈头痛",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "持续高热超过 3 天",
+      "input": "持续高热超过 3 天",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "title": "意识丧失 / 晕厥",
+      "input": "意识丧失 / 晕厥",
+      "level": "red",
+      "ok": true
     }
   ],
   "negativeCases": [
@@ -119,6 +180,171 @@
       "input": "腹泻 + 腹痛",
       "level": "yellow",
       "falsePositive": false
+    },
+    {
+      "input": "失眠",
+      "level": "yellow",
+      "falsePositive": false
+    },
+    {
+      "input": "皮疹",
+      "level": "yellow",
+      "falsePositive": false
+    },
+    {
+      "input": "便秘",
+      "level": "yellow",
+      "falsePositive": false
+    },
+    {
+      "input": "腰背痛",
+      "level": "yellow",
+      "falsePositive": false
+    }
+  ],
+  "weightedCases": [
+    {
+      "name": "全部轻微",
+      "score": {
+        "duration": 0,
+        "fever": 0,
+        "activity": 0
+      },
+      "expect": "green",
+      "level": "green",
+      "ok": true
+    },
+    {
+      "name": "4–7 天 + 低热",
+      "score": {
+        "duration": 2,
+        "fever": 1,
+        "activity": 0
+      },
+      "expect": "green",
+      "level": "green",
+      "ok": true
+    },
+    {
+      "name": "4–7 天 + 中度发热",
+      "score": {
+        "duration": 2,
+        "fever": 2,
+        "activity": 0
+      },
+      "expect": "yellow",
+      "level": "yellow",
+      "ok": true
+    },
+    {
+      "name": "4–7 天 + 中度发热 + 影响工作",
+      "score": {
+        "duration": 2,
+        "fever": 2,
+        "activity": 1
+      },
+      "expect": "yellow",
+      "level": "yellow",
+      "ok": true
+    },
+    {
+      "name": "超过 1 周 + 高热 + 影响工作",
+      "score": {
+        "duration": 3,
+        "fever": 3,
+        "activity": 1
+      },
+      "expect": "yellow",
+      "level": "yellow",
+      "ok": true
+    },
+    {
+      "name": "超过 1 周 + 高热 + 卧床",
+      "score": {
+        "duration": 3,
+        "fever": 3,
+        "activity": 2
+      },
+      "expect": "red",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "name": "高热 + 卧床",
+      "score": {
+        "duration": 0,
+        "fever": 3,
+        "activity": 2
+      },
+      "expect": "yellow",
+      "level": "yellow",
+      "ok": true
+    },
+    {
+      "name": "超过 1 周 + 卧床",
+      "score": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 2
+      },
+      "expect": "yellow",
+      "level": "yellow",
+      "ok": true
+    }
+  ],
+  "ageCases": [
+    {
+      "name": "6 个月发热",
+      "age": 0.5,
+      "expect": "red",
+      "level": "red",
+      "ok": true
+    },
+    {
+      "name": "老人轻症不误判为红",
+      "age": 75,
+      "expect": "green",
+      "level": "green",
+      "ok": true
+    },
+    {
+      "name": "儿童中度症状",
+      "age": 10,
+      "expect": "yellow",
+      "level": "yellow",
+      "ok": true
+    }
+  ],
+  "medsCases": [
+    {
+      "name": "18 岁以下 + 阿司匹林",
+      "expect": "red",
+      "hits": 2,
+      "ok": true
+    },
+    {
+      "name": "6 个月以下 + 布洛芬",
+      "expect": "red",
+      "hits": 2,
+      "ok": true
+    },
+    {
+      "name": "65 岁以上 + 布洛芬",
+      "expect": "yellow",
+      "hits": 2,
+      "ok": true
+    },
+    {
+      "name": "2 岁以下 + 氯苯那敏",
+      "expect": "red",
+      "hits": 2,
+      "ok": true
+    },
+    {
+      "name": "12 岁以下 + 甲硝唑",
+      "expect": "yellow",
+      "hits": 2,
+      "ok": true
     }
   ]
 }
