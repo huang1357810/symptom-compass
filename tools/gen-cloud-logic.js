@@ -10,6 +10,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const SRC = path.join(ROOT, 'site', 'index.html');
 const OUT_DIR = path.join(ROOT, 'cloud', 'functiongraph');
+const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 
 const html = fs.readFileSync(SRC, 'utf8');
 const m = html.match(/<script>([\s\S]*?)<\/script>/);
@@ -26,6 +27,7 @@ fs.writeFileSync(path.join(OUT_DIR, 'index.html'), html, 'utf8');
 // 2. 逻辑抽出成 CommonJS 模块
 const header = `/**
  * 分诊逻辑（服务端）
+ * @version v${pkg.version}
  * ⚠️ 由 tools/gen-cloud-logic.js 从 site/index.html 自动生成，请勿手工修改。
  * 该 script 末尾已自带 module.exports，因此可直接被 require。
  */
@@ -34,7 +36,7 @@ const header = `/**
 fs.writeFileSync(path.join(OUT_DIR, 'logic.js'), header + m[1], 'utf8');
 
 // 3. 静态附属页（隐私与数据说明）
-const EXTRA_FILES = ['privacy.html'];
+const EXTRA_FILES = ['privacy.html', 'selftest.html'];
 EXTRA_FILES.forEach(name => {
   const src = path.join(ROOT, 'site', name);
   if (fs.existsSync(src)) {

@@ -4,6 +4,7 @@
   "private": true,
   "description": "明辨康途 · 健康科普与就医参考（Web / HarmonyOS / Cloudflare Workers）",
   "scripts": {
+    "build": "node tools/build.js",
     "test": "node tools/run-all-tests.js",
     "evals": "node tools/run-evals.js",
     "deploy": "wrangler deploy"

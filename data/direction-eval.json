@@ -1,0 +1,1869 @@
+[
+  {
+    "id": "d001",
+    "input": {
+      "symptoms": [
+        "runny_nose",
+        "congestion",
+        "sneeze"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 1,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "cold",
+    "note": "流涕+鼻塞+打喷嚏，2 天，低热，能活动",
+    "split": "train"
+  },
+  {
+    "id": "d002",
+    "input": {
+      "symptoms": [
+        "congestion",
+        "sore_throat",
+        "dry_cough"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 1,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "cold",
+    "note": "鼻塞+咽痛+干咳，4–7 天，低热；以鼻部症状为主",
+    "split": "holdout"
+  },
+  {
+    "id": "d003",
+    "input": {
+      "symptoms": [
+        "fever",
+        "myalgia",
+        "chills"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 2,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "flu",
+    "note": "发热+肌肉酸痛+畏寒，起病急，影响工作",
+    "split": "train"
+  },
+  {
+    "id": "d004",
+    "input": {
+      "symptoms": [
+        "fever",
+        "myalgia",
+        "fatigue",
+        "headache"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 2,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "flu",
+    "note": "发热+肌痛+乏力+头痛，全身症状明显",
+    "split": "holdout"
+  },
+  {
+    "id": "d005",
+    "input": {
+      "symptoms": [
+        "sneeze",
+        "runny_nose",
+        "eye_itch"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "allergic_rhinitis",
+    "note": "阵发喷嚏+清水涕+眼痒，反复发作、不发热",
+    "split": "train"
+  },
+  {
+    "id": "d006",
+    "input": {
+      "symptoms": [
+        "runny_nose",
+        "congestion",
+        "smell_loss"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "allergic_rhinitis",
+    "note": "流涕+鼻塞+嗅觉减退，无发热，接触花粉后加重",
+    "split": "holdout"
+  },
+  {
+    "id": "d007",
+    "input": {
+      "symptoms": [
+        "sore_throat",
+        "dysphagia",
+        "fever"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 1,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "pharyngitis",
+    "note": "咽痛+吞咽痛+低热，1–3 天",
+    "split": "train"
+  },
+  {
+    "id": "d008",
+    "input": {
+      "symptoms": [
+        "sore_throat",
+        "fever",
+        "headache"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 2,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "pharyngitis",
+    "note": "咽痛+中度发热+头痛，无鼻部症状",
+    "split": "holdout"
+  },
+  {
+    "id": "d009",
+    "input": {
+      "symptoms": [
+        "dry_cough",
+        "sputum",
+        "chest_tight"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 1,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "bronchitis",
+    "note": "干咳转有痰+胸闷，感冒后咳嗽加重",
+    "split": "train"
+  },
+  {
+    "id": "d010",
+    "input": {
+      "symptoms": [
+        "dry_cough",
+        "sputum",
+        "wheeze"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 1,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "bronchitis",
+    "note": "咳嗽有痰+喘息，超过 1 周，影响活动",
+    "split": "holdout"
+  },
+  {
+    "id": "d011",
+    "input": {
+      "symptoms": [
+        "dyspnea",
+        "sputum",
+        "high_fever",
+        "fever"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 3,
+        "activity": 2
+      },
+      "age": 40
+    },
+    "gold": "pneumonia",
+    "note": "气短+咳痰+高热，卧床，需排查肺炎",
+    "split": "train"
+  },
+  {
+    "id": "d012",
+    "input": {
+      "symptoms": [
+        "fever",
+        "sputum",
+        "chest_tight",
+        "dyspnea"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 2,
+        "activity": 1
+      },
+      "age": 65
+    },
+    "gold": "pneumonia",
+    "note": "发热+咳痰+胸闷+气短，老年人",
+    "split": "holdout"
+  },
+  {
+    "id": "d013",
+    "input": {
+      "symptoms": [
+        "night_sweat",
+        "weight_loss",
+        "hemoptysis"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 1,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "tb",
+    "note": "盗汗+体重下降+咯血，需排查结核",
+    "split": "train"
+  },
+  {
+    "id": "d014",
+    "input": {
+      "symptoms": [
+        "dry_cough",
+        "night_sweat",
+        "weight_loss"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 1,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "tb",
+    "note": "咳嗽超过 2 周+盗汗+消瘦",
+    "split": "holdout"
+  },
+  {
+    "id": "d015",
+    "input": {
+      "symptoms": [
+        "heartburn",
+        "bloating"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "gerd",
+    "note": "反酸烧心+腹胀，餐后加重",
+    "split": "train"
+  },
+  {
+    "id": "d016",
+    "input": {
+      "symptoms": [
+        "heartburn",
+        "dysphagia",
+        "chest_tight"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "gerd",
+    "note": "烧心+吞咽不适+胸闷，无发热",
+    "split": "holdout"
+  },
+  {
+    "id": "d017",
+    "input": {
+      "symptoms": [
+        "diarrhea",
+        "vomiting",
+        "abdominal_pain"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 1,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "gastroenteritis",
+    "note": "腹泻+呕吐+腹痛，进食不洁后",
+    "split": "train"
+  },
+  {
+    "id": "d018",
+    "input": {
+      "symptoms": [
+        "diarrhea",
+        "nausea",
+        "poor_appetite"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 1,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "gastroenteritis",
+    "note": "腹泻+恶心+食欲差，急性起病",
+    "split": "holdout"
+  },
+  {
+    "id": "d019",
+    "input": {
+      "symptoms": [
+        "bloating",
+        "belching",
+        "poor_appetite"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "dyspepsia",
+    "note": "餐后腹胀+嗳气+食欲差，无发热",
+    "split": "train"
+  },
+  {
+    "id": "d020",
+    "input": {
+      "symptoms": [
+        "bloating",
+        "nausea",
+        "abdominal_pain"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "dyspepsia",
+    "note": "腹胀+恶心+上腹不适，与饮食相关",
+    "split": "holdout"
+  },
+  {
+    "id": "d021",
+    "input": {
+      "symptoms": [
+        "constipation",
+        "bloating"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "constipation",
+    "note": "便秘+腹胀，排便次数减少",
+    "split": "train"
+  },
+  {
+    "id": "d022",
+    "input": {
+      "symptoms": [
+        "constipation",
+        "abdominal_pain"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "constipation",
+    "note": "便秘+腹痛，排便后缓解",
+    "split": "holdout"
+  },
+  {
+    "id": "d023",
+    "input": {
+      "symptoms": [
+        "headache",
+        "nausea",
+        "photophobia"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 0,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "migraine",
+    "note": "搏动性头痛+恶心+畏光，反复发作",
+    "split": "train"
+  },
+  {
+    "id": "d024",
+    "input": {
+      "symptoms": [
+        "headache",
+        "vision_blur",
+        "vomiting"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 0,
+        "activity": 2
+      },
+      "age": 30
+    },
+    "gold": "migraine",
+    "note": "头痛+视物模糊+呕吐，发作时卧床",
+    "split": "holdout"
+  },
+  {
+    "id": "d025",
+    "input": {
+      "symptoms": [
+        "headache",
+        "neck_pain",
+        "anxious"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "tension_headache",
+    "note": "双侧头痛+颈肩紧+焦虑，与压力相关",
+    "split": "train"
+  },
+  {
+    "id": "d026",
+    "input": {
+      "symptoms": [
+        "headache",
+        "neck_pain",
+        "insomnia"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "tension_headache",
+    "note": "头痛+颈肩痛+失眠，无恶心畏光",
+    "split": "holdout"
+  },
+  {
+    "id": "d027",
+    "input": {
+      "symptoms": [
+        "dysuria",
+        "urinary_freq",
+        "hematuria"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 1,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "uti",
+    "note": "尿痛+尿频+血尿",
+    "split": "train"
+  },
+  {
+    "id": "d028",
+    "input": {
+      "symptoms": [
+        "urinary_freq",
+        "dysuria",
+        "fever"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 1,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "uti",
+    "note": "尿频尿急尿痛+低热",
+    "split": "holdout"
+  },
+  {
+    "id": "d029",
+    "input": {
+      "symptoms": [
+        "flank_pain",
+        "hematuria",
+        "nausea"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 0,
+        "activity": 2
+      },
+      "age": 30
+    },
+    "gold": "kidney_stone",
+    "note": "腰侧绞痛+血尿+恶心，突发",
+    "split": "train"
+  },
+  {
+    "id": "d030",
+    "input": {
+      "symptoms": [
+        "flank_pain",
+        "vomiting",
+        "hematuria"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 0,
+        "activity": 2
+      },
+      "age": 30
+    },
+    "gold": "kidney_stone",
+    "note": "腰侧痛+呕吐+血尿，疼痛剧烈",
+    "split": "holdout"
+  },
+  {
+    "id": "d031",
+    "input": {
+      "symptoms": [
+        "dysmenorrhea",
+        "back_pain",
+        "nausea"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 0,
+        "activity": 1
+      },
+      "age": 25
+    },
+    "gold": "dysmenorrhea",
+    "note": "经期下腹痛+腰酸+恶心，周期性",
+    "split": "train"
+  },
+  {
+    "id": "d032",
+    "input": {
+      "symptoms": [
+        "dysmenorrhea",
+        "headache",
+        "fatigue"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 0,
+        "activity": 1
+      },
+      "age": 25
+    },
+    "gold": "dysmenorrhea",
+    "note": "经期腹痛+头痛+乏力",
+    "split": "train"
+  },
+  {
+    "id": "d033",
+    "input": {
+      "symptoms": [
+        "vaginal_discharge",
+        "itch"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 28
+    },
+    "gold": "vaginitis",
+    "note": "白带异常+外阴瘙痒",
+    "split": "train"
+  },
+  {
+    "id": "d034",
+    "input": {
+      "symptoms": [
+        "vaginal_discharge",
+        "dysuria"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 28
+    },
+    "gold": "vaginitis",
+    "note": "白带异常+排尿不适",
+    "split": "train"
+  },
+  {
+    "id": "d035",
+    "input": {
+      "symptoms": [
+        "fatigue",
+        "pallor",
+        "dizziness"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "anemia",
+    "note": "长期乏力+面色苍白+头晕",
+    "split": "train"
+  },
+  {
+    "id": "d036",
+    "input": {
+      "symptoms": [
+        "fatigue",
+        "palpitation",
+        "pallor"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "anemia",
+    "note": "乏力+心悸+面色苍白",
+    "split": "train"
+  },
+  {
+    "id": "d037",
+    "input": {
+      "symptoms": [
+        "itch",
+        "rash",
+        "dry_skin"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "eczema",
+    "note": "瘙痒+皮疹+皮肤干燥脱屑",
+    "split": "train"
+  },
+  {
+    "id": "d038",
+    "input": {
+      "symptoms": [
+        "rash",
+        "itch",
+        "blister"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "eczema",
+    "note": "皮疹+瘙痒+水疱，反复",
+    "split": "train"
+  },
+  {
+    "id": "d039",
+    "input": {
+      "symptoms": [
+        "hives",
+        "itch"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "urticaria",
+    "note": "风团+瘙痒，突然出现",
+    "split": "train"
+  },
+  {
+    "id": "d040",
+    "input": {
+      "symptoms": [
+        "hives",
+        "rash",
+        "itch"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "urticaria",
+    "note": "风团+皮疹+瘙痒，接触后急性发作",
+    "split": "train"
+  },
+  {
+    "id": "d041",
+    "input": {
+      "symptoms": [
+        "eye_red",
+        "eye_discharge"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "conjunctivitis",
+    "note": "眼红+分泌物增多",
+    "split": "train"
+  },
+  {
+    "id": "d042",
+    "input": {
+      "symptoms": [
+        "eye_red",
+        "eye_itch",
+        "eye_discharge"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "conjunctivitis",
+    "note": "眼红+眼痒+分泌物",
+    "split": "train"
+  },
+  {
+    "id": "d043",
+    "input": {
+      "symptoms": [
+        "ear_pain",
+        "hearing_loss",
+        "fever"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 1,
+        "activity": 1
+      },
+      "age": 5
+    },
+    "gold": "otitis",
+    "note": "儿童耳痛+听力下降+发热",
+    "split": "train"
+  },
+  {
+    "id": "d044",
+    "input": {
+      "symptoms": [
+        "ear_pain",
+        "tinnitus",
+        "fever"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 1,
+        "activity": 0
+      },
+      "age": 6
+    },
+    "gold": "otitis",
+    "note": "儿童耳痛+耳鸣+低热",
+    "split": "train"
+  },
+  {
+    "id": "d045",
+    "input": {
+      "symptoms": [
+        "toothache",
+        "facial_pain"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 1,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "dental",
+    "note": "牙痛+面部压痛",
+    "split": "train"
+  },
+  {
+    "id": "d046",
+    "input": {
+      "symptoms": [
+        "toothache",
+        "dysphagia",
+        "fever"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 1,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "dental",
+    "note": "牙痛+吞咽痛+发热，智齿周围肿痛",
+    "split": "train"
+  },
+  {
+    "id": "d047",
+    "input": {
+      "symptoms": [
+        "back_pain",
+        "myalgia"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "low_back",
+    "note": "腰背痛+肌肉酸痛，劳累后",
+    "split": "train"
+  },
+  {
+    "id": "d048",
+    "input": {
+      "symptoms": [
+        "back_pain",
+        "numbness"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "low_back",
+    "note": "腰背痛+下肢麻木",
+    "split": "train"
+  },
+  {
+    "id": "d049",
+    "input": {
+      "symptoms": [
+        "neck_pain",
+        "numbness",
+        "dizziness"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "cervical",
+    "note": "颈肩痛+手麻+头晕，久坐后",
+    "split": "train"
+  },
+  {
+    "id": "d050",
+    "input": {
+      "symptoms": [
+        "neck_pain",
+        "myalgia",
+        "numbness"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "cervical",
+    "note": "颈肩痛+肌肉酸痛+手麻",
+    "split": "train"
+  },
+  {
+    "id": "d051",
+    "input": {
+      "symptoms": [
+        "joint_pain",
+        "joint_swelling",
+        "fever"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 1,
+        "activity": 1
+      },
+      "age": 50
+    },
+    "gold": "gout",
+    "note": "关节痛+红肿发热+低热，夜间突发",
+    "split": "train"
+  },
+  {
+    "id": "d052",
+    "input": {
+      "symptoms": [
+        "joint_swelling",
+        "joint_pain"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 1,
+        "activity": 1
+      },
+      "age": 50
+    },
+    "gold": "gout",
+    "note": "关节红肿+疼痛，单关节发作",
+    "split": "train"
+  },
+  {
+    "id": "d053",
+    "input": {
+      "symptoms": [
+        "insomnia",
+        "anxious",
+        "low_mood"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "sleep_anxiety",
+    "note": "失眠+焦虑+情绪低落",
+    "split": "train"
+  },
+  {
+    "id": "d054",
+    "input": {
+      "symptoms": [
+        "insomnia",
+        "anxious",
+        "palpitation"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "sleep_anxiety",
+    "note": "失眠+焦虑+心悸",
+    "split": "train"
+  },
+  {
+    "id": "d055",
+    "input": {
+      "symptoms": [
+        "rectal_bleeding",
+        "anal_pain",
+        "constipation"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "hemorrhoids",
+    "note": "便血+肛门疼痛+便秘",
+    "split": "train"
+  },
+  {
+    "id": "d056",
+    "input": {
+      "symptoms": [
+        "rectal_bleeding",
+        "anal_pain",
+        "itch"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "hemorrhoids",
+    "note": "便血+肛周痛+瘙痒",
+    "split": "train"
+  },
+  {
+    "id": "d057",
+    "input": {
+      "symptoms": [
+        "purulent_discharge",
+        "facial_pain",
+        "congestion"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 1,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "sinusitis",
+    "note": "脓涕+面部压痛+鼻塞",
+    "split": "train"
+  },
+  {
+    "id": "d058",
+    "input": {
+      "symptoms": [
+        "purulent_discharge",
+        "headache",
+        "smell_loss"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 1,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "sinusitis",
+    "note": "脓涕+头痛+嗅觉减退",
+    "split": "train"
+  },
+  {
+    "id": "d059",
+    "input": {
+      "symptoms": [
+        "oral_ulcer",
+        "sore_throat",
+        "dysphagia"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "aphthous",
+    "note": "口腔溃疡+咽痛+吞咽痛",
+    "split": "train"
+  },
+  {
+    "id": "d060",
+    "input": {
+      "symptoms": [
+        "oral_ulcer",
+        "poor_appetite",
+        "fever"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 1,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "aphthous",
+    "note": "口腔溃疡+食欲差+低热",
+    "split": "train"
+  },
+  {
+    "id": "d061",
+    "input": {
+      "symptoms": [
+        "itch",
+        "dry_skin",
+        "rash"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "eczema",
+    "note": "瘙痒+皮肤干燥+皮疹（无明确足部定位）",
+    "split": "train"
+  },
+  {
+    "id": "d062",
+    "input": {
+      "symptoms": [
+        "dry_skin",
+        "itch",
+        "blister"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "tinea_pedis",
+    "note": "皮肤干燥+瘙痒+水疱，趾间明显",
+    "split": "train"
+  },
+  {
+    "id": "d063",
+    "input": {
+      "symptoms": [
+        "epigastric_pain",
+        "heartburn",
+        "nausea"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 0,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "gastritis",
+    "note": "上腹痛+烧心+恶心",
+    "split": "train"
+  },
+  {
+    "id": "d064",
+    "input": {
+      "symptoms": [
+        "epigastric_pain",
+        "belching",
+        "poor_appetite"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "gastritis",
+    "note": "上腹痛+嗳气+食欲差",
+    "split": "train"
+  },
+  {
+    "id": "d065",
+    "input": {
+      "symptoms": [
+        "hand_foot_rash",
+        "oral_ulcer",
+        "fever"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 1,
+        "activity": 1
+      },
+      "age": 4
+    },
+    "gold": "hfmd",
+    "note": "手足皮疹+口腔溃疡+发热，儿童",
+    "split": "train"
+  },
+  {
+    "id": "d066",
+    "input": {
+      "symptoms": [
+        "hand_foot_rash",
+        "fever",
+        "sore_throat"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 1,
+        "activity": 1
+      },
+      "age": 3
+    },
+    "gold": "hfmd",
+    "note": "手足皮疹+发热+咽痛，幼儿",
+    "split": "train"
+  },
+  {
+    "id": "d067",
+    "input": {
+      "symptoms": [
+        "heat_exposure",
+        "dizziness",
+        "nausea"
+      ],
+      "answers": {
+        "duration": 0,
+        "fever": 0,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "heat_illness",
+    "note": "高温环境暴露+头晕+恶心",
+    "split": "train"
+  },
+  {
+    "id": "d068",
+    "input": {
+      "symptoms": [
+        "heat_exposure",
+        "palpitation",
+        "vomiting"
+      ],
+      "answers": {
+        "duration": 0,
+        "fever": 0,
+        "activity": 2
+      },
+      "age": 30
+    },
+    "gold": "heat_illness",
+    "note": "高温暴露+心悸+呕吐，需降温",
+    "split": "train"
+  },
+  {
+    "id": "d069",
+    "input": {
+      "symptoms": [
+        "rib_pain",
+        "chest_wall_pain"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "costochondritis",
+    "note": "肋部疼痛+胸壁按压痛",
+    "split": "train"
+  },
+  {
+    "id": "d070",
+    "input": {
+      "symptoms": [
+        "chest_wall_pain",
+        "chest_pain",
+        "dyspnea"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "costochondritis",
+    "note": "胸壁按压痛+胸痛+气短，按压时加重",
+    "split": "train"
+  },
+  {
+    "id": "d071",
+    "input": {
+      "symptoms": [
+        "fever",
+        "sputum",
+        "dyspnea"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 2,
+        "activity": 1
+      },
+      "age": 70
+    },
+    "gold": "pneumonia",
+    "note": "老年发热+咳痰+气短",
+    "split": "train"
+  },
+  {
+    "id": "d072",
+    "input": {
+      "symptoms": [
+        "fever",
+        "sputum",
+        "dyspnea"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 2,
+        "activity": 1
+      },
+      "age": 25
+    },
+    "gold": "pneumonia",
+    "note": "同症状，青年，4–7 天，中度发热；气短需排查肺炎",
+    "split": "holdout"
+  },
+  {
+    "id": "d073",
+    "input": {
+      "symptoms": [
+        "fever",
+        "ear_pain",
+        "sore_throat"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 1,
+        "activity": 1
+      },
+      "age": 5
+    },
+    "gold": "otitis",
+    "note": "儿童发热+耳痛+咽痛",
+    "split": "train"
+  },
+  {
+    "id": "d074",
+    "input": {
+      "symptoms": [
+        "fever",
+        "ear_pain",
+        "sore_throat"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 1,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "pharyngitis",
+    "note": "同症状，成人，咽痛为主、耳痛为牵涉",
+    "split": "holdout"
+  },
+  {
+    "id": "d075",
+    "input": {
+      "symptoms": [
+        "dry_cough",
+        "sputum"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 1,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "bronchitis",
+    "note": "咳嗽有痰，4–7 天",
+    "split": "train"
+  },
+  {
+    "id": "d076",
+    "input": {
+      "symptoms": [
+        "dry_cough",
+        "sputum"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 1,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "bronchitis",
+    "note": "同症状，超过 1 周，无结核支持证据",
+    "split": "holdout"
+  },
+  {
+    "id": "d077",
+    "input": {
+      "symptoms": [
+        "dry_cough",
+        "sputum",
+        "fever"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 2,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "bronchitis",
+    "note": "咳嗽有痰+发热，1–3 天",
+    "split": "train"
+  },
+  {
+    "id": "d078",
+    "input": {
+      "symptoms": [
+        "dry_cough",
+        "sputum",
+        "fever"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 1,
+        "activity": 1
+      },
+      "age": 30
+    },
+    "gold": "bronchitis",
+    "note": "同症状，超过 1 周，低热，无结核支持证据",
+    "split": "holdout"
+  },
+  {
+    "id": "d079",
+    "input": {
+      "symptoms": [
+        "headache",
+        "nausea"
+      ],
+      "answers": {
+        "duration": 0,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "migraine",
+    "note": "头痛+恶心，今天发作",
+    "split": "train"
+  },
+  {
+    "id": "d080",
+    "input": {
+      "symptoms": [
+        "headache",
+        "nausea"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "tension_headache",
+    "note": "同症状，超过 1 周，紧张性头痛",
+    "split": "holdout"
+  },
+  {
+    "id": "d081",
+    "input": {
+      "symptoms": [
+        "heartburn",
+        "nausea"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "gerd",
+    "note": "烧心+恶心，1–3 天",
+    "split": "train"
+  },
+  {
+    "id": "d082",
+    "input": {
+      "symptoms": [
+        "heartburn",
+        "nausea"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "gerd",
+    "note": "同症状，超过 1 周，烧心为核心",
+    "split": "holdout"
+  },
+  {
+    "id": "d083",
+    "input": {
+      "symptoms": [
+        "epigastric_pain",
+        "heartburn"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "gastritis",
+    "note": "上腹痛+烧心，近期",
+    "split": "train"
+  },
+  {
+    "id": "d084",
+    "input": {
+      "symptoms": [
+        "epigastric_pain",
+        "heartburn"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "gerd",
+    "note": "同症状，超过 1 周，反流为主",
+    "split": "holdout"
+  },
+  {
+    "id": "d085",
+    "input": {
+      "symptoms": [
+        "fever",
+        "dry_cough"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 2,
+        "activity": 1
+      },
+      "age": 70
+    },
+    "gold": "pneumonia",
+    "note": "老年发热+干咳",
+    "split": "train"
+  },
+  {
+    "id": "d086",
+    "input": {
+      "symptoms": [
+        "fever",
+        "dry_cough"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 1,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "bronchitis",
+    "note": "同症状，青年，低热",
+    "split": "holdout"
+  },
+  {
+    "id": "d087",
+    "input": {
+      "symptoms": [
+        "dry_cough",
+        "night_sweat"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "bronchitis",
+    "note": "干咳+偶有盗汗，1–3 天",
+    "split": "train"
+  },
+  {
+    "id": "d088",
+    "input": {
+      "symptoms": [
+        "dry_cough",
+        "night_sweat"
+      ],
+      "answers": {
+        "duration": 2,
+        "fever": 1,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "tb",
+    "note": "同症状，4–7 天，低热盗汗",
+    "split": "holdout"
+  },
+  {
+    "id": "d089",
+    "input": {
+      "symptoms": [
+        "flank_pain",
+        "hematuria"
+      ],
+      "answers": {
+        "duration": 0,
+        "fever": 0,
+        "activity": 2
+      },
+      "age": 30
+    },
+    "gold": "kidney_stone",
+    "note": "腰侧痛+血尿，突发",
+    "split": "train"
+  },
+  {
+    "id": "d090",
+    "input": {
+      "symptoms": [
+        "flank_pain",
+        "hematuria"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 1,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "uti",
+    "note": "同症状，超过 1 周，低热",
+    "split": "holdout"
+  },
+  {
+    "id": "d091",
+    "input": {
+      "symptoms": [
+        "epigastric_pain",
+        "nausea"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "gastritis",
+    "note": "上腹痛+恶心，近期",
+    "split": "train"
+  },
+  {
+    "id": "d092",
+    "input": {
+      "symptoms": [
+        "epigastric_pain",
+        "nausea"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "gastritis",
+    "note": "同症状，超过 1 周，上腹痛为核心",
+    "split": "holdout"
+  },
+  {
+    "id": "d093",
+    "input": {
+      "symptoms": [
+        "sore_throat",
+        "congestion"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 1,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "pharyngitis",
+    "note": "咽痛+鼻塞，1–3 天",
+    "split": "train"
+  },
+  {
+    "id": "d094",
+    "input": {
+      "symptoms": [
+        "sore_throat",
+        "congestion"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "pharyngitis",
+    "note": "同症状，超过 1 周，无发热，咽痛为主",
+    "split": "holdout"
+  },
+  {
+    "id": "d095",
+    "input": {
+      "symptoms": [
+        "eye_red",
+        "eye_itch"
+      ],
+      "answers": {
+        "duration": 0,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "conjunctivitis",
+    "note": "眼红+眼痒，今天",
+    "split": "train"
+  },
+  {
+    "id": "d096",
+    "input": {
+      "symptoms": [
+        "eye_red",
+        "eye_itch"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "conjunctivitis",
+    "note": "同症状，超过 1 周，仅眼部症状",
+    "split": "holdout"
+  },
+  {
+    "id": "d097",
+    "input": {
+      "symptoms": [
+        "itch",
+        "rash"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "eczema",
+    "note": "瘙痒+皮疹，近期",
+    "split": "train"
+  },
+  {
+    "id": "d098",
+    "input": {
+      "symptoms": [
+        "itch",
+        "rash"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "eczema",
+    "note": "同症状，超过 1 周（无明确部位）",
+    "split": "holdout"
+  },
+  {
+    "id": "d099",
+    "input": {
+      "symptoms": [
+        "dizziness",
+        "headache"
+      ],
+      "answers": {
+        "duration": 1,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "tension_headache",
+    "note": "头晕+头痛，近期",
+    "split": "train"
+  },
+  {
+    "id": "d100",
+    "input": {
+      "symptoms": [
+        "dizziness",
+        "headache"
+      ],
+      "answers": {
+        "duration": 3,
+        "fever": 0,
+        "activity": 0
+      },
+      "age": 30
+    },
+    "gold": "tension_headache",
+    "note": "同症状，超过 1 周，无贫血线索",
+    "split": "holdout"
+  }
+]

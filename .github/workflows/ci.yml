@@ -28,6 +28,15 @@ jobs:
         run: |
           node tools/run-evals.js
 
+      - name: 方向评测（禁止倒退）
+        run: |
+          node tools/eval-direction.js --check
+
+      - name: 版本与文档检查
+        run: |
+          node tools/check-version.js
+          node tools/check-docs.js
+
       - name: 生成物一致性
         run: |
           node tools/gen-cloud-logic.js

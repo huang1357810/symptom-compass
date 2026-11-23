@@ -1,5 +1,6 @@
 /**
  * 症状 / 疾病 / 危险信号 数据
+ * @version v2.10.0
  *
  * ⚠️ 本文件由 tools/gen-harmony-data.js 从 site/index.html 自动生成，请勿手工修改。
  * 修改内容请改 Web 版数据源后重新生成： node tools/gen-harmony-data.js

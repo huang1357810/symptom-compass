@@ -1,0 +1,160 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>明辨康途 · 运行自检</title>
+<style>
+  :root{color-scheme:light}
+  body{margin:0;padding:20px 16px 40px;font:15px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+       background:#f4faf9;color:#1f2d2a}
+  h1{font-size:19px;margin:0 0 6px}
+  p.lead{margin:0 0 16px;font-size:13px;color:#5d7a74}
+  #summary{padding:12px 14px;border-radius:12px;background:#fff;border:1px solid #dfeeea;margin-bottom:14px;font-weight:600}
+  #summary.pass{color:#1d7a5f}
+  #summary.fail{color:#b23b2e}
+  ul{list-style:none;margin:0;padding:0}
+  li{background:#fff;border:1px solid #e6efec;border-radius:12px;padding:10px 13px;margin-bottom:8px}
+  li b{display:inline-block;min-width:104px}
+  .ok{color:#1d7a5f}
+  .bad{color:#b23b2e}
+  .detail{display:block;margin-top:4px;font-size:12.5px;color:#6b8a84;word-break:break-all}
+  a{color:#2f6f66}
+</style>
+</head>
+<body>
+  <h1>明辨康途 · 运行自检</h1>
+  <p class="lead">仅在本机加载 <code>index.html</code> 并检查关键功能，不发起任何网络请求。若页面被浏览器拦截，请通过 http(s) 打开本站后再点 logo 进入。</p>
+  <div id="summary">正在检查…</div>
+  <ul id="list"></ul>
+  <p class="lead"><a href="./index.html">← 返回首页</a></p>
+
+  <iframe id="app" src="./index.html" title="被测页面" aria-hidden="true"
+    style="position:absolute;left:-9999px;top:0;width:390px;height:844px;opacity:0;border:0"></iframe>
+
+<script>
+(function(){
+  var frame = document.getElementById('app');
+  var summary = document.getElementById('summary');
+  var list = document.getElementById('list');
+
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+  function add(rows, name, ok, detail){
+    rows.push({ name: name, ok: !!ok, detail: detail || '' });
+  }
+
+  function render(rows){
+    var pass = rows.filter(function(r){ return r.ok; }).length;
+    summary.textContent = '通过 ' + pass + ' / ' + rows.length + ' 项';
+    summary.className = pass === rows.length ? 'pass' : 'fail';
+    list.innerHTML = rows.map(function(r){
+      return '<li><b class="' + (r.ok ? 'ok' : 'bad') + '">' + (r.ok ? 'PASS' : 'FAIL') + '</b>' +
+        r.name + '<span class="detail">' + r.detail + '</span></li>';
+    }).join('');
+  }
+
+  async function run(){
+    var rows = [];
+    var doc, win;
+    try {
+      doc = frame.contentDocument;
+      win = frame.contentWindow;
+      if (!doc || !doc.getElementById) throw new Error('no document');
+    } catch (e) {
+      add(rows, '页面加载', false, '无法访问被测页面：请通过 http(s) 打开（file:// 可能被浏览器拦截）');
+      render(rows);
+      return;
+    }
+
+    await sleep(300);
+
+    try {
+
+    /* 1. 关键 DOM id */
+    var ids = ['nluInput', 'go', 'toResults', 'feedback', 'envTips', 'largeTextToggle'];
+    var missing = ids.filter(function(id){ return !doc.getElementById(id); });
+    add(rows, '关键 DOM id', missing.length === 0,
+      missing.length ? '缺少：' + missing.join('、') : '6 个关键 id 全部存在');
+
+    /* 2. 人体图热点 = 20 个唯一部位 */
+    var parts = {};
+    Array.prototype.forEach.call(doc.querySelectorAll('[data-part]'), function(el){
+      parts[el.getAttribute('data-part')] = true;
+    });
+    var partCount = Object.keys(parts).length;
+    add(rows, '人体图热点', partCount === 20, '唯一部位 ' + partCount + ' / 20');
+
+    /* 3. 自然语言识别 */
+    var nlu = doc.getElementById('nluInput');
+    var nluHits = 0;
+    for (var attempt = 0; attempt < 3 && nluHits === 0; attempt++){
+      if (nlu){
+        nlu.value = '嗓子疼，低烧';
+        nlu.dispatchEvent(new win.Event('input', { bubbles: true }));
+        var nluBtn = doc.getElementById('nluBtn');
+        if (nluBtn) nluBtn.click();
+      }
+      await sleep(1200);
+      nluHits = doc.querySelectorAll('.chip.on').length;
+    }
+    add(rows, 'NLU 识别', nluHits >= 1, '「嗓子疼，低烧」勾选 ' + nluHits + ' 项');
+
+    /* 4. 分诊流程：2 症状 → 三问 → 结果 */
+    var clearBtn = doc.getElementById('clear');
+    if (clearBtn) clearBtn.click();
+    await sleep(80);
+    var chips = Array.prototype.slice.call(doc.querySelectorAll('.chip')).slice(0, 2);
+    chips.forEach(function(c){ if (!c.classList.contains('on')) c.click(); });
+    var go = doc.getElementById('go');
+    if (go) go.click();
+    await sleep(150);
+    var triageEl = doc.getElementById('triage');
+    var triageVisible = !!(triageEl && !triageEl.classList.contains('hidden'));
+
+    ['duration', 'fever', 'activity'].forEach(function(qid){
+      var opt = doc.querySelector('.opt[data-q="' + qid + '"]');
+      if (opt) opt.click();
+    });
+    await sleep(120);
+    var toResults = doc.getElementById('toResults');
+    if (toResults && !toResults.disabled) toResults.click();
+    await sleep(500);
+    var resultsEl = doc.getElementById('results');
+    var resultsVisible = !!(resultsEl && !resultsEl.classList.contains('hidden'));
+    var urgent = doc.getElementById('urgent');
+    var hasTriage = !!(urgent && urgent.textContent && urgent.textContent.trim());
+    add(rows, '分诊流程', triageVisible && resultsVisible && hasTriage,
+      '三问页=' + triageVisible + '，结果页=' + resultsVisible + '，分诊节点=' + hasTriage);
+
+    /* 5. 大字模式切换 */
+    var lt = doc.getElementById('largeTextToggle');
+    var before = doc.documentElement.classList.contains('large-text');
+    if (lt) lt.click();
+    await sleep(120);
+    var after = doc.documentElement.classList.contains('large-text');
+    if (lt && before !== after) lt.click();
+    add(rows, '大字模式', before !== after, '切换' + (before !== after ? '成功' : '失败'));
+
+    } catch (e) {
+      add(rows, '自检异常', false, (e && e.message) ? e.message : '未知错误');
+    }
+
+    render(rows);
+  }
+
+  var bootTries = 0;
+  function boot(){
+    var w = null, d = null;
+    try { w = frame.contentWindow; d = frame.contentDocument; } catch (e) { w = null; d = null; }
+    var href = (w && w.location) ? String(w.location.href) : '';
+    if (d && d.readyState === 'complete' && href.indexOf('index.html') !== -1){ run(); return; }
+    if (bootTries++ < 60){ setTimeout(boot, 100); return; }
+    render([{ name: '页面加载', ok: false, detail: '未能在 6 秒内加载 index.html，请通过 http(s) 打开本站后再进入' }]);
+  }
+  frame.addEventListener('load', boot);
+  setTimeout(boot, 60);
+})();
+</script>
+</body>
+</html>

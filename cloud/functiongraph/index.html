@@ -661,6 +661,14 @@
   .env-see{font-size:12.5px; padding:4px 9px; border:1px solid #cfe5e0; background:#f4fbf9; color:#2f5d55; border-radius:999px; cursor:pointer}
   .env-see:hover{background:#e8f5f1}
   .env-meta{font-size:12px; color:#6b8a84; margin:6px 0 0}
+
+  /* 可解释性：一行内截断，不改变卡片高度节奏 */
+  .why{background:#f6fbfa; border-radius:8px; padding:6px 10px; margin:0 0 10px; font-size:12.5px;
+       line-height:1.5; color:#4b7a72; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .why:empty{display:none}
+  /* ?debug=1 调试块，普通用户不可见 */
+  .dbg{background:#101820; color:#9fe8d5; font-size:11.5px; line-height:1.5; border-radius:8px;
+       padding:6px 10px; margin:0 0 10px; overflow-x:auto; white-space:pre-wrap}
 </style>
 </head>
 <body>
@@ -1115,7 +1123,7 @@
 <script>
 
 /* 内容版本与接口地址（可被 config.js 覆盖；未配置时走同源） */
-const CONTENT_VERSION = 'v1';
+const CONTENT_VERSION = 'v2.10.0';
 const FEEDBACK_API = (typeof window !== 'undefined' && window.__FEEDBACK_API__) || '/api/feedback';
 const METRICS_API = (typeof window !== 'undefined' && window.__METRICS_API__) || '/api/metrics/event';
 
@@ -1236,6 +1244,7 @@ const CONDITIONS = [
     summary:'以鼻塞、流涕、咽部不适为主，多由病毒引起，通常 1 周左右自行好转。',
     symptoms:{runny_nose:1, congestion:0.9, sneeze:0.8, sore_throat:0.7, dry_cough:0.6, fever:0.4, fatigue:0.5, headache:0.4, myalgia:0.3, smell_loss:0.3},
     core:['runny_nose','congestion','sneeze','sore_throat'],
+    typicalDays:[0,10],
     keyNegatives:['dyspnea','high_fever'],
     care:['多休息、多饮水，保证睡眠','温盐水漱口缓解咽痛','保持室内湿度，避免冷风直吹','复方感冒药只选一种，避免成分重复'],
     meds:[
@@ -1250,6 +1259,7 @@ const CONDITIONS = [
     summary:'起病急，高热伴明显肌肉酸痛、乏力，传染性强，冬春季多见。',
     symptoms:{fever:1, myalgia:0.9, fatigue:0.9, chills:0.7, headache:0.7, dry_cough:0.6, sore_throat:0.5, poor_appetite:0.5, congestion:0.3},
     core:['fever','myalgia'],
+    typicalDays:[0,7],
     keyNegatives:['sputum','diarrhea'],
     care:['居家休息并适当隔离，避免传染家人','多饮水，监测体温变化','老人、孕妇、儿童及有基础病者尽早评估','咳嗽打喷嚏时遮挡，勤洗手'],
     meds:[
@@ -1263,6 +1273,7 @@ const CONDITIONS = [
     summary:'接触花粉、尘螨后出现阵发性喷嚏、清水样鼻涕，常伴眼痒，脱离环境可缓解。',
     symptoms:{sneeze:1, runny_nose:1, congestion:0.9, eye_itch:0.7, itch:0.3, dry_cough:0.2, smell_loss:0.3},
     core:['sneeze','runny_nose'],
+    typicalDays:[0,90],
     keyNegatives:['fever'],
     care:['减少接触过敏原，花粉季外出戴口罩','回家后洗脸、洗鼻、换外衣','生理盐水冲洗鼻腔','保持室内清洁，勤晒被褥'],
     meds:[
@@ -1276,6 +1287,7 @@ const CONDITIONS = [
     summary:'咽部疼痛、吞咽时加重，可为病毒感染，也可为细菌性扁桃体炎。',
     symptoms:{sore_throat:1, dysphagia:0.7, fever:0.6, fatigue:0.4, headache:0.3, congestion:0.2},
     core:['sore_throat'],
+    typicalDays:[0,7],
     keyNegatives:['runny_nose','sneeze'],
     care:['温盐水漱口，每日数次','多饮水，避免烟酒和辛辣食物','减少说话，让声带休息','保持室内空气湿润'],
     meds:[
@@ -1289,6 +1301,7 @@ const CONDITIONS = [
     summary:'感冒后咳嗽加重、可有痰，多由病毒引起，咳嗽可能持续 2–3 周。',
     symptoms:{dry_cough:1, sputum:0.9, chest_tight:0.5, wheeze:0.4, fever:0.4, fatigue:0.4, sore_throat:0.3},
     core:['dry_cough','sputum'],
+    typicalDays:[2,21],
     keyNegatives:['sneeze','eye_itch'],
     care:['多饮水，帮助稀释痰液','避免冷空气、烟雾和油烟刺激','咳嗽期间不要强行憋咳','多数不需要抗生素'],
     meds:[
@@ -1302,6 +1315,7 @@ const CONDITIONS = [
     summary:'发热伴咳嗽咳痰、气短，可能为肺部感染，需要医生听诊和胸片/CT 评估。',
     symptoms:{fever:0.9, high_fever:0.85, sputum:0.9, dry_cough:0.7, dyspnea:0.8, chest_tight:0.7, chills:0.6, fatigue:0.6, poor_appetite:0.4},
     core:['dyspnea','sputum','high_fever'],
+    typicalDays:[1,14],
     care:['尽早就医，不要自行使用抗生素','注意休息，适量补液','有条件可监测血氧饱和度','老人可能不发热，仅表现为精神差、食欲下降'],
     meds:[
       {n:'抗生素', note:'必须由医生根据病情处方，切勿自行服用、减量或停药'}
@@ -1313,6 +1327,7 @@ const CONDITIONS = [
     summary:'咳嗽咳痰超过 2 周，伴午后低热、夜间盗汗、体重下降，需排查肺结核。',
     symptoms:{dry_cough:0.9, sputum:0.8, fever:0.7, night_sweat:0.9, weight_loss:0.9, fatigue:0.6, poor_appetite:0.6, hemoptysis:0.7, chest_pain:0.3, dyspnea:0.3},
     core:['night_sweat','weight_loss','hemoptysis'],
+    typicalDays:[7,90],
     care:['戴口罩，避免近距离传染家人','不要随地吐痰，痰液需妥善处理','尽早做胸片/CT 和痰检，这是确诊关键','加强营养、规律作息，戒烟酒','确诊后抗结核药必须足疗程，不可自行停药'],
     meds:[
       {n:'抗结核药（异烟肼、利福平等）', note:'必须由结核病定点医院规范处方，全程督导服药；自行购买或中断治疗会导致耐药'}
@@ -1324,6 +1339,7 @@ const CONDITIONS = [
     summary:'反酸、烧心，餐后或平卧时加重，可伴慢性干咳和咽部不适。',
     symptoms:{heartburn:1, nausea:0.3, dry_cough:0.4, sore_throat:0.3, bloating:0.4, chest_tight:0.3, dysphagia:0.3},
     core:['heartburn'],
+    typicalDays:[0,90],
     keyNegatives:['diarrhea','fever'],
     care:['少食多餐，避免过饱','睡前 3 小时不进食，床头抬高 15–20 cm','减少咖啡、浓茶、酒、高脂和辛辣食物','超重者减重，避免紧身衣物'],
     meds:[
@@ -1337,6 +1353,7 @@ const CONDITIONS = [
     summary:'进食不洁后出现腹泻、呕吐、腹痛，多为病毒或细菌感染，关键是防脱水。',
     symptoms:{diarrhea:1, nausea:0.9, vomiting:0.9, abdominal_pain:0.8, fever:0.5, poor_appetite:0.5, dehydration:0.4},
     core:['diarrhea','vomiting'],
+    typicalDays:[0,5],
     keyNegatives:['dyspnea','chest_pain'],
     care:['口服补液盐少量多次，是最重要的处理','清淡饮食，腹泻期间避免牛奶和高脂食物','注意手卫生，避免传染家人','不要自行使用止泻药（尤其发热或血便时）'],
     meds:[
@@ -1351,6 +1368,7 @@ const CONDITIONS = [
     summary:'餐后饱胀、早饱、上腹不适，检查常无明显器质性病变，与饮食和压力相关。',
     symptoms:{bloating:0.9, belching:0.7, poor_appetite:0.7, nausea:0.6, abdominal_pain:0.6, heartburn:0.5, constipation:0.2},
     core:['bloating'],
+    typicalDays:[0,90],
     keyNegatives:['fever','rectal_bleeding'],
     care:['规律进食、细嚼慢咽','减少油腻、产气和过冷食物','适度运动，管理压力','避免餐后立即躺下'],
     meds:[
@@ -1364,6 +1382,7 @@ const CONDITIONS = [
     summary:'排便次数减少、粪便干硬或排便费力，多与饮水、膳食纤维和活动量不足有关。',
     symptoms:{constipation:1, bloating:0.7, abdominal_pain:0.4, poor_appetite:0.2},
     core:['constipation'],
+    typicalDays:[2,90],
     care:['每日饮水 1.5–2 L','增加膳食纤维：蔬菜、全谷、火龙果、西梅','规律如厕，不要长期憋便','适度运动，避免久坐'],
     meds:[
       {n:'乳果糖', note:'渗透性泻剂，温和，可较长期使用，起效需 1–2 天'},
@@ -1377,6 +1396,7 @@ const CONDITIONS = [
     summary:'单侧搏动性头痛，伴恶心、畏光，活动后加重，可持续 4–72 小时。',
     symptoms:{headache:1, nausea:0.7, photophobia:0.6, vomiting:0.5, vision_blur:0.4, dizziness:0.3},
     core:['headache'],
+    typicalDays:[0,3],
     keyNegatives:['fever','stiff_neck'],
     care:['发作时在安静、昏暗环境休息','记录诱因：睡眠不足、红酒、奶酪、月经周期','规律作息和进餐，避免过度饥饿','适度有氧运动'],
     meds:[
@@ -1391,6 +1411,7 @@ const CONDITIONS = [
     summary:'双侧紧箍样压迫性头痛，常与压力、久坐、睡眠不足和颈肩紧张有关。',
     symptoms:{headache:1, neck_pain:0.6, anxious:0.5, insomnia:0.4, fatigue:0.3, dizziness:0.2},
     core:['headache'],
+    typicalDays:[0,90],
     keyNegatives:['fever','vomiting'],
     care:['热敷颈肩，轻柔拉伸','每 45 分钟起身活动，调整坐姿','规律作息，保证睡眠','深呼吸、放松训练'],
     meds:[
@@ -1403,6 +1424,7 @@ const CONDITIONS = [
     summary:'尿频、尿急、尿痛，多为细菌感染，女性更常见。',
     symptoms:{urinary_freq:1, dysuria:1, hematuria:0.6, flank_pain:0.5, fever:0.4, abdominal_pain:0.3},
     core:['dysuria','urinary_freq'],
+    typicalDays:[0,7],
     care:['多饮水，增加排尿冲刷','不憋尿，注意会阴清洁','治疗期间避免性生活','完成医生开具的全程疗程，不要症状一好就停药'],
     meds:[
       {n:'抗生素（如呋喃妥因、磷霉素）', note:'均为处方药，需医生根据尿检结果选择，不要自行购买服用'}
@@ -1517,6 +1539,7 @@ const CONDITIONS = [
     summary:'久坐或负重后腰背酸痛，活动后可能加重，休息可缓解。',
     symptoms:{back_pain:1, myalgia:0.4, numbness:0.4, neck_pain:0.2},
     core:['back_pain'],
+    typicalDays:[0,90],
     care:['避免久坐和弯腰搬重物','急性期适度休息，但不宜长期卧床','热敷，轻柔拉伸','加强核心肌群锻炼'],
     meds:[
       {n:'布洛芬', note:'短期止痛，饭后服，不超过 3–5 天'},
@@ -2202,31 +2225,116 @@ function mergeRedFlags(localFlags, remoteFlags){
   return out;
 }
 
-function scoreConditions(selectedIds, negatedIds){
+/* 排序算法开关：默认值即线上组合；评测脚本可逐项覆盖 */
+const RANK_FLAGS = {
+  v2: true,           /* 阶段 1：IDF 加权（分母回退 smooth，优先临床合理性） */
+  denom: 'smooth',    /* 'smooth' | 'pow' —— 已回退 smooth */
+  negPenalty: true,   /* 阶段 2：阴性按权重罚（不影响无否定输入） */
+  coreBonus: true,    /* 阶段 3：core 加成 + 证据门槛 */
+  evidence: true,     /* 证据充分性降权：仅命中 1 个症状且证据弱时 ×0.55 */
+  ageDuration: false, /* 阶段 4：病程/年龄乘子 */
+  minScore: null      /* 阶段 5：最低分阈值覆盖，null = 0.18 */
+};
+
+/* IDF：从 CONDITIONS 统计 df，首次调用时计算一次并缓存，不写死 */
+let IDF_CACHE = null;
+function symptomIdf(){
+  if (IDF_CACHE) return IDF_CACHE;
+  const N = CONDITIONS.length;
+  const df = {};
+  CONDITIONS.forEach(c => {
+    Object.keys(c.symptoms).forEach(sid => { df[sid] = (df[sid] || 0) + 1; });
+  });
+  const idf = {};
+  Object.keys(df).forEach(sid => {
+    const raw = Math.log((N + 1) / (df[sid] + 1)) + 1;
+    idf[sid] = Math.max(0.6, Math.min(2.2, raw));
+  });
+  IDF_CACHE = idf;
+  return idf;
+}
+
+function scoreConditions(selectedIds, negatedIds, ctx){
   const sel = selectedIds instanceof Set ? selectedIds : new Set(selectedIds);
   const neg = negatedIds instanceof Set ? negatedIds : new Set(negatedIds || []);
   const minHit = sel.size >= 3 ? 2 : 1;
+  const useIdf = RANK_FLAGS.v2 === true;
+  const idf = useIdf ? symptomIdf() : null;
 
   const scored = CONDITIONS.map(c => {
     const entries = Object.entries(c.symptoms);
-    let total = 0, hit = 0;
+    let total = 0, hit = 0, hitRaw = 0, negWeight = 0;
     const matched = [];
     for (const [sid, w] of entries){
-      total += w;
-      if (sel.has(sid)){ hit += w; matched.push(sid); }
+      const wEff = useIdf ? w * (idf[sid] || 1) : w;
+      total += wEff;
+      if (sel.has(sid)){ hit += wEff; hitRaw += w; matched.push(sid); }
+      else if (neg.has(sid)){ negWeight += wEff; }
     }
-    let score = total ? hit / total : 0;
-    /* 关键阴性：仅在用户明确否定时降权，每个交集 -8%，最多 -20% */
-    const negatives = Array.isArray(c.keyNegatives) ? c.keyNegatives : [];
-    let negHits = 0;
-    negatives.forEach(id => { if (neg.has(id)) negHits++; });
-    if (negHits) score = Math.max(0, score * (1 - Math.min(0.20, 0.08 * negHits)));
-    const coreHit = (c.core || []).some(s => sel.has(s));
-    return Object.assign({}, c, {score, matched, coreHit});
+    let score;
+    if (!total){
+      score = 0;
+    } else if (!useIdf){
+      score = hit / total;
+    } else if (RANK_FLAGS.denom === 'pow'){
+      score = hit / Math.pow(total, 0.7);
+    } else {
+      score = hit / (hit + 0.4 * (total - hit) + 0.2);
+    }
+    if (RANK_FLAGS.negPenalty === true){
+      /* 阶段 2：用户明确否定的症状，按其在本题中的权重占比降权，上限 40% */
+      if (negWeight > 0){
+        const penalty = Math.min(0.4, (negWeight / total) * 1.5);
+        score = Math.max(0, score * (1 - penalty));
+      }
+    } else {
+      /* 旧逻辑：仅 keyNegatives 命中才每个 -8%，最多 -20% */
+      const negatives = Array.isArray(c.keyNegatives) ? c.keyNegatives : [];
+      let negHits = 0;
+      negatives.forEach(id => { if (neg.has(id)) negHits++; });
+      if (negHits) score = Math.max(0, score * (1 - Math.min(0.20, 0.08 * negHits)));
+    }
+    const core = c.core || [];
+    const coreHitCount = core.filter(s => sel.has(s)).length;
+    const coreHit = coreHitCount > 0;
+    const coreAll = core.length > 0 && coreHitCount === core.length;
+    if (RANK_FLAGS.coreBonus === true && coreHitCount > 0){
+      /* 阶段 3：core 命中越多加成越高，乘子上限 1.2 */
+      score = score * Math.min(1.2, 1 + 0.08 * coreHitCount);
+    }
+    if (RANK_FLAGS.evidence !== false){
+      /* 证据充分性：单症状查询、core 命中、或命中占比 ≥0.34 时不降权；
+         否则 ×0.55。比「仅看 matched.length===1」更严，避免命中 2 个
+         泛化症状但 core 全无的短表病种（如手足口病）冲进前三。仍不进榜剔除。 */
+      const singleMatch = matched.length === 1;
+      const ratioOk = total > 0 && hit / total >= 0.34;
+      const evidenceOk = sel.size === 1 || coreAll || coreHit || (!singleMatch && ratioOk);
+      if (!evidenceOk) score *= 0.55;
+    }
+    if (RANK_FLAGS.ageDuration === true && ctx && typeof ctx === 'object'){
+      /* 阶段 4：病程落在典型区间 ×1.15，超出 ×0.85；年龄加成 ×1.10 */
+      const days = typeof ctx.durationDays === 'number' ? ctx.durationDays : null;
+      const age = typeof ctx.age === 'number' ? ctx.age : null;
+      if (Array.isArray(c.typicalDays) && days !== null){
+        const lo = c.typicalDays[0], hi = c.typicalDays[1];
+        score = score * (days >= lo && days <= hi ? 1.15 : 0.85);
+      }
+      if (age !== null){
+        if (age < 12 && (c.id === 'otitis' || c.id === 'hfmd')) score *= 1.10;
+        if (age >= 65 && (c.id === 'pneumonia' || c.id === 'uti')) score *= 1.10;
+      }
+    }
+    return Object.assign({}, c, {score, matched, coreHit, coreAll, hitRaw});
   });
 
+  const minScore = typeof RANK_FLAGS.minScore === 'number' ? RANK_FLAGS.minScore : 0.18;
   return scored
-    .filter(c => c.matched.length >= minHit && c.score >= 0.18 && (c.coreHit || c.score >= 0.5))
+    .filter(c => {
+      if (c.matched.length < minHit) return false;
+      /* 阶段 3：证据门槛，core 全部命中可豁免 */
+      if (RANK_FLAGS.coreBonus === true && !c.coreAll && c.hitRaw < 0.8) return false;
+      return c.score >= minScore && (c.coreHit || c.score >= 0.5);
+    })
     .sort((a, b) => b.score - a.score || b.matched.length - a.matched.length)
     .slice(0, 8);
 }
@@ -4179,6 +4287,22 @@ function bindEvents(){
 
   initFeedback();
 
+  /* 隐藏自检入口：连续点 logo 5 次进入 selftest.html（不影响普通点击） */
+  const logoEl = document.querySelector('.logo');
+  if (logoEl){
+    let logoTaps = 0;
+    let logoTimer = null;
+    logoEl.addEventListener('click', () => {
+      logoTaps += 1;
+      clearTimeout(logoTimer);
+      logoTimer = setTimeout(() => { logoTaps = 0; }, 1200);
+      if (logoTaps >= 5){
+        logoTaps = 0;
+        location.href = 'selftest.html';
+      }
+    });
+  }
+
   document.getElementById('skipTriage').addEventListener('click', () => {
     showResults();
   });
@@ -4578,7 +4702,7 @@ async function showResults(){
   }
 
   if (results === null){
-    results = scoreConditions(selected, lastNegated);
+    results = scoreConditions(selected, lastNegated, triageCtx);
     flags = flagsFor(selected, triageCtx);
   }
 
@@ -4669,8 +4793,86 @@ async function showResults(){
   } catch (e) { /* file:// 等环境可能不允许，忽略 */ }
   document.getElementById('shareHint').classList.toggle('hidden', !shareable);
 
+  if (DEBUG && typeof console !== 'undefined' && console.table){
+    const dbgCtx = { age: patientAge, durationDays: durationDaysFromAnswers() };
+    console.table(results.map(r => {
+      const d = debugInfoFor(r, selected, lastNegated, dbgCtx);
+      return {
+        方向: r.name,
+        score: Number((typeof r.score === 'number' ? r.score : 0).toFixed(3)),
+        matched: d.matched,
+        core: d.core,
+        negPenalty: Number(d.negPenalty.toFixed(3)),
+        证据门槛: d.evidence ? '通过' : '未通过'
+      };
+    }));
+  }
+
 
   window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+/* 可解释性：来源：仅展示层，不改 scoreConditions 的分数/排序 */
+const DEBUG = typeof location !== 'undefined' && /[?&]debug=1/.test(String(location.search || ''));
+
+/* 生成「为什么推荐」一行；无信息时返回空字符串，不占位 */
+function explainFor(c, selectedSet, negatedSet, ctx){
+  const sel = selectedSet instanceof Set ? selectedSet : new Set(selectedSet || []);
+  const neg = negatedSet instanceof Set ? negatedSet : new Set(negatedSet || []);
+  const cond = CONDITIONS.find(x => x.id === c.id) || c;
+  const weights = cond.symptoms || {};
+  const parts = [];
+
+  const matched = (Array.isArray(c.matched) ? c.matched : []).slice()
+    .sort((a, b) => (weights[b] || 0) - (weights[a] || 0))
+    .slice(0, 2)
+    .map(id => (SYMPTOMS[id] ? SYMPTOMS[id].label : String(id)));
+  if (matched.length) parts.push('因为你提到：' + matched.join('、'));
+
+  const negHit = (Array.isArray(c.keyNegatives) ? c.keyNegatives : [])
+    .filter(id => neg.has(id))
+    .map(id => (SYMPTOMS[id] ? SYMPTOMS[id].label : String(id)));
+  if (negHit.length) parts.push('你也说没有：' + negHit.join('、') + '（已降低该方向权重）');
+
+  if (Array.isArray(c.typicalDays) && ctx && typeof ctx.durationDays === 'number'){
+    const lo = c.typicalDays[0], hi = c.typicalDays[1];
+    if (ctx.durationDays >= lo && ctx.durationDays <= hi){
+      parts.push('病程 ' + ctx.durationDays + ' 天，符合该病常见范围');
+    }
+  }
+
+  return parts.length ? parts.join('；') : '';
+}
+
+/* 调试信息：复算展示用指标，不参与排序 */
+function debugInfoFor(c, selectedSet, negatedSet, ctx){
+  const sel = selectedSet instanceof Set ? selectedSet : new Set(selectedSet || []);
+  const neg = negatedSet instanceof Set ? negatedSet : new Set(negatedSet || []);
+  const cond = CONDITIONS.find(x => x.id === c.id) || c;
+  const useIdf = RANK_FLAGS.v2 === true;
+  const idf = useIdf ? symptomIdf() : null;
+  let total = 0, hit = 0, negWeight = 0;
+  Object.entries(cond.symptoms || {}).forEach(([sid, w]) => {
+    const wEff = useIdf ? w * (idf[sid] || 1) : w;
+    total += wEff;
+    if (sel.has(sid)) hit += wEff;
+    else if (neg.has(sid)) negWeight += wEff;
+  });
+  const penalty = (total > 0 && negWeight > 0)
+    ? Math.min(0.4, (negWeight / total) * 1.5) : 0;
+  const core = cond.core || [];
+  const coreHitCount = core.filter(s => sel.has(s)).length;
+  const coreAll = core.length > 0 && coreHitCount === core.length;
+  const ratioOk = total > 0 && (hit / total) >= 0.34;
+  const evidenceOk = sel.size === 1 || coreAll || coreHitCount > 0 ||
+    ((c.matched || []).length !== 1 && ratioOk);
+  return {
+    score: c.score,
+    matched: (c.matched || []).length,
+    core: coreHitCount,
+    negPenalty: penalty,
+    evidence: evidenceOk
+  };
 }
 
 function renderCondition(c, i, openFirst){
@@ -4686,6 +4888,18 @@ function renderCondition(c, i, openFirst){
     '<li><b>' + esc(m && m.n) + '</b><span>' + esc(m && m.note) + '</span></li>'
   ).join('');
   const isOpen = openFirst !== false && i === 0;
+  const ctx = {
+    age: typeof patientAge === 'number' ? patientAge : null,
+    durationDays: durationDaysFromAnswers()
+  };
+  const reason = explainFor(c, selected, lastNegated, ctx);
+  const dbg = DEBUG ? (() => {
+    const d = debugInfoFor(c, selected, lastNegated, ctx);
+    return '<pre class="dbg">score ' + (typeof d.score === 'number' ? d.score.toFixed(3) : '—') +
+      ' · matched ' + d.matched + ' · core ' + d.core +
+      ' · negPenalty ' + d.negPenalty.toFixed(3) +
+      ' · 证据门槛 ' + (d.evidence ? '通过' : '未通过') + '</pre>';
+  })() : '';
 
   return '' +
   '<details class="cond fade"' + (isOpen ? ' open' : '') + ' style="animation-delay:' + (i * 45) + 'ms">' +
@@ -4706,6 +4920,8 @@ function renderCondition(c, i, openFirst){
       '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>' +
     '</summary>' +
     '<div class="cbody">' +
+      (reason ? '<p class="why">' + esc(reason) + '</p>' : '') +
+      dbg +
       '<p class="sum">' + esc(c.summary || '') + '</p>' +
       '<p class="meta-src">来源：' + esc(c.source || '未标注') +
         ' · 审核：' + esc(c.reviewer || '待审核') +
@@ -4964,7 +5180,7 @@ if (typeof document !== 'undefined'){
   document.addEventListener('DOMContentLoaded', init);
 }
 if (typeof module !== 'undefined' && module.exports){
-  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, mergeRedFlags, scoreConditions, gradeOf, SKIN_SYMPTOMS, analyzeSkinPixels, describeSkinFeatures, skinAdvice, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline, weatherTipsFor, selectSymptomForTip, ENV_CITY_KEY, ENV_CACHE_KEY, ENV_CACHE_MS };
+  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, mergeRedFlags, scoreConditions, gradeOf, SKIN_SYMPTOMS, analyzeSkinPixels, describeSkinFeatures, skinAdvice, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline, weatherTipsFor, selectSymptomForTip, explainFor, debugInfoFor, ENV_CITY_KEY, ENV_CACHE_KEY, ENV_CACHE_MS };
 }
 </script>
 <script>
