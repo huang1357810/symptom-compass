@@ -2935,6 +2935,156 @@ function bindBodyMap(){
 }
 
 /* =========================================================
+   匿名账号（可选）：注册 / 登录 / 退出 / 注销
+   不收集手机号、邮箱、真实姓名；健康档案仍只存本机
+   ========================================================= */
+const ACCOUNT_API = '/api/auth';
+const ANON_KEY = 'mingbian.anonId.v1';
+let accountMe = null;
+
+/* 游客匿名编号：仅本机随机串，不含任何个人信息 */
+function anonId(){
+  try {
+    let v = localStorage.getItem(ANON_KEY);
+    if (!v){
+      v = 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem(ANON_KEY, v);
+    }
+    return v;
+  } catch (e) { return ''; }
+}
+
+function acMsg(text, cls){
+  const el = document.getElementById('acMsg');
+  if (!el) return;
+  el.textContent = text || '';
+  el.className = 'ac-msg' + (cls ? ' ' + cls : '');
+}
+
+function renderAccount(){
+  const guest = document.getElementById('acGuest');
+  const member = document.getElementById('acMember');
+  const state = document.getElementById('acState');
+  const name = document.getElementById('acName');
+  if (!guest || !member) return;
+  const on = !!(accountMe && accountMe.userId);
+  guest.classList.toggle('hidden', on);
+  member.classList.toggle('hidden', !on);
+  if (state) state.textContent = on ? '已登录（匿名）' : '游客模式';
+  if (name && on) name.textContent = accountMe.username || '';
+}
+
+async function acFetch(path, body){
+  const url = path.indexOf('/api/') === 0 ? path : ACCOUNT_API + path;
+  const res = await fetch(url, {
+    method: body === undefined ? 'GET' : 'POST',
+    headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    credentials: 'include',
+    cache: 'no-store'
+  });
+  const data = await res.json().catch(function () { return {}; });
+  return { ok: res.ok && data.ok, status: res.status, data: data };
+}
+
+async function initAccount(){
+  try {
+    const r = await acFetch('/me');
+    accountMe = r.ok ? { userId: r.data.userId, username: r.data.username } : null;
+  } catch (e) {
+    accountMe = null;
+  }
+  renderAccount();
+}
+
+function acCreds(){
+  const u = (document.getElementById('acUser').value || '').trim();
+  const p = document.getElementById('acPass').value || '';
+  if (!/^[A-Za-z0-9_]{3,20}$/.test(u)) return { error: '用户名需为 3–20 位字母、数字或下划线' };
+  if (/^\d{11}$/.test(u)) return { error: '用户名不能是手机号' };
+  if (u.indexOf('@') !== -1) return { error: '用户名不能包含 @' };
+  if (p.length < 8) return { error: '密码至少 8 位' };
+  return { username: u, password: p };
+}
+
+async function acRegister(){
+  const c = acCreds();
+  if (c.error){ acMsg(c.error, 'err'); return; }
+  const agree = document.getElementById('acAgree');
+  if (!agree || !agree.checked){ acMsg('请先勾选同意匿名账号与反馈存储说明', 'err'); return; }
+  acMsg('注册中…');
+  try {
+    const r = await acFetch('/register', { username: c.username, password: c.password, agree: true });
+    if (!r.ok){ acMsg(r.data.error || '注册失败', 'err'); return; }
+    accountMe = { userId: r.data.userId, username: r.data.username };
+    renderAccount();
+    const msg = document.getElementById('acMsg');
+    if (msg){
+      msg.className = 'ac-msg ok';
+      msg.innerHTML = '注册成功。恢复码：<b>' + esc(r.data.recoveryCode || '') + '</b>（只显示这一次，请立即保存）';
+    }
+  } catch (e) {
+    acMsg('网络不可用：账号功能需要线上后端，游客模式不受影响', 'err');
+  }
+}
+
+async function acLogin(){
+  const c = acCreds();
+  if (c.error){ acMsg(c.error, 'err'); return; }
+  acMsg('登录中…');
+  try {
+    const r = await acFetch('/login', { username: c.username, password: c.password });
+    if (!r.ok){ acMsg(r.data.error || '用户名或密码错误', 'err'); return; }
+    accountMe = { userId: r.data.userId, username: r.data.username };
+    renderAccount();
+    acMsg('已登录', 'ok');
+  } catch (e) {
+    acMsg('网络不可用，游客模式不受影响', 'err');
+  }
+}
+
+async function acLogout(){
+  try { await acFetch('/logout', {}); } catch (e) { /* 忽略 */ }
+  accountMe = null;
+  renderAccount();
+  acMsg('已退出，当前为游客模式', 'ok');
+}
+
+async function acDelete(){
+  if (!accountMe) return;
+  if (!confirm('注销会立即删除账号、全部会话与名下反馈，无法恢复。确定继续？')) return;
+  try {
+    const r = await acFetch('/api/account/delete', {});
+    if (!r.ok){ acMsg(r.data.error || '注销失败', 'err'); return; }
+    accountMe = null;
+    renderAccount();
+    acMsg('账号与名下反馈已删除', 'ok');
+  } catch (e) {
+    acMsg('网络不可用，注销未完成', 'err');
+  }
+}
+
+async function acRecover(){
+  const u = (document.getElementById('acUser').value || '').trim();
+  const code = (document.getElementById('acRecoverCode').value || '').trim();
+  const np = document.getElementById('acNewPass').value || '';
+  if (!u || !code){ acMsg('请填写用户名与恢复码', 'err'); return; }
+  if (np.length < 8){ acMsg('新密码至少 8 位', 'err'); return; }
+  acMsg('重置中…');
+  try {
+    const r = await acFetch('/recover', { username: u, recoveryCode: code, newPassword: np });
+    if (!r.ok){ acMsg(r.data.error || '重置失败', 'err'); return; }
+    const msg = document.getElementById('acMsg');
+    if (msg){
+      msg.className = 'ac-msg ok';
+      msg.innerHTML = '密码已重置。新恢复码：<b>' + esc(r.data.recoveryCode || '') + '</b>（只显示这一次）';
+    }
+  } catch (e) {
+    acMsg('网络不可用', 'err');
+  }
+}
+
+/* =========================================================
    结果反馈：评分 + 标签 + 建议，POST 到 /api/feedback
    ========================================================= */
 const FB_KEY = 'mingbian.feedback.v1';
@@ -3027,6 +3177,14 @@ async function fbSubmit(){
     context: fbContext()
   };
 
+  /* 反馈归属：登录用户带 userId（后端与 session 校验），游客带本机匿名编号 */
+  if (accountMe && accountMe.userId){
+    payload.userId = accountMe.userId;
+  } else {
+    const a = anonId();
+    if (a) payload.anonId = a;
+  }
+
   fbSetStatus('提交中…', '');
   let ok = false;
   let serverId = '';
@@ -3034,7 +3192,8 @@ async function fbSubmit(){
     const res = await fetch(FEEDBACK_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      credentials: 'include'
     });
     const data = await res.json().catch(() => ({}));
     ok = res.ok && data.ok;
@@ -3171,6 +3330,26 @@ function bindEvents(){
   });
 
   initFeedback();
+
+  /* 匿名账号（可选）：绑定按钮并恢复登录态；失败不影响游客模式 */
+  [
+    ['acRegister', acRegister],
+    ['acLogin', acLogin],
+    ['acLogout', acLogout],
+    ['acDelete', acDelete],
+    ['acRecoverBtn', acRecover]
+  ].forEach(pair => {
+    const el = document.getElementById(pair[0]);
+    if (el) el.addEventListener('click', pair[1]);
+  });
+  const acForgot = document.getElementById('acForgot');
+  if (acForgot){
+    acForgot.addEventListener('click', () => {
+      const box = document.getElementById('acRecover');
+      if (box) box.classList.toggle('hidden');
+    });
+  }
+  initAccount();
 
   /* 隐藏自检入口：连续点 logo 5 次进入 selftest.html（不影响普通点击） */
   const logoEl = document.querySelector('.logo');

@@ -11,6 +11,11 @@
 
 import { summarizeFeedback } from './feedback-stats.mjs';
 import { validateEvals } from './evals-schema.mjs';
+import {
+  register, login, logout, me, recover, deleteAccount,
+  resolveFeedbackOwner, listUsers, userFeedback,
+  getCookie, sessionCookie, clearCookie, jsonNoStore
+} from './auth.mjs';
 import evalsSeed from './evals-seed.json';
 
 const MAX_TEXT = 300;
@@ -128,6 +133,10 @@ async function handleFeedback(request, env) {
     return json({ ok: false, error: 'no_store' }, 503);
   }
 
+  /* 反馈归属：登录用户以 session 为准；未登录用本机匿名编号；伪造 userId 直接拒绝 */
+  const owner = await resolveFeedbackOwner(request, env, body);
+  if (owner.error) return json({ ok: false, error: 'forged_user' }, 400);
+
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
   if (await rateLimited(env, ip)) return json({ ok: false, error: 'too_many' }, 429);
 
@@ -142,6 +151,8 @@ async function handleFeedback(request, env) {
     page: typeof body.page === 'string' ? body.page.slice(0, 40) : '',
     contentVersion: str(body.contentVersion, 20),
     context,
+    userId: owner.userId || '',
+    anonId: owner.anonId || '',
     status: 'open',
     improveNote: '',
     updatedAt: 0,
@@ -357,6 +368,13 @@ async function handleList(request, url, env) {
   const metrics = await readMetrics(env, day);
   const redPct = metrics.total ? Math.round(metrics.red / metrics.total * 100) : 0;
 
+  const userList = await listUsers(env);
+  const userRows = (userList.ok ? userList.users : []).slice(0, 200).map(u =>
+    `<tr><td>${escapeHtml(u.username)}</td><td>${fmtTs(u.createdAt)}</td>` +
+    `<td>${u.feedbackCount}</td><td>${fmtTs(u.lastActiveAt)}</td>` +
+    `<td><a href="/api/admin/user-feedback?key=${encodeURIComponent(key)}&userId=${encodeURIComponent(u.userId)}">查看反馈</a></td></tr>`
+  ).join('');
+
   const rows = items.map(i => {
     const d = new Date(i.ts + 8 * 3600 * 1000).toISOString().replace('T', ' ').slice(0, 16);
     const ctx = i.context || {};
@@ -433,6 +451,10 @@ table.small th,table.small td{padding:6px 8px}
 <h1>明辨康途 · 反馈汇总</h1>
 <p class="stat">共 ${stats.total} 条 ｜ 平均 ${stats.total ? stats.avg.toFixed(2) : '-'} 分 ｜ 待改进 ${items.filter(i => i.status !== 'improved').length} 条 ｜ 已改进 ${items.filter(i => i.status === 'improved').length} 条 ｜ 坏记录 ${badRecords} 条</p>
 
+<h2>匿名用户（${userList.ok ? userList.users.length : 0}）</h2>
+<table class="small"><thead><tr><th>用户名</th><th>注册时间</th><th>反馈数</th><th>最后活跃</th><th>操作</th></tr></thead>
+<tbody>${userRows || '<tr><td colspan="5">还没有注册用户</td></tr>'}</tbody></table>
+
 <div class="dash">
   <div class="panel">
     <h2>评分分布</h2>
@@ -465,6 +487,137 @@ table.small th,table.small td{padding:6px 8px}
   });
 }
 
+/* ---------------- 匿名账号路由 ---------------- */
+
+async function readJsonBody(request) {
+  try { return await request.json(); } catch (e) { return null; }
+}
+
+async function handleAuth(request, url, env) {
+  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (!env.FEEDBACK_KV) return jsonNoStore({ ok: false, error: 'no_store' }, 503);
+
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const p = url.pathname;
+
+  if (p === '/api/auth/register') {
+    if (request.method !== 'POST') return jsonNoStore({ ok: false, error: 'method_not_allowed' }, 405);
+    const body = await readJsonBody(request);
+    if (!body) return jsonNoStore({ ok: false, error: 'bad_json' }, 400);
+    const r = await register(env, body);
+    if (!r.ok) return jsonNoStore({ ok: false, error: r.error }, r.status);
+    /* 注册后直接建立会话，避免用户再输一次密码 */
+    let cookie = '';
+    const s = await login(env, { username: body.username, password: body.password, ip: ip });
+    if (s.ok) cookie = sessionCookie(s.token);
+    const res = jsonNoStore({ ok: true, userId: r.userId, username: r.username, recoveryCode: r.recoveryCode });
+    if (cookie) res.headers.set('Set-Cookie', cookie);
+    return res;
+  }
+
+  if (p === '/api/auth/login') {
+    if (request.method !== 'POST') return jsonNoStore({ ok: false, error: 'method_not_allowed' }, 405);
+    const body = await readJsonBody(request);
+    if (!body) return jsonNoStore({ ok: false, error: 'bad_json' }, 400);
+    const r = await login(env, { username: body.username, password: body.password, ip: ip });
+    if (!r.ok) return jsonNoStore({ ok: false, error: r.error }, r.status);
+    const res = jsonNoStore({ ok: true, userId: r.userId, username: r.username });
+    res.headers.set('Set-Cookie', sessionCookie(r.token));
+    return res;
+  }
+
+  if (p === '/api/auth/logout') {
+    if (request.method !== 'POST') return jsonNoStore({ ok: false, error: 'method_not_allowed' }, 405);
+    await logout(env, getCookie(request, 'mb_session'));
+    const res = jsonNoStore({ ok: true });
+    res.headers.set('Set-Cookie', clearCookie());
+    return res;
+  }
+
+  if (p === '/api/auth/me') {
+    if (request.method !== 'GET') return jsonNoStore({ ok: false, error: 'method_not_allowed' }, 405);
+    const u = await me(env, getCookie(request, 'mb_session'));
+    if (!u) return jsonNoStore({ ok: false, error: 'unauthorized' }, 401);
+    return jsonNoStore({ ok: true, userId: u.userId, username: u.username });
+  }
+
+  if (p === '/api/auth/recover') {
+    if (request.method !== 'POST') return jsonNoStore({ ok: false, error: 'method_not_allowed' }, 405);
+    const body = await readJsonBody(request);
+    if (!body) return jsonNoStore({ ok: false, error: 'bad_json' }, 400);
+    const r = await recover(env, body);
+    if (!r.ok) return jsonNoStore({ ok: false, error: r.error }, r.status);
+    return jsonNoStore({ ok: true, recoveryCode: r.recoveryCode });
+  }
+
+  if (p === '/api/account/delete') {
+    if (request.method !== 'POST') return jsonNoStore({ ok: false, error: 'method_not_allowed' }, 405);
+    const u = await me(env, getCookie(request, 'mb_session'));
+    if (!u) return jsonNoStore({ ok: false, error: 'unauthorized' }, 401);
+    const r = await deleteAccount(env, u.userId);
+    const res = jsonNoStore({
+      ok: true,
+      deletedFeedback: r.deletedFeedback || 0,
+      deletedSessions: r.deletedSessions || 0
+    });
+    res.headers.set('Set-Cookie', clearCookie());
+    return res;
+  }
+
+  return jsonNoStore({ ok: false, error: 'not_found' }, 404);
+}
+
+function fmtTs(ts) {
+  if (!ts) return '—';
+  return new Date(ts + 8 * 3600 * 1000).toISOString().replace('T', ' ').slice(0, 16);
+}
+
+/* 管理端：某个用户的全部反馈（HTML） */
+async function handleUserFeedbackPage(request, url, env) {
+  if (!isAdmin(request, url, env)) {
+    return new Response('需要管理密钥', {
+      status: 401,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    });
+  }
+  const userId = (url.searchParams.get('userId') || '').trim();
+  const r = await userFeedback(env, userId);
+  if (!r.ok) {
+    return new Response('尚未配置 FEEDBACK_KV 存储', {
+      status: 503,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    });
+  }
+  const key = encodeURIComponent(adminKeyFrom(request, url));
+  const rows = r.items.map(i => {
+    const top = i.context && i.context.top && i.context.top.name ? i.context.top.name : '—';
+    return `<tr><td>${fmtTs(i.ts)}</td>` +
+      `<td>${'★'.repeat(i.rating)}${'☆'.repeat(5 - i.rating)}</td>` +
+      `<td>${escapeHtml((i.tags || []).join('、'))}</td>` +
+      `<td>${escapeHtml(i.text || '')}</td>` +
+      `<td>${escapeHtml(top)}</td></tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>明辨康途 · 用户反馈</title>
+<style>
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;margin:24px;color:#103b38;background:#f4faf9}
+h1{font-size:18px} table{border-collapse:collapse;width:100%;background:#fff;font-size:13px}
+th,td{border:1px solid #dde9e7;padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#eaf7f4} td:nth-child(1){white-space:nowrap;color:#5d7b78}
+a{color:#0b6f68}
+</style></head><body>
+<h1>用户反馈（${escapeHtml(userId)}）</h1>
+<p><a href="/api/feedback/list?key=${key}">← 返回反馈汇总</a></p>
+<table><thead><tr><th>时间</th><th>评分</th><th>标签</th><th>建议</th><th>对应病症</th></tr></thead>
+<tbody>${rows || '<tr><td colspan="5">该用户暂无反馈</td></tr>'}</tbody></table>
+</body></html>`;
+
+  return new Response(html, {
+    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -475,6 +628,20 @@ export default {
     if (url.pathname === '/api/evals/latest') return handleEvals(env);
     if (url.pathname === '/api/evals/publish') return handleEvalsPublish(request, url, env);
     if (url.pathname === '/api/metrics/event') return handleMetrics(request, env);
+
+    if (url.pathname.indexOf('/api/auth/') === 0 || url.pathname === '/api/account/delete') {
+      return handleAuth(request, url, env);
+    }
+    if (url.pathname === '/api/admin/users') {
+      if (request.method === 'OPTIONS') return json({ ok: true });
+      if (!isAdmin(request, url, env)) return jsonNoStore({ ok: false, error: 'unauthorized' }, 401);
+      const r = await listUsers(env);
+      if (!r.ok) return jsonNoStore({ ok: false, error: r.error }, r.status);
+      return jsonNoStore({ ok: true, users: r.users });
+    }
+    if (url.pathname === '/api/admin/user-feedback') {
+      return handleUserFeedbackPage(request, url, env);
+    }
 
     /* 其余请求交给静态资源 */
     return env.ASSETS.fetch(request);
