@@ -38,7 +38,7 @@ function makeKV() {
   const raw = await kv.get('users:' + reg.userId);
   const rec = JSON.parse(raw);
   const keys = Object.keys(rec).sort();
-  const allowed = ['createdAt', 'hash', 'recoveryHash', 'salt', 'status', 'username'];
+  const allowed = ['createdAt', 'hash', 'iterations', 'recoveryHash', 'salt', 'status', 'username'];
 
   if (keys.join(',') !== allowed.join(',')) {
     errors.push('users 字段不在白名单：' + keys.join(','));
@@ -63,4 +63,4 @@ function makeKV() {
     console.error('账号隐私校验失败：\n  ' + errors.join('\n  '));
     process.exit(1);
   }
-  console.log('账号隐私通过：users 仅 6 个白名单字段，未出现 phone / email / realName');})();
+  console.log('账号隐私通过：users 仅白名单字段（含 iterations），未出现 phone / email / realName');})();

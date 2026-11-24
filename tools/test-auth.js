@@ -138,6 +138,35 @@ function makeKV() {
   const meAfter = await auth.me(env, login1.token);
   ok('旧会话已失效', meAfter === null);
 
+  /* 13. 迭代数：默认 50000、env 可配、老记录兼容 */
+  {
+    const kv2 = makeKV();
+    const env2 = { FEEDBACK_KV: kv2 };
+    const r1 = await auth.register(env2, { username: 'iter_default', password: 'password123', agree: true });
+    const u1 = JSON.parse(await kv2.get('users:' + r1.userId));
+    ok('默认注册 iterations=50000', u1.iterations === 50000, String(u1.iterations));
+
+    const kv3 = makeKV();
+    const env3 = { FEEDBACK_KV: kv3, AUTH_ITERATIONS: '100000' };
+    const r2 = await auth.register(env3, { username: 'iter_custom', password: 'password123', agree: true });
+    const u2 = JSON.parse(await kv3.get('users:' + r2.userId));
+    ok('AUTH_ITERATIONS=100000 生效', u2.iterations === 100000, String(u2.iterations));
+
+    const kv4 = makeKV();
+    const env4 = { FEEDBACK_KV: kv4 };
+    const saltBytes = new Uint8Array(16).fill(0xaa);
+    const salt = Array.from(saltBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    const hash = await auth.pbkdf2('legacypass1', saltBytes, 100000);
+    await kv4.put('users:u_legacy', JSON.stringify({
+      username: 'legacy_user', salt, hash, recoveryHash: hash, createdAt: Date.now(), status: 'active'
+    }));
+    await kv4.put('uname:legacy_user', 'u_legacy');
+    const legacy = await auth.login(env4, {
+      username: 'legacy_user', password: 'legacypass1', ip: '6.6.6.6', now: 60000 * 500
+    });
+    ok('老记录无 iterations（旧默认 10 万）仍可登录', legacy.ok === true, JSON.stringify(legacy));
+  }
+
   if (failures.length) {
     console.error('匿名账号校验失败：\n  ' + failures.join('\n  '));
     process.exit(1);

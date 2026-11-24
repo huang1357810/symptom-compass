@@ -8,7 +8,7 @@ const { spawnSync } = require('child_process');
 
 const dir = __dirname;
 const files = fs.readdirSync(dir)
-  .filter(f => /^test-.*\.js$/.test(f))
+  .filter(f => /^test-.*\.js$/.test(f) || f === 'security-check.js')
   .sort();
 
 if (!files.length) {

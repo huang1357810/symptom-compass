@@ -10,8 +10,12 @@
  * 明确不存储：phone / email / realName（任何联系方式）。
  */
 
+export const DEFAULT_ITERATIONS = 50000;
+/* 旧版本（首次上线）默认迭代数；老记录没有 iterations 字段时按此校验，避免降档后老账号失效 */
+export const LEGACY_ITERATIONS = 100000;
+
 export const AUTH = {
-  ITERATIONS: 100000,
+  ITERATIONS: DEFAULT_ITERATIONS,
   SALT_BYTES: 16,
   RECOVERY_LEN: 8,
   SESSION_TTL_MS: 7 * 24 * 3600 * 1000,
@@ -21,6 +25,13 @@ export const AUTH = {
   RECOVER_FAIL_LOCK: 5,
   RECOVER_LOCK_SECONDS: 30 * 60
 };
+
+/* 迭代数解析：默认 5 万（免费版 CPU 限制），可通过 env.AUTH_ITERATIONS 覆盖（1 万–30 万） */
+export function iterationsFor(env) {
+  const n = env && Number(env.AUTH_ITERATIONS);
+  if (!Number.isFinite(n) || n < 10000) return DEFAULT_ITERATIONS;
+  return Math.min(Math.round(n), 300000);
+}
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
 const PHONE_RE = /^\d{11}$/;
@@ -59,12 +70,13 @@ function fromHex(hex) {
   return out;
 }
 
-export async function pbkdf2(text, saltBytes) {
+export async function pbkdf2(text, saltBytes, iterations) {
+  const iters = Number.isFinite(iterations) && iterations > 0 ? iterations : DEFAULT_ITERATIONS;
   const key = await crypto.subtle.importKey(
     'raw', new TextEncoder().encode(String(text)), 'PBKDF2', false, ['deriveBits']
   );
   const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt: saltBytes, iterations: AUTH.ITERATIONS, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt: saltBytes, iterations: iters, hash: 'SHA-256' },
     key, 256
   );
   return toHex(new Uint8Array(bits));
@@ -156,11 +168,12 @@ export async function register(env, input) {
     return { ok: false, status: 409, error: '用户名已被占用' };
   }
 
+  const iterations = iterationsFor(env);
   const saltBytes = randomBytes(AUTH.SALT_BYTES);
   const salt = toHex(saltBytes);
-  const hash = await pbkdf2(password, saltBytes);
+  const hash = await pbkdf2(password, saltBytes, iterations);
   const code = recoveryCode();
-  const recoveryHash = await pbkdf2(code, saltBytes);
+  const recoveryHash = await pbkdf2(code, saltBytes, iterations);
   const userId = 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
   const record = {
@@ -168,6 +181,7 @@ export async function register(env, input) {
     salt,
     hash,
     recoveryHash,
+    iterations,
     createdAt: Date.now(),
     status: 'active'
   };
@@ -202,7 +216,10 @@ export async function login(env, input) {
 
   let ok = false;
   if (record && record.status === 'active') {
-    const hash = await pbkdf2(password, fromHex(record.salt));
+    /* 校验必须用「创建时记录的迭代数」；老账号没有该字段时回退默认值 */
+    const iterations = Number.isFinite(record.iterations) && record.iterations > 0
+      ? record.iterations : LEGACY_ITERATIONS;
+    const hash = await pbkdf2(password, fromHex(record.salt), iterations);
     ok = hash === record.hash;
   }
 
@@ -264,7 +281,10 @@ export async function recover(env, input) {
 
   let ok = false;
   if (user && user.status === 'active' && code) {
-    const hash = await pbkdf2(code, fromHex(user.salt));
+    /* 恢复码校验同样使用该账号记录的迭代数，避免默认值调整后老账号失效 */
+    const iterations = Number.isFinite(user.iterations) && user.iterations > 0
+      ? user.iterations : LEGACY_ITERATIONS;
+    const hash = await pbkdf2(code, fromHex(user.salt), iterations);
     ok = hash === user.recoveryHash;
   }
 
@@ -279,12 +299,14 @@ export async function recover(env, input) {
   const pErr = validatePassword(newPassword);
   if (pErr) return { ok: false, status: 400, error: pErr };
 
-  /* 换盐防复用，并生成新恢复码（只返回这一次，旧码立即失效） */
+  /* 换盐防复用，并生成新恢复码（只返回这一次，旧码立即失效）；迭代数按当前 env 更新 */
+  const iterations = iterationsFor(env);
   const saltBytes = randomBytes(AUTH.SALT_BYTES);
   user.salt = toHex(saltBytes);
-  user.hash = await pbkdf2(newPassword, saltBytes);
+  user.hash = await pbkdf2(newPassword, saltBytes, iterations);
   const newCode = recoveryCode();
-  user.recoveryHash = await pbkdf2(newCode, saltBytes);
+  user.recoveryHash = await pbkdf2(newCode, saltBytes, iterations);
+  user.iterations = iterations;
   await kv.put('users:' + userId, JSON.stringify(user));
   await kv.delete('recoverfail:' + lower);
 

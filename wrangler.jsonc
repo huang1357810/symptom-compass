@@ -13,6 +13,8 @@
   //   wrangler secret put ADMIN_KEY
   // 生成建议：openssl rand -hex 32（32 位以上随机串），不要复用旧值。
   // 旧版明文 ADMIN_KEY 已轮换，如仍在使用请立即更换。
+  // 不改这一项，每次部署会把 Workers 日志/指标关掉。
+  "observability": { "enabled": true },
   "kv_namespaces": [
     { "binding": "FEEDBACK_KV", "id": "1de22f39cfe24e09979c5bc44ad3c288" }
   ]
