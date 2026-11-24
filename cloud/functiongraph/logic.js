@@ -1286,6 +1286,62 @@ function dayKey(t){
   return d.getFullYear() + '-' + m + '-' + day;
 }
 
+const REVISIT_KEY = 'mingbian.revisit.v1';
+const LOGIN_HINT_KEY = 'mingbian.loginHint.v1';
+const LOGIN_HINT_COOLDOWN = 7 * 24 * 3600 * 1000;
+
+/* 复诊提醒纯函数：日期计算 / 到期判断 / 无通知权限时降级 */
+function revisitDate(days, fromMs){
+  return dayKey((fromMs || Date.now()) + Math.max(0, Number(days) || 0) * 86400000);
+}
+
+function reminderDue(rem, today){
+  if (!rem || !rem.date || rem.notified) return false;
+  return rem.date <= (today || dayKey(Date.now()));
+}
+
+function reminderChannel(permission){
+  return permission === 'granted' ? 'system' : 'inline';
+}
+
+/* 时间轴单日条目（本地与服务端共用同一结构） */
+function timelineEntryFor(sym, level, now){
+  const score = estimateSeverity(sym, level);
+  const symptoms = {};
+  (sym || []).forEach(id => {
+    symptoms[id] = Math.min(10, score + (RED_SET.has(id) ? 1 : 0));
+  });
+  return { score: score, source: 'auto', level: level || '', sym: (sym || []).slice(), symptoms: symptoms };
+}
+
+/* 合并两天及以上：同日取较高分、症状取最大值、manual 优先 */
+function mergeTimelineDays(baseDays, incomingDays){
+  const out = Object.assign({}, baseDays || {});
+  Object.keys(incomingDays || {}).forEach(key => {
+    const prev = out[key] || null;
+    const next = incomingDays[key] || {};
+    const prevSym = Array.isArray(prev && prev.sym) ? prev.sym : [];
+    const nextSym = Array.isArray(next.sym) ? next.sym : [];
+    const sym = Array.from(new Set(prevSym.concat(nextSym)));
+    const symptoms = Object.assign({}, prev && prev.symptoms ? prev.symptoms : {});
+    const add = next.symptoms && typeof next.symptoms === 'object' ? next.symptoms : {};
+    Object.keys(add).forEach(id => {
+      const v = Number(add[id]);
+      if (!Number.isFinite(v)) return;
+      symptoms[id] = Math.max(Number(symptoms[id]) || 0, Math.min(10, Math.round(v)));
+    });
+    const manual = (prev && prev.source === 'manual') || next.source === 'manual';
+    out[key] = {
+      score: Math.max(Number(prev && prev.score) || 0, Number(next.score) || 0),
+      source: manual ? 'manual' : 'auto',
+      level: next.level || (prev && prev.level) || '',
+      sym: sym,
+      symptoms: symptoms
+    };
+  });
+  return out;
+}
+
 function emptyTimeline(){ return { days: {} }; }
 
 function loadTimeline(){
@@ -1325,19 +1381,14 @@ function recordTimeline(sym, level, now){
   const prev = tl.days[key];
   if (prev && prev.source === 'manual') return tl;
 
-  const score = estimateSeverity(sym, level);
-  const symptoms = {};
-  (sym || []).forEach(id => {
-    symptoms[id] = Math.min(10, score + (RED_SET.has(id) ? 1 : 0));
-  });
-
+  const entry = timelineEntryFor(sym, level, t);
   const merged = Object.assign({}, prev && prev.symptoms ? prev.symptoms : {});
-  Object.keys(symptoms).forEach(id => {
-    merged[id] = Math.max(merged[id] || 0, symptoms[id]);
+  Object.keys(entry.symptoms).forEach(id => {
+    merged[id] = Math.max(merged[id] || 0, entry.symptoms[id]);
   });
 
   tl.days[key] = {
-    score: prev ? Math.max(prev.score, score) : score,
+    score: prev ? Math.max(prev.score, entry.score) : entry.score,
     source: 'auto',
     level: level || '',
     sym: (sym || []).slice(),
@@ -2363,6 +2414,8 @@ function openProfile(){
   renderProfilePanel();
   const modal = document.getElementById('profileModal');
   if (modal) modal.classList.remove('hidden');
+  /* 登录后时间轴来自服务端，首次打开时拉取 */
+  if (accountMe && !accountTimeline) loadAccountTimeline();
 }
 
 /* ---------------- 症状时间轴：曲线绘制 ---------------- */
@@ -2603,7 +2656,7 @@ function renderTimeline(){
   const legend = document.getElementById('tlLegend');
   if (!box) return;
 
-  const tl = loadTimeline();
+  const tl = currentTimeline();
   const view = analyzeTimeline(tl, TIMELINE_DAYS);
 
   if (legend){
@@ -2623,6 +2676,14 @@ function renderTimeline(){
     manual.querySelectorAll('.tl-sev').forEach(btn => {
       btn.classList.toggle('on', !!today && today.source === 'manual' && Number(btn.dataset.sev) === today.score);
     });
+  }
+
+  /* 到期复诊提醒：一直显示，直到用户删除/重设 */
+  const due = document.getElementById('revisitDue');
+  if (due){
+    const rem = revisitReminder();
+    const isDue = !!(rem && rem.date && rem.date <= dayKey(Date.now()));
+    due.classList.toggle('hidden', !isDue);
   }
 }
 
@@ -2941,6 +3002,69 @@ function bindBodyMap(){
 const ACCOUNT_API = '/api/auth';
 const ANON_KEY = 'mingbian.anonId.v1';
 let accountMe = null;
+/* 登录后的服务端时间轴（{days:{}}）；游客为 null，继续用本机 storage */
+let accountTimeline = null;
+
+function currentTimeline(){
+  return (accountMe && accountTimeline) ? accountTimeline : loadTimeline();
+}
+
+async function loadAccountTimeline(){
+  if (!accountMe) return;
+  try {
+    const r = await acFetch('/api/timeline');
+    if (r.ok && r.data.timeline){
+      accountTimeline = r.data.timeline;
+      renderTimeline();
+    }
+  } catch (e) { /* 降级：保持当前显示 */ }
+}
+
+async function pushTimelineDays(days){
+  if (!accountMe || !days) return;
+  try {
+    const r = await acFetch('/api/timeline', { days: days });
+    if (r.ok && r.data.timeline){
+      accountTimeline = r.data.timeline;
+      renderTimeline();
+    }
+  } catch (e) { /* 静默：不影响结果展示 */ }
+}
+
+/* 登录时把本机记录合并到服务端（同日期取高分/并集），成功后清本机 */
+async function mergeLocalTimeline(){
+  if (!accountMe) return;
+  const local = loadTimeline();
+  const days = local.days || {};
+  if (!Object.keys(days).length){
+    await loadAccountTimeline();
+    return;
+  }
+  try {
+    const r = await acFetch('/api/timeline', { days: days });
+    if (r.ok && r.data.timeline){
+      clearTimelineData();
+      accountTimeline = r.data.timeline;
+      renderTimeline();
+    }
+  } catch (e) { /* 失败保留本机，下次登录再合并 */ }
+}
+
+async function clearMyTimeline(){
+  if (accountMe){
+    try {
+      const r = await acFetch('/api/timeline', undefined, 'DELETE');
+      if (!r.ok){ acMsg(r.data.error || '清空失败', 'err'); return; }
+      accountTimeline = { days: {} };
+      renderTimeline();
+    } catch (e) {
+      acMsg('网络不可用，清空未完成', 'err');
+    }
+    return;
+  }
+  clearTimelineData();
+  renderTimeline();
+}
 
 /* 游客匿名编号：仅本机随机串，不含任何个人信息 */
 function anonId(){
@@ -2974,10 +3098,11 @@ function renderAccount(){
   if (name && on) name.textContent = accountMe.username || '';
 }
 
-async function acFetch(path, body){
+async function acFetch(path, body, method){
   const url = path.indexOf('/api/') === 0 ? path : ACCOUNT_API + path;
+  const verb = method || (body === undefined ? 'GET' : 'POST');
   const res = await fetch(url, {
-    method: body === undefined ? 'GET' : 'POST',
+    method: verb,
     headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
     credentials: 'include',
@@ -2995,6 +3120,7 @@ async function initAccount(){
     accountMe = null;
   }
   renderAccount();
+  if (accountMe) await mergeLocalTimeline();
 }
 
 function acCreds(){
@@ -3018,6 +3144,7 @@ async function acRegister(){
     if (!r.ok){ acMsg(r.data.error || '注册失败', 'err'); return; }
     accountMe = { userId: r.data.userId, username: r.data.username };
     renderAccount();
+    await mergeLocalTimeline();
     const msg = document.getElementById('acMsg');
     if (msg){
       msg.className = 'ac-msg ok';
@@ -3037,6 +3164,7 @@ async function acLogin(){
     if (!r.ok){ acMsg(r.data.error || '用户名或密码错误', 'err'); return; }
     accountMe = { userId: r.data.userId, username: r.data.username };
     renderAccount();
+    await mergeLocalTimeline();
     acMsg('已登录', 'ok');
   } catch (e) {
     acMsg('网络不可用，游客模式不受影响', 'err');
@@ -3046,7 +3174,10 @@ async function acLogin(){
 async function acLogout(){
   try { await acFetch('/logout', {}); } catch (e) { /* 忽略 */ }
   accountMe = null;
+  accountTimeline = null;
+  clearTimelineData();
   renderAccount();
+  renderTimeline();
   acMsg('已退出，当前为游客模式', 'ok');
 }
 
@@ -3057,7 +3188,10 @@ async function acDelete(){
     const r = await acFetch('/api/account/delete', {});
     if (!r.ok){ acMsg(r.data.error || '注销失败', 'err'); return; }
     accountMe = null;
+    accountTimeline = null;
+    clearTimelineData();
     renderAccount();
+    renderTimeline();
     acMsg('账号与名下反馈已删除', 'ok');
   } catch (e) {
     acMsg('网络不可用，注销未完成', 'err');
@@ -3082,6 +3216,94 @@ async function acRecover(){
   } catch (e) {
     acMsg('网络不可用', 'err');
   }
+}
+
+/* ---------------- 登录引导（软门槛，不阻断游客） ---------------- */
+
+function loginHintState(){
+  try { return JSON.parse(localStorage.getItem(LOGIN_HINT_KEY) || 'null'); } catch (e) { return null; }
+}
+
+function maybeShowLoginHint(){
+  const box = document.getElementById('loginHint');
+  if (!box) return;
+  const on = !!(accountMe && accountMe.userId);
+  const state = loginHintState();
+  const dismissedAt = state && typeof state.dismissedAt === 'number' ? state.dismissedAt : 0;
+  const cooling = Date.now() - dismissedAt < LOGIN_HINT_COOLDOWN;
+  box.classList.toggle('hidden', on || cooling);
+}
+
+function dismissLoginHint(){
+  try {
+    localStorage.setItem(LOGIN_HINT_KEY, JSON.stringify({ dismissedAt: Date.now() }));
+  } catch (e) { /* 忽略 */ }
+  const box = document.getElementById('loginHint');
+  if (box) box.classList.add('hidden');
+}
+
+function openAccountPanel(){
+  const modal = document.getElementById('profileModal');
+  if (modal) modal.classList.remove('hidden');
+  const user = document.getElementById('acUser');
+  if (user) user.focus();
+}
+
+/* ---------------- 复诊提醒（仅本地，不申请后台推送） ---------------- */
+
+function revisitReminder(){
+  try { return JSON.parse(localStorage.getItem(REVISIT_KEY) || 'null'); } catch (e) { return null; }
+}
+
+function revisitIsDue(rem){
+  return !!(rem && rem.date && rem.date <= dayKey(Date.now()));
+}
+
+function setRevisit(days){
+  const rem = {
+    date: revisitDate(days),
+    days: Number(days) || 0,
+    owner: (accountMe && accountMe.userId) || anonId(),
+    notified: false,
+    createdAt: Date.now()
+  };
+  try { localStorage.setItem(REVISIT_KEY, JSON.stringify(rem)); } catch (e) { /* 忽略 */ }
+  renderRevisitState();
+  return rem;
+}
+
+function renderRevisitState(){
+  const state = document.getElementById('revisitState');
+  if (state){
+    const rem = revisitReminder();
+    state.textContent = rem ? ('已设为 ' + rem.date + ' 复查') : '未设置';
+  }
+  const due = document.getElementById('revisitDue');
+  if (due) due.classList.toggle('hidden', !revisitIsDue(revisitReminder()));
+}
+
+/* 页面打开时执行一次：到期弹一次通知；无权限降级为页面内提示 */
+function checkRevisit(){
+  const rem = revisitReminder();
+  renderRevisitState();
+  if (!rem || !revisitIsDue(rem) || rem.notified) return;
+
+  const permission = (typeof Notification !== 'undefined' && Notification.permission)
+    ? Notification.permission : 'denied';
+  const channel = reminderChannel(permission);
+  if (channel === 'system'){
+    try {
+      new Notification('复诊提醒', { body: '今天该复查了（' + (rem.date || '') + '）。如有加重请及时就医。' });
+    } catch (e) { /* 某些浏览器限制构造通知，忽略 */ }
+  } else {
+    const due = document.getElementById('revisitDue');
+    if (due){
+      due.classList.remove('hidden');
+      due.textContent = '今天该复查了（未开启系统通知，已在页面提示）';
+    }
+  }
+  rem.notified = true;
+  try { localStorage.setItem(REVISIT_KEY, JSON.stringify(rem)); } catch (e) { /* 忽略 */ }
 }
 
 /* =========================================================
@@ -3350,6 +3572,18 @@ function bindEvents(){
     });
   }
   initAccount();
+
+  /* 登录引导与本地复诊提醒 */
+  const hintGo = document.getElementById('loginHintGo');
+  if (hintGo) hintGo.addEventListener('click', openAccountPanel);
+  const hintLater = document.getElementById('loginHintLater');
+  if (hintLater) hintLater.addEventListener('click', dismissLoginHint);
+  document.querySelectorAll('[data-revisit]').forEach(btn => {
+    btn.addEventListener('click', () => setRevisit(btn.getAttribute('data-revisit')));
+  });
+  const clearTl = document.getElementById('clearTimeline');
+  if (clearTl) clearTl.addEventListener('click', clearMyTimeline);
+  checkRevisit();
 
   /* 隐藏自检入口：连续点 logo 5 次进入 selftest.html（不影响普通点击） */
   const logoEl = document.querySelector('.logo');
@@ -3791,8 +4025,13 @@ async function showResults(){
     triage.level
   );
 
-  /* 同步记一条当天严重度，供档案里的时间轴画曲线 */
-  recordTimeline([...selected], triage.level);
+  /* 同步记一条当天严重度：登录用户写服务端，游客写本机 */
+  if (accountMe && accountTimeline){
+    const key = dayKey(Date.now());
+    pushTimelineDays({ [key]: timelineEntryFor([...selected], triage.level, Date.now()) });
+  } else {
+    recordTimeline([...selected], triage.level);
+  }
 
   const levelLabel = { red: '高风险 · 需急诊', yellow: '中风险 · 需就医', green: '低风险 · 可观察' };
   document.getElementById('urgent').innerHTML = renderUrgent(triage, flags);
@@ -3872,6 +4111,9 @@ async function showResults(){
     }));
   }
 
+
+  /* 首次/未冷却时展示登录引导（软门槛，不阻断） */
+  maybeShowLoginHint();
 
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
@@ -4244,5 +4486,5 @@ if (typeof document !== 'undefined'){
   document.addEventListener('DOMContentLoaded', init);
 }
 if (typeof module !== 'undefined' && module.exports){
-  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, mergeRedFlags, scoreConditions, gradeOf, SKIN_SYMPTOMS, analyzeSkinPixels, describeSkinFeatures, skinAdvice, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline, weatherTipsFor, selectSymptomForTip, explainFor, debugInfoFor, ENV_CITY_KEY, ENV_CACHE_KEY, ENV_CACHE_MS };
+  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, mergeRedFlags, scoreConditions, gradeOf, SKIN_SYMPTOMS, analyzeSkinPixels, describeSkinFeatures, skinAdvice, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline, weatherTipsFor, selectSymptomForTip, explainFor, debugInfoFor, timelineEntryFor, mergeTimelineDays, revisitDate, reminderDue, reminderChannel, revisitIsDue, REVISIT_KEY, LOGIN_HINT_KEY, ENV_CITY_KEY, ENV_CACHE_KEY, ENV_CACHE_MS };
 }

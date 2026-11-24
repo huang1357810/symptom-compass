@@ -56,18 +56,21 @@
       <thead><tr><th>键名</th><th>内容</th><th>用途</th></tr></thead>
       <tbody>
         <tr><td><code>mingbian.profile.v1</code></td><td>查看过的方向、时间、症状组合、分诊等级</td><td>「我的档案」、就医提醒、康复关心</td></tr>
-        <tr><td><code>mingbian.timeline.v1</code></td><td>按天的症状严重度与打卡</td><td>14 天症状时间轴</td></tr>
+        <tr><td><code>mingbian.timeline.v1</code></td><td>按天的症状严重度与打卡（游客模式）</td><td>14 天症状时间轴；登录后改存服务端，本机副本在合并成功后清空</td></tr>
         <tr><td><code>mingbian.feedback.v1</code></td><td>你在本机提交过的反馈副本</td><td>「我的反馈」与改进状态</td></tr>
         <tr><td><code>mingbian.pwa.dismissed</code></td><td>是否关闭过「添加到桌面」提示</td><td>避免重复打扰</td></tr>
         <tr><td><code>mingbian.envCity.v1</code></td><td>你主动填写的城市名</td><td>查询天气健康提示（只发送城市名）</td></tr>
         <tr><td><code>mingbian.weatherCache.v1</code></td><td>最近一次天气/空气质量数据与时间</td><td>同一城市 1 小时内不重复请求</td></tr>
         <tr><td><code>mingbian.anonId.v1</code></td><td>本机随机生成的匿名编号（不含个人信息）</td><td>游客模式下串联系列反馈</td></tr>
+        <tr><td><code>mingbian.revisit.v1</code></td><td>复诊日期、天数与是否已提醒</td><td>本地复诊提醒（不申请后台推送）</td></tr>
+        <tr><td><code>mingbian.loginHint.v1</code></td><td>「以后再说」的时间</td><td>7 天内不再显示登录引导</td></tr>
       </tbody>
     </table>
 </div>
     <h3>如何删除</h3>
     <ul>
       <li>在「我的档案」里点「清除全部记录」，会删除档案、时间轴与本地反馈副本。</li>
+      <li>登录用户可在设置页点「清空我的时间轴」删除服务端时间轴；注销账号会连同时间轴一并删除。</li>
       <li>也可以清除浏览器站点数据，或卸载 PWA（主屏幕图标）。</li>
     </ul>
   </div>
@@ -104,12 +107,14 @@
     <ul>
       <li><b>账号是可选功能</b>，不登录也能正常使用全部分诊与档案功能（游客模式）。</li>
       <li><b>不收集手机号、邮箱、真实姓名</b>；用户名只是匿名标识，请勿在用户名中填写个人信息。</li>
-      <li>密码以 <b>PBKDF2-SHA256（10 万次迭代 + 16 字节随机盐）</b> 派生后存储，服务端不保存明文密码。</li>
+      <li>密码以 <b>PBKDF2-SHA256（默认 5 万次迭代 + 16 字节随机盐）</b> 派生后存储，服务端不保存明文密码；付费部署可用 `AUTH_ITERATIONS` 调高（线上 10 万次实测 CPU 约 107ms）。</li>
       <li>注册时生成的一次性<b>恢复码</b>只返回一次；忘记密码只能用恢复码重置，重置后会下发新的恢复码。</li>
       <li>登录状态使用 <b>HttpOnly + Secure + SameSite=Lax</b> Cookie，保存 7 天；退出即删除会话。</li>
       <li><b>登录后提交的反馈会关联你的匿名账号</b>；游客模式下的反馈附带本机随机匿名编号，用于串联系列反馈。</li>
-      <li><b>注销账号会立即删除</b>账号记录、全部会话与名下全部反馈，不保留副本。</li>
-      <li>健康档案、时间轴、照片仍只保存在本机，登录不会上传这些内容。</li>
+      <li><b>注销账号会立即删除</b>账号记录、全部会话、名下全部反馈与<b>服务端时间轴</b>，不保留副本。</li>
+      <li><b>时间轴在登录后存到服务端</b>（按账号隔离，`timeline:{userId}`）；游客模式仍只存本机。健康档案、照片仍只保存在本机。</li>
+      <li><b>时间轴包含症状记录，属于敏感信息</b>；可随时在设置页点「清空我的时间轴」删除（登录用户同时清空服务端），或注销账号一并删除。</li>
+      <li>复诊提醒只存在本机（`mingbian.revisit.v1`），不申请后台推送；到时间后仅在打开页面时提示一次，无通知权限时改为页面内提示。</li>
     </ul>
   </div>
 

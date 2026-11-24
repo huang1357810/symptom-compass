@@ -4,7 +4,7 @@
  *   - 静态资源：缓存优先（图标、manifest 这类不常变的）
  *   - /api/ 请求：永不缓存
  */
-const CACHE = 'mingbian-kangtu-v20';
+const CACHE = 'mingbian-kangtu-v21';
 const SHELL = [
   './',
   './index.html',

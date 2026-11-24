@@ -14,6 +14,7 @@ import { validateEvals } from './evals-schema.mjs';
 import {
   register, login, logout, me, recover, deleteAccount,
   resolveFeedbackOwner, listUsers, userFeedback,
+  timelineGet, timelineAppend, timelineClear,
   getCookie, sessionCookie, clearCookie, jsonNoStore
 } from './auth.mjs';
 import evalsSeed from './evals-seed.json';
@@ -618,6 +619,38 @@ a{color:#0b6f68}
   });
 }
 
+/* ---------------- 账号时间轴（需登录） ---------------- */
+
+async function handleTimeline(request, env) {
+  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (!env.FEEDBACK_KV) return jsonNoStore({ ok: false, error: 'no_store' }, 503);
+
+  const user = await me(env, getCookie(request, 'mb_session'));
+  if (!user) return jsonNoStore({ ok: false, error: 'unauthorized' }, 401);
+
+  if (request.method === 'GET') {
+    const r = await timelineGet(env, user.userId);
+    if (!r.ok) return jsonNoStore({ ok: false, error: r.error }, r.status);
+    return jsonNoStore({ ok: true, timeline: r.timeline });
+  }
+
+  if (request.method === 'POST') {
+    const body = await readJsonBody(request);
+    if (!body) return jsonNoStore({ ok: false, error: 'bad_json' }, 400);
+    const r = await timelineAppend(env, user.userId, body);
+    if (!r.ok) return jsonNoStore({ ok: false, error: r.error }, r.status);
+    return jsonNoStore({ ok: true, timeline: r.timeline });
+  }
+
+  if (request.method === 'DELETE') {
+    const r = await timelineClear(env, user.userId);
+    if (!r.ok) return jsonNoStore({ ok: false, error: r.error }, r.status);
+    return jsonNoStore({ ok: true });
+  }
+
+  return jsonNoStore({ ok: false, error: 'method_not_allowed' }, 405);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -631,6 +664,9 @@ export default {
 
     if (url.pathname.indexOf('/api/auth/') === 0 || url.pathname === '/api/account/delete') {
       return handleAuth(request, url, env);
+    }
+    if (url.pathname === '/api/timeline') {
+      return handleTimeline(request, env);
     }
     if (url.pathname === '/api/admin/users') {
       if (request.method === 'OPTIONS') return json({ ok: true });

@@ -329,6 +329,74 @@ async function listAll(kv, prefix, maxPages = 6) {
   return out;
 }
 
+/* ---------------- 时间轴（仅登录用户，服务端隔离） ---------------- */
+
+const TIMELINE_MAX_DAYS = 400;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function mergeTimelineDays(baseDays, incomingDays) {
+  const out = Object.assign({}, baseDays || {});
+  Object.keys(incomingDays || {}).forEach(date => {
+    if (!DATE_RE.test(date)) return;
+    const prev = out[date] || null;
+    const next = incomingDays[date] || {};
+    const prevSym = Array.isArray(prev && prev.sym) ? prev.sym : [];
+    const nextSym = Array.isArray(next.sym) ? next.sym : [];
+    const sym = Array.from(new Set(prevSym.concat(nextSym))).slice(0, 40);
+    const symptoms = Object.assign({}, prev && prev.symptoms ? prev.symptoms : {});
+    const incoming = next.symptoms && typeof next.symptoms === 'object' ? next.symptoms : {};
+    Object.keys(incoming).forEach(id => {
+      const v = Number(incoming[id]);
+      if (!Number.isFinite(v)) return;
+      symptoms[id] = Math.max(Number(symptoms[id]) || 0, Math.max(0, Math.min(10, Math.round(v))));
+    });
+    const manual = (prev && prev.source === 'manual') || next.source === 'manual';
+    out[date] = {
+      score: Math.max(Number(prev && prev.score) || 0, Number(next.score) || 0),
+      source: manual ? 'manual' : 'auto',
+      level: next.level || (prev && prev.level) || '',
+      sym: sym,
+      symptoms: symptoms
+    };
+  });
+  const keys = Object.keys(out).sort();
+  if (keys.length > TIMELINE_MAX_DAYS) {
+    keys.slice(0, keys.length - TIMELINE_MAX_DAYS).forEach(k => { delete out[k]; });
+  }
+  return out;
+}
+
+export async function timelineGet(env, userId) {
+  const kv = env.FEEDBACK_KV;
+  if (!kv) return { ok: false, status: 503, error: 'no_store' };
+  const raw = await readJson(kv, 'timeline:' + userId);
+  return { ok: true, timeline: { days: (raw && raw.days) || {} } };
+}
+
+export async function timelineAppend(env, userId, payload) {
+  const kv = env.FEEDBACK_KV;
+  if (!kv) return { ok: false, status: 503, error: 'no_store' };
+
+  const days = payload && payload.days && typeof payload.days === 'object' ? payload.days : null;
+  const single = payload && typeof payload.date === 'string'
+    ? { [payload.date]: payload.entry || {} }
+    : null;
+  const incoming = days || single;
+  if (!incoming) return { ok: false, status: 400, error: 'bad_timeline' };
+
+  const cur = await readJson(kv, 'timeline:' + userId);
+  const merged = mergeTimelineDays(cur && cur.days, incoming);
+  await kv.put('timeline:' + userId, JSON.stringify({ days: merged }));
+  return { ok: true, timeline: { days: merged } };
+}
+
+export async function timelineClear(env, userId) {
+  const kv = env.FEEDBACK_KV;
+  if (!kv) return { ok: false, status: 503, error: 'no_store' };
+  await kv.delete('timeline:' + userId);
+  return { ok: true };
+}
+
 export async function deleteAccount(env, userId) {
   const kv = env.FEEDBACK_KV;
   if (!kv || !userId) return { ok: false, status: 400, error: 'bad_request' };
@@ -354,6 +422,7 @@ export async function deleteAccount(env, userId) {
     }
   }
 
+  await kv.delete('timeline:' + userId);
   await kv.delete('uname:' + String(user.username).toLowerCase());
   await kv.delete('users:' + userId);
   return { ok: true, deletedSessions: sessions, deletedFeedback: feedback };
