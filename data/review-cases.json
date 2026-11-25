@@ -1,0 +1,1218 @@
+{
+  "generatedAt": "2026-11-25",
+  "total": 100,
+  "cases": [
+    {
+      "caseId": "R001",
+      "age": 21,
+      "symptoms": [
+        "反酸/烧心",
+        "吞咽困难",
+        "胸闷"
+      ],
+      "duration": "4–7 天",
+      "temperature": "没有发热",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R002",
+      "age": 39,
+      "symptoms": [
+        "流涕",
+        "鼻塞",
+        "打喷嚏"
+      ],
+      "duration": "1–3 天",
+      "temperature": "37.3–38℃",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R003",
+      "age": 22,
+      "symptoms": [
+        "发热",
+        "咳痰",
+        "胸闷",
+        "气短/呼吸困难"
+      ],
+      "duration": "4–7 天",
+      "temperature": "38.1–39℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R004",
+      "age": 67,
+      "symptoms": [
+        "牙痛",
+        "吞咽困难",
+        "发热"
+      ],
+      "duration": "4–7 天",
+      "temperature": "37.3–38℃",
+      "activity": "活动减少但能自理"
+    },
+    {
+      "caseId": "R005",
+      "age": 87,
+      "symptoms": [
+        "头痛",
+        "视物模糊",
+        "呕吐"
+      ],
+      "duration": "1–3 天",
+      "temperature": "没有发热",
+      "activity": "卧床需人照顾"
+    },
+    {
+      "caseId": "R006",
+      "age": 90,
+      "symptoms": [
+        "咽痛",
+        "吞咽困难",
+        "发热"
+      ],
+      "duration": "1–3 天",
+      "temperature": "37.3–38℃",
+      "activity": "日常活动正常"
+    },
+    {
+      "caseId": "R007",
+      "age": 46,
+      "symptoms": [
+        "发热",
+        "咳痰",
+        "胸闷",
+        "气短/呼吸困难"
+      ],
+      "duration": "4–7 天",
+      "temperature": "38.1–39℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R008",
+      "age": 14,
+      "symptoms": [
+        "头痛",
+        "视物模糊",
+        "呕吐"
+      ],
+      "duration": "1–3 天",
+      "temperature": "没有发热",
+      "activity": "卧床需人照顾"
+    },
+    {
+      "caseId": "R009",
+      "age": 1,
+      "symptoms": [
+        "鼻塞",
+        "咽痛",
+        "干咳"
+      ],
+      "duration": "4–7 天",
+      "temperature": "37.3–38℃",
+      "activity": "精神好能玩"
+    },
+    {
+      "caseId": "R010",
+      "age": 76,
+      "symptoms": [
+        "腹泻",
+        "呕吐",
+        "腹痛"
+      ],
+      "duration": "1–3 天",
+      "temperature": "37.3–38℃",
+      "activity": "活动减少但能自理"
+    },
+    {
+      "caseId": "R011",
+      "age": 50,
+      "symptoms": [
+        "反酸/烧心",
+        "腹胀",
+        "乏力"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R012",
+      "age": 62,
+      "symptoms": [
+        "干咳",
+        "咳痰",
+        "胸闷"
+      ],
+      "duration": "4–7 天",
+      "temperature": "37.3–38℃",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R013",
+      "age": 39,
+      "symptoms": [
+        "腹泻",
+        "恶心",
+        "食欲不振"
+      ],
+      "duration": "1–3 天",
+      "temperature": "37.3–38℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R014",
+      "age": 49,
+      "symptoms": [
+        "干咳",
+        "咳痰",
+        "胸闷"
+      ],
+      "duration": "4–7 天",
+      "temperature": "37.3–38℃",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R015",
+      "age": 20,
+      "symptoms": [
+        "鼻塞",
+        "咽痛",
+        "干咳"
+      ],
+      "duration": "4–7 天",
+      "temperature": "37.3–38℃",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R016",
+      "age": 20,
+      "symptoms": [
+        "咽痛",
+        "发热",
+        "头痛"
+      ],
+      "duration": "4–7 天",
+      "temperature": "38.1–39℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R017",
+      "age": 19,
+      "symptoms": [
+        "干咳",
+        "咳痰",
+        "胸闷"
+      ],
+      "duration": "4–7 天",
+      "temperature": "37.3–38℃",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R018",
+      "age": 1,
+      "symptoms": [
+        "气短/呼吸困难",
+        "咳痰",
+        "高热 ≥39℃",
+        "发热"
+      ],
+      "duration": "1–3 天",
+      "temperature": "超过 39℃",
+      "activity": "嗜睡难唤醒"
+    },
+    {
+      "caseId": "R019",
+      "age": 47,
+      "symptoms": [
+        "夜间盗汗",
+        "体重下降",
+        "咯血"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "37.3–38℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R020",
+      "age": 41,
+      "symptoms": [
+        "腰侧痛",
+        "血尿",
+        "恶心"
+      ],
+      "duration": "1–3 天",
+      "temperature": "没有发热",
+      "activity": "卧床需人照顾"
+    },
+    {
+      "caseId": "R021",
+      "age": 0,
+      "symptoms": [
+        "流涕",
+        "鼻塞",
+        "打喷嚏"
+      ],
+      "duration": "1–3 天",
+      "temperature": "37.3–38℃",
+      "activity": "精神好能玩"
+    },
+    {
+      "caseId": "R022",
+      "age": 24,
+      "symptoms": [
+        "发热",
+        "肌肉酸痛",
+        "畏寒/寒战"
+      ],
+      "duration": "1–3 天",
+      "temperature": "38.1–39℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R023",
+      "age": 40,
+      "symptoms": [
+        "乏力",
+        "面色苍白",
+        "头晕"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R024",
+      "age": 83,
+      "symptoms": [
+        "腰侧痛",
+        "血尿",
+        "恶心"
+      ],
+      "duration": "1–3 天",
+      "temperature": "没有发热",
+      "activity": "卧床需人照顾"
+    },
+    {
+      "caseId": "R025",
+      "age": 26,
+      "symptoms": [
+        "干咳",
+        "咳痰",
+        "喘息/喘鸣"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "37.3–38℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R026",
+      "age": 12,
+      "symptoms": [
+        "干咳",
+        "夜间盗汗",
+        "体重下降"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "37.3–38℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R027",
+      "age": 1,
+      "symptoms": [
+        "发热",
+        "咳痰",
+        "胸闷",
+        "气短/呼吸困难"
+      ],
+      "duration": "4–7 天",
+      "temperature": "38.1–39℃",
+      "activity": "精神差但能进食"
+    },
+    {
+      "caseId": "R028",
+      "age": 45,
+      "symptoms": [
+        "干咳",
+        "夜间盗汗",
+        "体重下降"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "37.3–38℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R029",
+      "age": 10,
+      "symptoms": [
+        "打喷嚏",
+        "流涕",
+        "眼痒"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "精神好能玩"
+    },
+    {
+      "caseId": "R030",
+      "age": 77,
+      "symptoms": [
+        "打喷嚏",
+        "流涕",
+        "眼痒"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "日常活动正常"
+    },
+    {
+      "caseId": "R031",
+      "age": 6,
+      "symptoms": [
+        "发热",
+        "肌肉酸痛",
+        "畏寒/寒战"
+      ],
+      "duration": "1–3 天",
+      "temperature": "38.1–39℃",
+      "activity": "精神差但能进食"
+    },
+    {
+      "caseId": "R032",
+      "age": 32,
+      "symptoms": [
+        "牙痛",
+        "面部压痛",
+        "乏力"
+      ],
+      "duration": "4–7 天",
+      "temperature": "37.3–38℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R033",
+      "age": 72,
+      "symptoms": [
+        "乏力",
+        "面色苍白",
+        "头晕"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "活动减少但能自理"
+    },
+    {
+      "caseId": "R034",
+      "age": 4,
+      "symptoms": [
+        "发热",
+        "肌肉酸痛",
+        "乏力",
+        "头痛"
+      ],
+      "duration": "4–7 天",
+      "temperature": "38.1–39℃",
+      "activity": "精神差但能进食"
+    },
+    {
+      "caseId": "R035",
+      "age": 32,
+      "symptoms": [
+        "发热",
+        "肌肉酸痛",
+        "乏力",
+        "头痛"
+      ],
+      "duration": "4–7 天",
+      "temperature": "38.1–39℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R036",
+      "age": 21,
+      "symptoms": [
+        "反酸/烧心",
+        "腹胀",
+        "乏力"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R037",
+      "age": 44,
+      "symptoms": [
+        "流涕",
+        "鼻塞",
+        "打喷嚏"
+      ],
+      "duration": "1–3 天",
+      "temperature": "37.3–38℃",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R038",
+      "age": 3,
+      "symptoms": [
+        "干咳",
+        "夜间盗汗",
+        "体重下降"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "37.3–38℃",
+      "activity": "精神差但能进食"
+    },
+    {
+      "caseId": "R039",
+      "age": 55,
+      "symptoms": [
+        "发热",
+        "肌肉酸痛",
+        "畏寒/寒战"
+      ],
+      "duration": "1–3 天",
+      "temperature": "38.1–39℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R040",
+      "age": 54,
+      "symptoms": [
+        "乏力",
+        "心悸",
+        "面色苍白"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R041",
+      "age": 73,
+      "symptoms": [
+        "发热",
+        "咳痰",
+        "气短/呼吸困难"
+      ],
+      "duration": "1–3 天",
+      "temperature": "38.1–39℃",
+      "activity": "活动减少但能自理"
+    },
+    {
+      "caseId": "R042",
+      "age": 54,
+      "symptoms": [
+        "干咳",
+        "咳痰",
+        "喘息/喘鸣"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "37.3–38℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R043",
+      "age": 45,
+      "symptoms": [
+        "腹泻",
+        "呕吐",
+        "腹痛"
+      ],
+      "duration": "1–3 天",
+      "temperature": "37.3–38℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R044",
+      "age": 21,
+      "symptoms": [
+        "牙痛",
+        "吞咽困难",
+        "发热"
+      ],
+      "duration": "4–7 天",
+      "temperature": "37.3–38℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R045",
+      "age": 56,
+      "symptoms": [
+        "发热",
+        "咳痰",
+        "气短/呼吸困难"
+      ],
+      "duration": "1–3 天",
+      "temperature": "38.1–39℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R046",
+      "age": 34,
+      "symptoms": [
+        "胸壁按压痛",
+        "胸痛",
+        "气短/呼吸困难"
+      ],
+      "duration": "4–7 天",
+      "temperature": "没有发热",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R047",
+      "age": 34,
+      "symptoms": [
+        "腰侧痛",
+        "呕吐",
+        "血尿"
+      ],
+      "duration": "1–3 天",
+      "temperature": "没有发热",
+      "activity": "卧床需人照顾"
+    },
+    {
+      "caseId": "R048",
+      "age": 31,
+      "symptoms": [
+        "乏力",
+        "面色苍白",
+        "头晕"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R049",
+      "age": 54,
+      "symptoms": [
+        "气短/呼吸困难",
+        "咳痰",
+        "高热 ≥39℃",
+        "发热"
+      ],
+      "duration": "1–3 天",
+      "temperature": "超过 39℃",
+      "activity": "卧床需人照顾"
+    },
+    {
+      "caseId": "R050",
+      "age": 28,
+      "symptoms": [
+        "腹胀",
+        "嗳气/打嗝",
+        "食欲不振"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R051",
+      "age": 10,
+      "symptoms": [
+        "气短/呼吸困难",
+        "咳痰",
+        "高热 ≥39℃",
+        "发热"
+      ],
+      "duration": "1–3 天",
+      "temperature": "超过 39℃",
+      "activity": "嗜睡难唤醒"
+    },
+    {
+      "caseId": "R052",
+      "age": 65,
+      "symptoms": [
+        "胸壁按压痛",
+        "胸痛",
+        "气短/呼吸困难"
+      ],
+      "duration": "4–7 天",
+      "temperature": "没有发热",
+      "activity": "日常活动正常"
+    },
+    {
+      "caseId": "R053",
+      "age": 36,
+      "symptoms": [
+        "腰侧痛",
+        "血尿",
+        "恶心"
+      ],
+      "duration": "1–3 天",
+      "temperature": "没有发热",
+      "activity": "卧床需人照顾"
+    },
+    {
+      "caseId": "R054",
+      "age": 65,
+      "symptoms": [
+        "胸痛",
+        "乏力",
+        "食欲不振"
+      ],
+      "duration": "1–3 天",
+      "temperature": "38.1–39℃",
+      "activity": "活动减少但能自理"
+    },
+    {
+      "caseId": "R055",
+      "age": 47,
+      "symptoms": [
+        "发热",
+        "咳痰",
+        "气短/呼吸困难"
+      ],
+      "duration": "4–7 天",
+      "temperature": "38.1–39℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R056",
+      "age": 13,
+      "symptoms": [
+        "夜间盗汗",
+        "体重下降",
+        "咯血"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "37.3–38℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R057",
+      "age": 63,
+      "symptoms": [
+        "腰侧痛",
+        "呕吐",
+        "血尿"
+      ],
+      "duration": "1–3 天",
+      "temperature": "没有发热",
+      "activity": "卧床需人照顾"
+    },
+    {
+      "caseId": "R058",
+      "age": 75,
+      "symptoms": [
+        "反酸/烧心",
+        "吞咽困难",
+        "胸闷"
+      ],
+      "duration": "4–7 天",
+      "temperature": "没有发热",
+      "activity": "日常活动正常"
+    },
+    {
+      "caseId": "R059",
+      "age": 84,
+      "symptoms": [
+        "高温环境暴露",
+        "意识模糊",
+        "乏力"
+      ],
+      "duration": "1–3 天",
+      "temperature": "38.1–39℃",
+      "activity": "活动减少但能自理"
+    },
+    {
+      "caseId": "R060",
+      "age": 30,
+      "symptoms": [
+        "腹泻",
+        "呕吐",
+        "腹痛"
+      ],
+      "duration": "1–3 天",
+      "temperature": "37.3–38℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R061",
+      "age": 80,
+      "symptoms": [
+        "发热",
+        "肌肉酸痛",
+        "畏寒/寒战"
+      ],
+      "duration": "1–3 天",
+      "temperature": "38.1–39℃",
+      "activity": "活动减少但能自理"
+    },
+    {
+      "caseId": "R062",
+      "age": 32,
+      "symptoms": [
+        "打喷嚏",
+        "流涕",
+        "眼痒"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R063",
+      "age": 13,
+      "symptoms": [
+        "流涕",
+        "鼻塞",
+        "打喷嚏"
+      ],
+      "duration": "1–3 天",
+      "temperature": "37.3–38℃",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R064",
+      "age": 59,
+      "symptoms": [
+        "发热",
+        "肌肉酸痛",
+        "乏力",
+        "头痛"
+      ],
+      "duration": "4–7 天",
+      "temperature": "38.1–39℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R065",
+      "age": 22,
+      "symptoms": [
+        "流涕",
+        "鼻塞",
+        "嗅觉/味觉减退"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R066",
+      "age": 52,
+      "symptoms": [
+        "头痛",
+        "视物模糊",
+        "呕吐"
+      ],
+      "duration": "1–3 天",
+      "temperature": "没有发热",
+      "activity": "卧床需人照顾"
+    },
+    {
+      "caseId": "R067",
+      "age": 20,
+      "symptoms": [
+        "干咳",
+        "夜间盗汗",
+        "体重下降"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "37.3–38℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R068",
+      "age": 38,
+      "symptoms": [
+        "气短/呼吸困难",
+        "咳痰",
+        "高热 ≥39℃",
+        "发热"
+      ],
+      "duration": "1–3 天",
+      "temperature": "超过 39℃",
+      "activity": "卧床需人照顾"
+    },
+    {
+      "caseId": "R069",
+      "age": 87,
+      "symptoms": [
+        "反酸/烧心",
+        "腹胀",
+        "乏力"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "日常活动正常"
+    },
+    {
+      "caseId": "R070",
+      "age": 90,
+      "symptoms": [
+        "孕期出血/腹痛",
+        "乏力",
+        "食欲不振"
+      ],
+      "duration": "1–3 天",
+      "temperature": "38.1–39℃",
+      "activity": "活动减少但能自理"
+    },
+    {
+      "caseId": "R071",
+      "age": 54,
+      "symptoms": [
+        "胸壁按压痛",
+        "胸痛",
+        "气短/呼吸困难"
+      ],
+      "duration": "4–7 天",
+      "temperature": "没有发热",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R072",
+      "age": 56,
+      "symptoms": [
+        "反酸/烧心",
+        "吞咽困难",
+        "胸闷"
+      ],
+      "duration": "4–7 天",
+      "temperature": "没有发热",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R073",
+      "age": 27,
+      "symptoms": [
+        "咽痛",
+        "吞咽困难",
+        "发热"
+      ],
+      "duration": "1–3 天",
+      "temperature": "37.3–38℃",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R074",
+      "age": 58,
+      "symptoms": [
+        "腰侧痛",
+        "呕吐",
+        "血尿"
+      ],
+      "duration": "1–3 天",
+      "temperature": "没有发热",
+      "activity": "卧床需人照顾"
+    },
+    {
+      "caseId": "R075",
+      "age": 86,
+      "symptoms": [
+        "腹胀",
+        "恶心",
+        "腹痛"
+      ],
+      "duration": "4–7 天",
+      "temperature": "没有发热",
+      "activity": "日常活动正常"
+    },
+    {
+      "caseId": "R076",
+      "age": 44,
+      "symptoms": [
+        "咽痛",
+        "发热",
+        "头痛"
+      ],
+      "duration": "4–7 天",
+      "temperature": "38.1–39℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R077",
+      "age": 16,
+      "symptoms": [
+        "咽痛",
+        "发热",
+        "头痛"
+      ],
+      "duration": "4–7 天",
+      "temperature": "38.1–39℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R078",
+      "age": 80,
+      "symptoms": [
+        "夜间盗汗",
+        "体重下降",
+        "咯血"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "37.3–38℃",
+      "activity": "活动减少但能自理"
+    },
+    {
+      "caseId": "R079",
+      "age": 13,
+      "symptoms": [
+        "鼻塞",
+        "咽痛",
+        "干咳"
+      ],
+      "duration": "4–7 天",
+      "temperature": "37.3–38℃",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R080",
+      "age": 20,
+      "symptoms": [
+        "发热",
+        "咳痰",
+        "气短/呼吸困难"
+      ],
+      "duration": "4–7 天",
+      "temperature": "38.1–39℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R081",
+      "age": 12,
+      "symptoms": [
+        "发热",
+        "肌肉酸痛",
+        "乏力",
+        "头痛"
+      ],
+      "duration": "4–7 天",
+      "temperature": "38.1–39℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R082",
+      "age": 3,
+      "symptoms": [
+        "干咳",
+        "咳痰",
+        "喘息/喘鸣"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "37.3–38℃",
+      "activity": "精神差但能进食"
+    },
+    {
+      "caseId": "R083",
+      "age": 76,
+      "symptoms": [
+        "乏力",
+        "心悸",
+        "面色苍白"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "活动减少但能自理"
+    },
+    {
+      "caseId": "R084",
+      "age": 11,
+      "symptoms": [
+        "发热",
+        "咳痰",
+        "胸闷",
+        "气短/呼吸困难"
+      ],
+      "duration": "4–7 天",
+      "temperature": "38.1–39℃",
+      "activity": "精神差但能进食"
+    },
+    {
+      "caseId": "R085",
+      "age": 38,
+      "symptoms": [
+        "夜间盗汗",
+        "体重下降",
+        "咯血"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "37.3–38℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R086",
+      "age": 45,
+      "symptoms": [
+        "流涕",
+        "鼻塞",
+        "嗅觉/味觉减退"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R087",
+      "age": 46,
+      "symptoms": [
+        "咽痛",
+        "吞咽困难",
+        "发热"
+      ],
+      "duration": "1–3 天",
+      "temperature": "37.3–38℃",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R088",
+      "age": 38,
+      "symptoms": [
+        "发热",
+        "咳痰",
+        "气短/呼吸困难"
+      ],
+      "duration": "1–3 天",
+      "temperature": "38.1–39℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R089",
+      "age": 33,
+      "symptoms": [
+        "乏力",
+        "心悸",
+        "面色苍白"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R090",
+      "age": 11,
+      "symptoms": [
+        "干咳",
+        "咳痰",
+        "喘息/喘鸣"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "37.3–38℃",
+      "activity": "精神差但能进食"
+    },
+    {
+      "caseId": "R091",
+      "age": 2,
+      "symptoms": [
+        "咽痛",
+        "发热",
+        "头痛"
+      ],
+      "duration": "4–7 天",
+      "temperature": "38.1–39℃",
+      "activity": "精神差但能进食"
+    },
+    {
+      "caseId": "R092",
+      "age": 62,
+      "symptoms": [
+        "腹胀",
+        "嗳气/打嗝",
+        "食欲不振"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R093",
+      "age": 21,
+      "symptoms": [
+        "高温环境暴露",
+        "意识模糊",
+        "乏力"
+      ],
+      "duration": "1–3 天",
+      "temperature": "38.1–39℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R094",
+      "age": 64,
+      "symptoms": [
+        "发热",
+        "咳痰",
+        "气短/呼吸困难"
+      ],
+      "duration": "4–7 天",
+      "temperature": "38.1–39℃",
+      "activity": "影响工作但能自理"
+    },
+    {
+      "caseId": "R095",
+      "age": 36,
+      "symptoms": [
+        "头痛",
+        "视物模糊",
+        "呕吐"
+      ],
+      "duration": "1–3 天",
+      "temperature": "没有发热",
+      "activity": "卧床需人照顾"
+    },
+    {
+      "caseId": "R096",
+      "age": 60,
+      "symptoms": [
+        "流涕",
+        "鼻塞",
+        "嗅觉/味觉减退"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R097",
+      "age": 75,
+      "symptoms": [
+        "牙痛",
+        "面部压痛",
+        "乏力"
+      ],
+      "duration": "4–7 天",
+      "temperature": "37.3–38℃",
+      "activity": "活动减少但能自理"
+    },
+    {
+      "caseId": "R098",
+      "age": 76,
+      "symptoms": [
+        "腹泻",
+        "恶心",
+        "食欲不振"
+      ],
+      "duration": "1–3 天",
+      "temperature": "37.3–38℃",
+      "activity": "活动减少但能自理"
+    },
+    {
+      "caseId": "R099",
+      "age": 41,
+      "symptoms": [
+        "鼻塞",
+        "咽痛",
+        "干咳"
+      ],
+      "duration": "4–7 天",
+      "temperature": "37.3–38℃",
+      "activity": "活动正常"
+    },
+    {
+      "caseId": "R100",
+      "age": 56,
+      "symptoms": [
+        "打喷嚏",
+        "流涕",
+        "眼痒"
+      ],
+      "duration": "超过 1 周",
+      "temperature": "没有发热",
+      "activity": "活动正常"
+    }
+  ]
+}

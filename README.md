@@ -11,6 +11,43 @@
 - 所有分诊计算在浏览器本地完成，**不上传症状、年龄、用药等健康数据**
 - 天气健康提示（可选）：输入城市查看高温 / 寒冷 / 空气质量 / 流感季 / 闷热提醒，可一键勾选相关症状（只发送城市名，失败自动隐藏）
 
+## 接入大模型（可选）
+
+症状抽取默认走本地词表；只有显式开启灰度时才调用模型，且只做「一句话 → 症状 id 数组」，不输出病名、建议或剂量，失败自动回退本地。
+
+Worker 变量：
+
+- `LLM_API_KEY`（secret）、`LLM_BASE_URL`、`LLM_MODEL`
+- 支持的 OpenAI 兼容服务：
+
+| 厂商 | Base URL | 模型示例 |
+| --- | --- | --- |
+| 阿里云百炼 | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-turbo` / `qwen-plus` |
+| DeepSeek | `https://api.deepseek.com/v1` | `deepseek-chat` |
+| 智谱 | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-flash` |
+
+本地评测（PowerShell，运行后清理 key）：
+
+```powershell
+$env:LLM_API_KEY = Read-Host "粘贴 API Key"
+$env:LLM_MODEL = "deepseek-chat"
+$env:LLM_BASE_URL = "https://api.deepseek.com/v1"
+$env:LLM_PRICE_PER_1K = "0.001"   # 可选：按控制台单价填；不填则费用显示「未估算」
+node tools/eval-nlu.js
+Remove-Item Env:LLM_API_KEY
+Remove-Item Env:LLM_MODEL
+Remove-Item Env:LLM_BASE_URL
+Remove-Item Env:LLM_PRICE_PER_1K
+```
+
+`eval-nlu.js` 退出码：**0** 正常（无 key 也返回 0，LLM 列写「未覆盖（缺 key）」）；**1** key 无效或未开通模型；**2** 超时/网络不可达。
+
+开启与回退：
+
+- 开启：`wrangler.jsonc` 的 `vars` 加 `"LLM_NLU_ENABLED": "true"`，并 `npx wrangler secret put LLM_API_KEY` 后部署。
+- 回退：把 `LLM_NLU_ENABLED` 设为 `false` 或删除；即使开启，超时/无 key/坏 JSON 也会自动回退本地 `parseSymptoms`，功能不降级。
+- ⚠️ 开启前必须先在 `privacy.html` 说明「你输入的一句话会发送给模型服务商」并取得同意。
+
 > ⚠️ 这是一个科普工具，不是诊断工具。它不能替代医生面诊，也不能用于自我确诊或自行用药决策。
 
 ---

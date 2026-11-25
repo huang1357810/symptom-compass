@@ -1,0 +1,917 @@
+{
+  "generatedAt": "2026-11-25",
+  "key": {
+    "R001": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "heartburn",
+        "dysphagia",
+        "chest_tight"
+      ],
+      "synthetic": false
+    },
+    "R002": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "runny_nose",
+        "congestion",
+        "sneeze"
+      ],
+      "synthetic": false
+    },
+    "R003": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "fever",
+        "sputum",
+        "chest_tight",
+        "dyspnea"
+      ],
+      "synthetic": false
+    },
+    "R004": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "toothache",
+        "dysphagia",
+        "fever"
+      ],
+      "synthetic": false
+    },
+    "R005": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "headache",
+        "vision_blur",
+        "vomiting"
+      ],
+      "synthetic": false
+    },
+    "R006": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "sore_throat",
+        "dysphagia",
+        "fever"
+      ],
+      "synthetic": false
+    },
+    "R007": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "fever",
+        "sputum",
+        "chest_tight",
+        "dyspnea"
+      ],
+      "synthetic": false
+    },
+    "R008": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "headache",
+        "vision_blur",
+        "vomiting"
+      ],
+      "synthetic": false
+    },
+    "R009": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "congestion",
+        "sore_throat",
+        "dry_cough"
+      ],
+      "synthetic": false
+    },
+    "R010": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "diarrhea",
+        "vomiting",
+        "abdominal_pain"
+      ],
+      "synthetic": false
+    },
+    "R011": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "heartburn",
+        "bloating",
+        "fatigue"
+      ],
+      "synthetic": false
+    },
+    "R012": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "dry_cough",
+        "sputum",
+        "chest_tight"
+      ],
+      "synthetic": false
+    },
+    "R013": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "diarrhea",
+        "nausea",
+        "poor_appetite"
+      ],
+      "synthetic": false
+    },
+    "R014": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "dry_cough",
+        "sputum",
+        "chest_tight"
+      ],
+      "synthetic": false
+    },
+    "R015": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "congestion",
+        "sore_throat",
+        "dry_cough"
+      ],
+      "synthetic": false
+    },
+    "R016": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "sore_throat",
+        "fever",
+        "headache"
+      ],
+      "synthetic": false
+    },
+    "R017": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "dry_cough",
+        "sputum",
+        "chest_tight"
+      ],
+      "synthetic": false
+    },
+    "R018": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "dyspnea",
+        "sputum",
+        "high_fever",
+        "fever"
+      ],
+      "synthetic": false
+    },
+    "R019": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "night_sweat",
+        "weight_loss",
+        "hemoptysis"
+      ],
+      "synthetic": false
+    },
+    "R020": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "flank_pain",
+        "hematuria",
+        "nausea"
+      ],
+      "synthetic": false
+    },
+    "R021": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "runny_nose",
+        "congestion",
+        "sneeze"
+      ],
+      "synthetic": false
+    },
+    "R022": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "fever",
+        "myalgia",
+        "chills"
+      ],
+      "synthetic": false
+    },
+    "R023": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "fatigue",
+        "pallor",
+        "dizziness"
+      ],
+      "synthetic": false
+    },
+    "R024": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "flank_pain",
+        "hematuria",
+        "nausea"
+      ],
+      "synthetic": false
+    },
+    "R025": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "dry_cough",
+        "sputum",
+        "wheeze"
+      ],
+      "synthetic": false
+    },
+    "R026": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "dry_cough",
+        "night_sweat",
+        "weight_loss"
+      ],
+      "synthetic": false
+    },
+    "R027": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "fever",
+        "sputum",
+        "chest_tight",
+        "dyspnea"
+      ],
+      "synthetic": false
+    },
+    "R028": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "dry_cough",
+        "night_sweat",
+        "weight_loss"
+      ],
+      "synthetic": false
+    },
+    "R029": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "sneeze",
+        "runny_nose",
+        "eye_itch"
+      ],
+      "synthetic": false
+    },
+    "R030": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "sneeze",
+        "runny_nose",
+        "eye_itch"
+      ],
+      "synthetic": false
+    },
+    "R031": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "fever",
+        "myalgia",
+        "chills"
+      ],
+      "synthetic": false
+    },
+    "R032": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "toothache",
+        "facial_pain",
+        "fatigue"
+      ],
+      "synthetic": false
+    },
+    "R033": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "fatigue",
+        "pallor",
+        "dizziness"
+      ],
+      "synthetic": false
+    },
+    "R034": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "fever",
+        "myalgia",
+        "fatigue",
+        "headache"
+      ],
+      "synthetic": false
+    },
+    "R035": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "fever",
+        "myalgia",
+        "fatigue",
+        "headache"
+      ],
+      "synthetic": false
+    },
+    "R036": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "heartburn",
+        "bloating",
+        "fatigue"
+      ],
+      "synthetic": false
+    },
+    "R037": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "runny_nose",
+        "congestion",
+        "sneeze"
+      ],
+      "synthetic": false
+    },
+    "R038": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "dry_cough",
+        "night_sweat",
+        "weight_loss"
+      ],
+      "synthetic": false
+    },
+    "R039": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "fever",
+        "myalgia",
+        "chills"
+      ],
+      "synthetic": false
+    },
+    "R040": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "fatigue",
+        "palpitation",
+        "pallor"
+      ],
+      "synthetic": false
+    },
+    "R041": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "fever",
+        "sputum",
+        "dyspnea"
+      ],
+      "synthetic": false
+    },
+    "R042": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "dry_cough",
+        "sputum",
+        "wheeze"
+      ],
+      "synthetic": false
+    },
+    "R043": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "diarrhea",
+        "vomiting",
+        "abdominal_pain"
+      ],
+      "synthetic": false
+    },
+    "R044": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "toothache",
+        "dysphagia",
+        "fever"
+      ],
+      "synthetic": false
+    },
+    "R045": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "fever",
+        "sputum",
+        "dyspnea"
+      ],
+      "synthetic": false
+    },
+    "R046": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "chest_wall_pain",
+        "chest_pain",
+        "dyspnea"
+      ],
+      "synthetic": false
+    },
+    "R047": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "flank_pain",
+        "vomiting",
+        "hematuria"
+      ],
+      "synthetic": false
+    },
+    "R048": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "fatigue",
+        "pallor",
+        "dizziness"
+      ],
+      "synthetic": false
+    },
+    "R049": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "dyspnea",
+        "sputum",
+        "high_fever",
+        "fever"
+      ],
+      "synthetic": false
+    },
+    "R050": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "bloating",
+        "belching",
+        "poor_appetite"
+      ],
+      "synthetic": false
+    },
+    "R051": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "dyspnea",
+        "sputum",
+        "high_fever",
+        "fever"
+      ],
+      "synthetic": false
+    },
+    "R052": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "chest_wall_pain",
+        "chest_pain",
+        "dyspnea"
+      ],
+      "synthetic": false
+    },
+    "R053": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "flank_pain",
+        "hematuria",
+        "nausea"
+      ],
+      "synthetic": false
+    },
+    "R054": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "chest_pain",
+        "fatigue",
+        "poor_appetite"
+      ],
+      "synthetic": false
+    },
+    "R055": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "fever",
+        "sputum",
+        "dyspnea"
+      ],
+      "synthetic": false
+    },
+    "R056": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "night_sweat",
+        "weight_loss",
+        "hemoptysis"
+      ],
+      "synthetic": false
+    },
+    "R057": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "flank_pain",
+        "vomiting",
+        "hematuria"
+      ],
+      "synthetic": false
+    },
+    "R058": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "heartburn",
+        "dysphagia",
+        "chest_tight"
+      ],
+      "synthetic": false
+    },
+    "R059": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "heat_exposure",
+        "confusion",
+        "fatigue"
+      ],
+      "synthetic": false
+    },
+    "R060": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "diarrhea",
+        "vomiting",
+        "abdominal_pain"
+      ],
+      "synthetic": false
+    },
+    "R061": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "fever",
+        "myalgia",
+        "chills"
+      ],
+      "synthetic": false
+    },
+    "R062": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "sneeze",
+        "runny_nose",
+        "eye_itch"
+      ],
+      "synthetic": false
+    },
+    "R063": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "runny_nose",
+        "congestion",
+        "sneeze"
+      ],
+      "synthetic": false
+    },
+    "R064": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "fever",
+        "myalgia",
+        "fatigue",
+        "headache"
+      ],
+      "synthetic": false
+    },
+    "R065": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "runny_nose",
+        "congestion",
+        "smell_loss"
+      ],
+      "synthetic": false
+    },
+    "R066": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "headache",
+        "vision_blur",
+        "vomiting"
+      ],
+      "synthetic": false
+    },
+    "R067": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "dry_cough",
+        "night_sweat",
+        "weight_loss"
+      ],
+      "synthetic": false
+    },
+    "R068": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "dyspnea",
+        "sputum",
+        "high_fever",
+        "fever"
+      ],
+      "synthetic": false
+    },
+    "R069": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "heartburn",
+        "bloating",
+        "fatigue"
+      ],
+      "synthetic": false
+    },
+    "R070": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "pregnancy_bleed",
+        "fatigue",
+        "poor_appetite"
+      ],
+      "synthetic": false
+    },
+    "R071": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "chest_wall_pain",
+        "chest_pain",
+        "dyspnea"
+      ],
+      "synthetic": false
+    },
+    "R072": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "heartburn",
+        "dysphagia",
+        "chest_tight"
+      ],
+      "synthetic": false
+    },
+    "R073": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "sore_throat",
+        "dysphagia",
+        "fever"
+      ],
+      "synthetic": false
+    },
+    "R074": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "flank_pain",
+        "vomiting",
+        "hematuria"
+      ],
+      "synthetic": false
+    },
+    "R075": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "bloating",
+        "nausea",
+        "abdominal_pain"
+      ],
+      "synthetic": false
+    },
+    "R076": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "sore_throat",
+        "fever",
+        "headache"
+      ],
+      "synthetic": false
+    },
+    "R077": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "sore_throat",
+        "fever",
+        "headache"
+      ],
+      "synthetic": false
+    },
+    "R078": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "night_sweat",
+        "weight_loss",
+        "hemoptysis"
+      ],
+      "synthetic": false
+    },
+    "R079": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "congestion",
+        "sore_throat",
+        "dry_cough"
+      ],
+      "synthetic": false
+    },
+    "R080": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "fever",
+        "sputum",
+        "dyspnea"
+      ],
+      "synthetic": false
+    },
+    "R081": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "fever",
+        "myalgia",
+        "fatigue",
+        "headache"
+      ],
+      "synthetic": false
+    },
+    "R082": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "dry_cough",
+        "sputum",
+        "wheeze"
+      ],
+      "synthetic": false
+    },
+    "R083": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "fatigue",
+        "palpitation",
+        "pallor"
+      ],
+      "synthetic": false
+    },
+    "R084": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "fever",
+        "sputum",
+        "chest_tight",
+        "dyspnea"
+      ],
+      "synthetic": false
+    },
+    "R085": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "night_sweat",
+        "weight_loss",
+        "hemoptysis"
+      ],
+      "synthetic": false
+    },
+    "R086": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "runny_nose",
+        "congestion",
+        "smell_loss"
+      ],
+      "synthetic": false
+    },
+    "R087": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "sore_throat",
+        "dysphagia",
+        "fever"
+      ],
+      "synthetic": false
+    },
+    "R088": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "fever",
+        "sputum",
+        "dyspnea"
+      ],
+      "synthetic": false
+    },
+    "R089": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "fatigue",
+        "palpitation",
+        "pallor"
+      ],
+      "synthetic": false
+    },
+    "R090": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "dry_cough",
+        "sputum",
+        "wheeze"
+      ],
+      "synthetic": false
+    },
+    "R091": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "sore_throat",
+        "fever",
+        "headache"
+      ],
+      "synthetic": false
+    },
+    "R092": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "bloating",
+        "belching",
+        "poor_appetite"
+      ],
+      "synthetic": false
+    },
+    "R093": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "heat_exposure",
+        "confusion",
+        "fatigue"
+      ],
+      "synthetic": false
+    },
+    "R094": {
+      "systemLevel": "red",
+      "symptomIds": [
+        "fever",
+        "sputum",
+        "dyspnea"
+      ],
+      "synthetic": false
+    },
+    "R095": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "headache",
+        "vision_blur",
+        "vomiting"
+      ],
+      "synthetic": false
+    },
+    "R096": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "runny_nose",
+        "congestion",
+        "smell_loss"
+      ],
+      "synthetic": false
+    },
+    "R097": {
+      "systemLevel": "yellow",
+      "symptomIds": [
+        "toothache",
+        "facial_pain",
+        "fatigue"
+      ],
+      "synthetic": false
+    },
+    "R098": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "diarrhea",
+        "nausea",
+        "poor_appetite"
+      ],
+      "synthetic": false
+    },
+    "R099": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "congestion",
+        "sore_throat",
+        "dry_cough"
+      ],
+      "synthetic": false
+    },
+    "R100": {
+      "systemLevel": "green",
+      "symptomIds": [
+        "sneeze",
+        "runny_nose",
+        "eye_itch"
+      ],
+      "synthetic": false
+    }
+  }
+}

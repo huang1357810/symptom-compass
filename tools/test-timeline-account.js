@@ -39,6 +39,7 @@ function makeKV() {
   src = src.replace(/^import \{ validateEvals \} from '\.\/evals-schema\.mjs';$/m, '');
   src = src.replace(/^import \{[\s\S]*?\} from '\.\/auth\.mjs';$/m, '');
   src = src.replace(/^import evalsSeed from '\.\/evals-seed\.json';$/m, '');
+  src = src.replace(/^import \{ extractSymptoms \} from '\.\/nlu-llm\.mjs';$/m, '');
   src = src.replace('export default {', 'globalThis.__worker = {');
 
   const sandbox = Object.assign({}, globalThis, {
@@ -47,6 +48,7 @@ function makeKV() {
     TextEncoder: globalThis.TextEncoder, TextDecoder: globalThis.TextDecoder,
     setTimeout: globalThis.setTimeout, clearTimeout: globalThis.clearTimeout,
     summarizeFeedback, validateEvals, evalsSeed,
+    extractSymptoms: async () => null,
     register: auth.register, login: auth.login, logout: auth.logout, me: auth.me,
     recover: auth.recover, deleteAccount: auth.deleteAccount,
     resolveFeedbackOwner: auth.resolveFeedbackOwner,

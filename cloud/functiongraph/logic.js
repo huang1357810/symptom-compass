@@ -1324,11 +1324,18 @@ function parseSymptoms(text){
   picked.forEach(c => { covered += c.word.length; });
   kept.forEach(c => { ids.add(c.id); });
 
-  /* 语义归并：明确高热必然包含发热；剧烈腹痛必然包含腹痛；有痰就不再算干咳 */
+  /* 语义归并：明确高热必然包含发热；剧烈腹痛必然包含腹痛；关节肿必然伴痛。
+     不做跨位置的「有痰→删干咳」：「干咳、咳痰」是两个不同位置的明确描述，应同时保留；
+     同一位置的多个候选已由上面的「长词优先」决定。 */
   if (ids.has('high_fever')) ids.add('fever');
   if (ids.has('severe_abd')) ids.add('abdominal_pain');
   if (ids.has('joint_swelling')) ids.add('joint_pain');
-  if (ids.has('sputum')) ids.delete('dry_cough');
+  /* 有痰时：只有明确说了「干咳」才保留 dry_cough（不同位置的描述不互相吞并）；
+     若只是泛称「咳嗽」+ 黄痰，则归为 sputum。 */
+  if (ids.has('sputum') && ids.has('dry_cough')){
+    const explicitDry = kept.some(c => c.id === 'dry_cough' && c.word.indexOf('干咳') !== -1);
+    if (!explicitDry) ids.delete('dry_cough');
+  }
 
   out.ids = SYMPTOM_IDS.filter(id => ids.has(id));
   /* 关键阴性：明确说「没有/不」的症状，只用于给对应方向降权 */
@@ -3894,9 +3901,48 @@ function bindEvents(){
   const nluInput = document.getElementById('nluInput');
   const nluBtn = document.getElementById('nluBtn');
   if (nluInput && nluBtn){
-    const run = scroll => {
+    let lastNluSource = 'local';
+
+    /* 先试服务端 LLM 抽取（灰度）；失败/关闭/空则回退本地 parseSymptoms */
+    async function nluParse(text){
+      const local = parseSymptoms(text);
+      if (!text || !text.trim()) return { parsed: local, source: 'local' };
+      try {
+        const res = await fetch((typeof window !== 'undefined' && window.__NLU_API__) || '/api/nlu', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: String(text).slice(0, 200) }),
+          credentials: 'include',
+          cache: 'no-store'
+        });
+        if (!res.ok) throw new Error('http');
+        const data = await res.json();
+        if (data && data.ok && data.source === 'llm' && Array.isArray(data.symptoms) && data.symptoms.length){
+          const ids = data.symptoms.filter(id => SYMPTOMS[id]);
+          if (ids.length){
+            return {
+              parsed: {
+                ids: ids,
+                negated: (Array.isArray(data.negated) ? data.negated : []).filter(id => SYMPTOMS[id]),
+                words: ids.map(id => SYMPTOMS[id].label),
+                coverage: 1,
+                text: String(text)
+              },
+              source: 'llm'
+            };
+          }
+        }
+      } catch (e) { /* 回退本地 */ }
+      return { parsed: local, source: 'local' };
+    }
+
+    const run = async scroll => {
       clearTimeout(nluTimer);
-      applyParsed(parseSymptoms(nluInput.value), scroll);
+      const text = nluInput.value;
+      const result = await nluParse(text);
+      lastNluSource = result.source;
+      if (DEBUG) console.log('[NLU] source=' + result.source + ' ids=' + result.parsed.ids.join(','));
+      applyParsed(result.parsed, scroll);
     };
 
     /* 停笔 450ms 自动识别并勾选；点按钮或 Ctrl+Enter 立即识别 */

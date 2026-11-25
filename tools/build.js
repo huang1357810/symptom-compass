@@ -40,6 +40,7 @@ inject('README.md', /^- 版本：v[0-9.]+$/m, '- 版本：' + version);
 
 /* 2. 生成物 */
 run('gen-cloud-logic.js');
+run('gen-symptom-ids.js');
 run('gen-harmony-data.js');
 run('run-evals.js');
 if (fs.existsSync(path.join(__dirname, 'pack-cloudbase.js'))) {

@@ -17,6 +17,7 @@ import {
   timelineGet, timelineAppend, timelineClear,
   getCookie, sessionCookie, clearCookie, jsonNoStore
 } from './auth.mjs';
+import { extractSymptoms } from './nlu-llm.mjs';
 import evalsSeed from './evals-seed.json';
 
 const MAX_TEXT = 300;
@@ -619,6 +620,38 @@ a{color:#0b6f68}
   });
 }
 
+/* ---------------- NLU：症状抽取（受约束，灰度） ---------------- */
+
+async function nluRateLimited(env, ip) {
+  const key = 'nlu:ip:' + ip + ':' + Math.floor(Date.now() / 60000);
+  const n = Number(await env.FEEDBACK_KV.get(key)) || 0;
+  if (n >= 30) return true;
+  await env.FEEDBACK_KV.put(key, String(n + 1), { expirationTtl: 70 });
+  return false;
+}
+
+async function handleNlu(request, env) {
+  if (request.method === 'OPTIONS') return json({ ok: true });
+  if (request.method !== 'POST') return jsonNoStore({ ok: false, error: 'method_not_allowed' }, 405);
+
+  let body = null;
+  try { body = await request.json(); } catch (e) { return jsonNoStore({ ok: false, error: 'bad_json' }, 400); }
+  const text = String((body && body.text) || '').slice(0, 200);
+  if (!text.trim()) return jsonNoStore({ ok: false, error: 'empty' }, 400);
+
+  /* 灰度关闭或 KV 缺失：直接走本地（前端用 parseSymptoms 解析） */
+  if (env.LLM_NLU_ENABLED !== 'true' || !env.FEEDBACK_KV) {
+    return jsonNoStore({ ok: true, symptoms: [], negated: [], source: 'local' });
+  }
+
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  if (await nluRateLimited(env, ip)) return jsonNoStore({ ok: false, error: 'too_many' }, 429);
+
+  const r = await extractSymptoms(env, text);
+  if (!r) return jsonNoStore({ ok: true, symptoms: [], negated: [], source: 'local' });
+  return jsonNoStore({ ok: true, symptoms: r.symptoms, negated: r.negated, source: 'llm' });
+}
+
 /* ---------------- 账号时间轴（需登录） ---------------- */
 
 async function handleTimeline(request, env) {
@@ -667,6 +700,9 @@ export default {
     }
     if (url.pathname === '/api/timeline') {
       return handleTimeline(request, env);
+    }
+    if (url.pathname === '/api/nlu') {
+      return handleNlu(request, env);
     }
     if (url.pathname === '/api/admin/users') {
       if (request.method === 'OPTIONS') return json({ ok: true });
