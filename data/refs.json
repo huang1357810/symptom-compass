@@ -1,0 +1,205 @@
+{
+  "cold": [
+    {
+      "title": "急性上呼吸道感染基层诊疗指南（2018年）",
+      "org": "中华医学会全科医学分会等",
+      "year": 2018,
+      "url": "https://cs.medjournals.cn/article/doi/full/10.3760/cma.j.issn.1671-7368.2019.05.005",
+      "scope": "general"
+    }
+  ],
+  "pharyngitis": [
+    {
+      "title": "儿童A族链球菌咽扁桃体炎临床诊疗专家共识（2025）",
+      "org": "国家儿童感染与过敏性疾病监测中心等",
+      "year": 2025,
+      "url": "https://cs.medjournals.cn/cn/zhekzz/toc/65807",
+      "scope": "children"
+    }
+  ],
+  "flu": [
+    {
+      "title": "流行性感冒诊疗方案（2025年版）",
+      "org": "国家卫生健康委员会办公厅",
+      "year": 2025,
+      "url": "https://www.nhc.gov.cn/ylyjs/zcwj/202501/f8fcecca59a048bebc4a71847ce57594.shtml",
+      "scope": "general"
+    }
+  ],
+  "bronchitis": [
+    {
+      "title": "急性气管-支气管炎基层诊疗指南（2018年）",
+      "org": "中华医学会全科医学分会等",
+      "year": 2018,
+      "url": "https://cmab.yiigle.com/uploads/guide_html/%E6%80%A5%E6%80%A7%E6%B0%94%E7%AE%A1-%E6%94%AF%E6%B0%94%E7%AE%A1%E7%82%8E%E5%9F%BA%E5%B1%82%E8%AF%8A%E7%96%97%E6%8C%87%E5%8D%97%EF%BC%882018%E5%B9%B4%EF%BC%89.html",
+      "scope": "general"
+    }
+  ],
+  "pneumonia": [
+    {
+      "title": "成人社区获得性肺炎基层诊疗指南（2018年）",
+      "org": "中华医学会全科医学分会等",
+      "year": 2018,
+      "url": "https://cs.medjournals.cn/article/doi/full/10.3760/cma.j.issn.1671-7368.2019.02.005",
+      "scope": "general"
+    },
+    {
+      "title": "儿童肺炎支原体肺炎诊疗指南（2025年版）",
+      "org": "国家卫生健康委员会",
+      "year": 2025,
+      "url": "https://www.nhc.gov.cn/yzygj/c100068/202509/19e7145436b049a68d4ba8c2060dfa56/files/%E5%84%BF%E7%AB%A5%E8%82%BA%E7%82%8E%E6%94%AF%E5%8E%9F%E4%BD%93%E8%82%BA%E7%82%8E%E8%AF%8A%E7%96%97%E6%8C%87%E5%8D%97%EF%BC%882025%E5%B9%B4%E7%89%88%EF%BC%89.pdf",
+      "scope": "children"
+    }
+  ],
+  "tb": [
+    {
+      "title": "肺结核基层诊疗指南（2018年）",
+      "org": "中华医学会全科医学分会等",
+      "year": 2018,
+      "url": "https://tb.chinacdc.cn/xxjlg/201912/P020191204651893563356.pdf",
+      "scope": "general"
+    }
+  ],
+  "sinusitis": [
+    {
+      "title": "中国慢性鼻窦炎诊断和治疗指南（2018）",
+      "org": "中华耳鼻咽喉头颈外科杂志编辑委员会鼻科组等",
+      "year": 2018,
+      "url": "https://cmab.yiigle.com/uploads/guide_html/%E4%B8%AD%E5%9B%BD%E6%85%A2%E6%80%A7%E9%BC%BB%E7%AA%A6%E7%82%8E%E8%AF%8A%E6%96%AD%E5%92%8C%E6%B2%BB%E7%96%97%E6%8C%87%E5%8D%97%EF%BC%882018%EF%BC%89.html",
+      "scope": "general"
+    }
+  ],
+  "allergic_rhinitis": [
+    {
+      "title": "儿童变应性鼻炎诊断和治疗指南（2022年，修订版）",
+      "org": "中华耳鼻咽喉头颈外科杂志编辑委员会鼻科组等",
+      "year": 2022,
+      "url": "https://cs.medjournals.cn/article/doi/full/10.3760/cma.j.cn115330-20220303-00092",
+      "scope": "children"
+    }
+  ],
+  "gastroenteritis": [
+    {
+      "title": "成人急性感染性腹泻诊疗专家共识",
+      "org": "中华医学会消化病学分会",
+      "year": 2013,
+      "url": "https://master.yiigle.com/uploads/guide_html/%E6%88%90%E4%BA%BA%E6%80%A5%E6%80%A7%E6%84%9F%E6%9F%93%E6%80%A7%E8%85%B9%E6%B3%BB%E8%AF%8A%E7%96%97%E4%B8%93%E5%AE%B6%E5%85%B1%E8%AF%86.html",
+      "scope": "general"
+    },
+    {
+      "title": "儿童急性感染性腹泻病诊疗规范（2020年版）",
+      "org": "国家卫生健康委员会",
+      "year": 2020,
+      "url": "https://www.nhc.gov.cn/yzygj/c100068/202009/a0720947d2c744b49fc91b32d82293ef.shtml",
+      "scope": "children"
+    }
+  ],
+  "gerd": [
+    {
+      "title": "2020年中国胃食管反流病专家共识",
+      "org": "中华医学会消化病学分会",
+      "year": 2020,
+      "url": "https://seleguide.yiigle.com/uploads/guide_html/2020%E5%B9%B4%E4%B8%AD%E5%9B%BD%E8%83%83%E9%A3%9F%E7%AE%A1%E5%8F%8D%E6%B5%81%E7%97%85%E4%B8%93%E5%AE%B6%E5%85%B1%E8%AF%86.html",
+      "scope": "general"
+    }
+  ],
+  "gastritis": [
+    {
+      "title": "消化性溃疡诊断与治疗共识意见（2022年，上海）",
+      "org": "中华医学会消化病学分会",
+      "year": 2022,
+      "url": "https://csg.cma.org.cn/csg/a/cjmvt4",
+      "scope": "general"
+    }
+  ],
+  "dyspepsia": [
+    {
+      "title": "2022中国功能性消化不良诊治专家共识",
+      "org": "中华医学会消化病学分会胃肠动力学组等",
+      "year": 2022,
+      "url": "https://rs.yiigle.com/cmaid/1472591",
+      "scope": "general"
+    }
+  ],
+  "constipation": [
+    {
+      "title": "中国慢性便秘专家共识意见（2019，广州）",
+      "org": "中华医学会消化病学分会胃肠动力学组等",
+      "year": 2019,
+      "url": "https://cs.medjournals.cn/article/doi/full/10.3760/cma.j.issn.0254-1432.2019.09.001",
+      "scope": "general"
+    }
+  ],
+  "uti": [
+    {
+      "title": "尿路感染诊断与治疗中国专家共识（2015版）——复杂性尿路感染",
+      "org": "中华医学会泌尿外科学分会等",
+      "year": 2015,
+      "url": "https://seleguide.yiigle.com/uploads/guide_html/%E5%B0%BF%E8%B7%AF%E6%84%9F%E6%9F%93%E8%AF%8A%E6%96%AD%E4%B8%8E%E6%B2%BB%E7%96%97%E4%B8%AD%E5%9B%BD%E4%B8%93%E5%AE%B6%E5%85%B1%E8%AF%86(2015%E7%89%88)%E2%80%94%E2%80%94%E5%A4%8D%E6%9D%82%E6%80%A7%E5%B0%BF%E8%B7%AF%E6%84%9F%E6%9F%93.html",
+      "scope": "specific"
+    }
+  ],
+  "kidney_stone": [
+    {
+      "title": "儿童泌尿系结石诊疗中国专家共识",
+      "org": "中华医学会泌尿外科学分会结石学组等",
+      "year": 2021,
+      "url": "https://cua.cma.org.cn/art/2021/7/14/art_3888_40184.html",
+      "scope": "children"
+    }
+  ],
+  "migraine": [
+    {
+      "title": "中国偏头痛诊治指南（2022版）",
+      "org": "中华医学会神经病学分会等",
+      "year": 2022,
+      "url": "https://cs.medjournals.cn/article/doi/full/10.3760/cma.j.cn113694-20230222-00118",
+      "scope": "general"
+    }
+  ],
+  "tension_headache": [
+    {
+      "title": "中国紧张型头痛诊断与治疗指南（中华医学会神经病学分会第一版）",
+      "org": "中华医学会神经病学分会头痛协作组",
+      "year": 2023,
+      "url": "https://cs.medjournals.cn/cn/zhsjkzz/collections/6734",
+      "scope": "general"
+    }
+  ],
+  "conjunctivitis": [
+    {
+      "title": "我国过敏性结膜炎诊断和治疗专家共识（2018年）",
+      "org": "中华医学会眼科学分会等",
+      "year": 2018,
+      "url": "https://seleguide.yiigle.com/uploads/guide_html/%E6%88%91%E5%9B%BD%E8%BF%87%E6%95%8F%E6%80%A7%E7%BB%93%E8%86%9C%E7%82%8E%E8%AF%8A%E6%96%AD%E5%92%8C%E6%B2%BB%E7%96%97%E4%B8%93%E5%AE%B6%E5%85%B1%E8%AF%86%EF%BC%882018%E5%B9%B4%EF%BC%89.html",
+      "scope": "specific"
+    }
+  ],
+  "otitis": [
+    {
+      "title": "儿童分泌性中耳炎诊断和治疗指南（2021）",
+      "org": "中华耳鼻咽喉头颈外科杂志编辑委员会等",
+      "year": 2021,
+      "url": "https://cs.medjournals.cn/article/doi/full/10.3760/cma.j.cn115330-20210511-00264",
+      "scope": "children"
+    }
+  ],
+  "hfmd": [
+    {
+      "title": "手足口病诊疗指南（2018年版）",
+      "org": "国家卫生健康委员会",
+      "year": 2018,
+      "url": "https://www.nhc.gov.cn/wjw/c100175/201805/d290036e18ad41e5baf7d63f2e3e2c33.shtml",
+      "scope": "general"
+    }
+  ],
+  "gout": [
+    {
+      "title": "中国高尿酸血症与痛风诊疗指南(2019)",
+      "org": "中华医学会内分泌学分会",
+      "year": 2019,
+      "url": "https://seleguide.yiigle.com/uploads/guide_html/%E4%B8%AD%E5%9B%BD%E9%AB%98%E5%B0%BF%E9%85%B8%E8%A1%80%E7%97%87%E4%B8%8E%E7%97%9B%E9%A3%8E%E8%AF%8A%E7%96%97%E6%8C%87%E5%8D%97(2019).html",
+      "scope": "general"
+    }
+  ]
+}

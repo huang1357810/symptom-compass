@@ -480,7 +480,11 @@
 
   .cbody{padding:2px 17px 17px; border-top:1px solid #f2f8f7; padding-top:14px}
   .cbody .sum{font-size:14.2px; color:#42605e; margin-bottom:12px}
-  .cbody .meta-src{font-size:11.5px; color:#93aeab; margin:-6px 0 12px; line-height:1.6}
+  .cbody .meta-ref{margin:4px 0 0; font-size:12px; color:#6b8a84; line-height:1.7}
+.meta-ref a{color:#0b6f68; text-decoration:none; border-bottom:1px dashed #9ccfc9}
+.meta-src{font-size:11.5px; color:#93aeab; margin:-6px 0 12px; line-height:1.6}
+  .cbody .refs{font-size:11.5px; color:#6b8a84; margin:-8px 0 12px; line-height:1.7}
+  .cbody .refs a{color:#2f6f66; text-decoration:underline}
   .mrow{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:15px}
   .mrow .k{font-size:12.5px; color:#87a3a1}
   .mrow .m{font-size:12.5px; color:#0b6f68; background:#e9f7f4; border-radius:999px; padding:2px 9px}
@@ -553,6 +557,17 @@
   .opt.on::before{content:"✓";margin-right:5px;font-size:11px}
 
   /* ---------- 三色分诊横幅 ---------- */
+  /* 四段式分析过程（仅展示层） */
+  .analysis-four{margin:0 0 16px; border:1px solid #e6efec; border-radius:14px; padding:12px 14px; background:#fff}
+  .analysis-four.alert{border-color:#f0c7bf; background:#fff8f6}
+  .af-sec{margin:0 0 10px}
+  .af-sec:last-child{margin-bottom:0}
+  .af-sec h4{font-size:13px; margin:0 0 4px; color:#2f5d55}
+  .af-sec p{font-size:13px; line-height:1.6; margin:0; color:#41615f}
+  .af-sec ul{margin:4px 0 0; padding-left:18px; font-size:13px; color:#41615f}
+  .af-red{color:#b23b2e; font-weight:600}
+  .af-fold{margin:8px 0}
+  .af-fold summary{cursor:pointer; font-size:12.5px; color:#6b8a84}
   .triage{border-radius:16px;padding:18px 18px 17px;margin-bottom:16px;border:1px solid}
   .triage.red{background:linear-gradient(135deg,#fff6f4,#ffe9e4);border-color:#f3c2ba;border-left:5px solid #d9503f}
   .triage.yellow{background:linear-gradient(135deg,#fffdf6,#fff4df);border-color:#f0dcae;border-left:5px solid #d99a2b}
@@ -1049,6 +1064,7 @@
 
 
     <div id="urgent"></div>
+    <div id="analysisFour"></div>
     <div id="safetyBox"></div>
     <div class="selrow" id="selrow"></div>
     <div class="report-skin hidden" id="skinSummary"></div>
@@ -1337,7 +1353,7 @@ const CONDITIONS = [
     see:'超过 10 天不缓解、高热不退、出现耳痛/气短/咳黄脓痰，或婴幼儿精神差时就医。'
   },
   {
-    id:'flu', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'流行性感冒', dept:'呼吸内科', tag:'起病急',
+    id:'flu', refs:[{title:'流行性感冒诊疗方案（2020年版）', org:'国家卫生健康委员会', year:2020, url:'https://www.nhc.gov.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'流行性感冒', dept:'呼吸内科', tag:'起病急',
     summary:'起病急，高热伴明显肌肉酸痛、乏力，传染性强，冬春季多见。',
     symptoms:{fever:1, myalgia:0.9, fatigue:0.9, chills:0.7, headache:0.7, dry_cough:0.6, sore_throat:0.5, poor_appetite:0.5, congestion:0.3},
     core:['fever','myalgia'],
@@ -1351,7 +1367,7 @@ const CONDITIONS = [
     see:'高热超过 3 天、呼吸困难、胸痛、意识改变，或属于高危人群，应尽快就医。'
   },
   {
-    id:'allergic_rhinitis', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'过敏性鼻炎', dept:'耳鼻喉科 / 变态反应科', tag:'反复发作',
+    id:'allergic_rhinitis', refs:[{title:'中国变应性鼻炎诊断和治疗指南（2022年，修订版）', org:'中华医学会耳鼻咽喉头颈外科学分会', year:2022, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'过敏性鼻炎', dept:'耳鼻喉科 / 变态反应科', tag:'反复发作',
     summary:'接触花粉、尘螨后出现阵发性喷嚏、清水样鼻涕，常伴眼痒，脱离环境可缓解。',
     symptoms:{sneeze:1, runny_nose:1, congestion:0.9, eye_itch:0.7, itch:0.3, dry_cough:0.2, smell_loss:0.3},
     core:['sneeze','runny_nose'],
@@ -1393,7 +1409,7 @@ const CONDITIONS = [
     see:'咯血、气短、高热不退、咳嗽超过 3 周，或原有心肺疾病者，需就医。'
   },
   {
-    id:'pneumonia', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'肺炎', dept:'呼吸内科 / 急诊', tag:'需就医',
+    id:'pneumonia', refs:[{title:'中国成人社区获得性肺炎诊断和治疗指南（2016年版）', org:'中华医学会呼吸病学分会', year:2016, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'肺炎', dept:'呼吸内科 / 急诊', tag:'需就医',
     summary:'发热伴咳嗽咳痰、气短，可能为肺部感染，需要医生听诊和胸片/CT 评估。',
     symptoms:{fever:0.9, high_fever:0.85, sputum:0.9, dry_cough:0.7, dyspnea:0.8, chest_tight:0.7, chills:0.6, fatigue:0.6, poor_appetite:0.4},
     core:['dyspnea','sputum','high_fever'],
@@ -1405,7 +1421,7 @@ const CONDITIONS = [
     see:'出现气短、呼吸急促、口唇发紫、意识改变或高热不退，请立即就医或拨打 120。'
   },
   {
-    id:'tb', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'肺结核（需排查）', dept:'呼吸内科 / 结核病定点医院', tag:'需筛查',
+    id:'tb', refs:[{title:'肺结核诊断（WS 288—2017）', org:'国家卫生和计划生育委员会', year:2017, url:'https://www.nhc.gov.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'肺结核（需排查）', dept:'呼吸内科 / 结核病定点医院', tag:'需筛查',
     summary:'咳嗽咳痰超过 2 周，伴午后低热、夜间盗汗、体重下降，需排查肺结核。',
     symptoms:{dry_cough:0.9, sputum:0.8, fever:0.7, night_sweat:0.9, weight_loss:0.9, fatigue:0.6, poor_appetite:0.6, hemoptysis:0.7, chest_pain:0.3, dyspnea:0.3},
     core:['night_sweat','weight_loss','hemoptysis'],
@@ -1417,7 +1433,7 @@ const CONDITIONS = [
     see:'咳嗽咳痰超过 2 周、痰中带血、盗汗消瘦，请到呼吸科或结核病防治机构就诊；确诊后需按规范隔离治疗。'
   },
   {
-    id:'gerd', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'胃食管反流', dept:'消化内科', tag:'',
+    id:'gerd', refs:[{title:'2020年中国胃食管反流病专家共识', org:'中华医学会消化病学分会', year:2020, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'胃食管反流', dept:'消化内科', tag:'',
     summary:'反酸、烧心，餐后或平卧时加重，可伴慢性干咳和咽部不适。',
     symptoms:{heartburn:1, nausea:0.3, dry_cough:0.4, sore_throat:0.3, bloating:0.4, chest_tight:0.3, dysphagia:0.3},
     core:['heartburn'],
@@ -1446,7 +1462,7 @@ const CONDITIONS = [
     see:'血便、高热、剧烈腹痛、明显脱水（口干、少尿、头晕），或持续超过 3 天；婴幼儿、老人、孕妇应更早就医。'
   },
   {
-    id:'dyspepsia', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'功能性消化不良', dept:'消化内科', tag:'',
+    id:'dyspepsia', refs:[{title:'中国功能性消化不良专家共识意见（2015年，上海）', org:'中华医学会消化病学分会', year:2015, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'功能性消化不良', dept:'消化内科', tag:'',
     summary:'餐后饱胀、早饱、上腹不适，检查常无明显器质性病变，与饮食和压力相关。',
     symptoms:{bloating:0.9, belching:0.7, poor_appetite:0.7, nausea:0.6, abdominal_pain:0.6, heartburn:0.5, constipation:0.2},
     core:['bloating'],
@@ -1460,7 +1476,7 @@ const CONDITIONS = [
     see:'体重下降、贫血、黑便、吞咽困难、反复呕吐，或 40 岁以上新发、症状持续加重，需胃镜等检查。'
   },
   {
-    id:'constipation', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'便秘', dept:'消化内科', tag:'',
+    id:'constipation', refs:[{title:'中国慢性便秘诊治指南（2013年，武汉）', org:'中华医学会消化病学分会', year:2013, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'便秘', dept:'消化内科', tag:'',
     summary:'排便次数减少、粪便干硬或排便费力，多与饮水、膳食纤维和活动量不足有关。',
     symptoms:{constipation:1, bloating:0.7, abdominal_pain:0.4, poor_appetite:0.2},
     core:['constipation'],
@@ -1474,7 +1490,7 @@ const CONDITIONS = [
     see:'便血、体重下降、贫血、新发便秘超过 2 周（尤其 50 岁以上），或排便习惯明显改变。'
   },
   {
-    id:'migraine', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'偏头痛', dept:'神经内科', tag:'',
+    id:'migraine', refs:[{title:'中国偏头痛诊治指南（2022版）', org:'中华医学会神经病学分会', year:2022, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'偏头痛', dept:'神经内科', tag:'',
     summary:'单侧搏动性头痛，伴恶心、畏光，活动后加重，可持续 4–72 小时。',
     symptoms:{headache:1, nausea:0.7, photophobia:0.6, vomiting:0.5, vision_blur:0.4, dizziness:0.3},
     core:['headache'],
@@ -1502,7 +1518,7 @@ const CONDITIONS = [
     see:'头痛性质改变、进行性加重、伴神经症状，或每月止痛药使用超过 10 天。'
   },
   {
-    id:'uti', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'尿路感染', dept:'泌尿外科 / 肾内科', tag:'',
+    id:'uti', refs:[{title:'中国泌尿外科和男科疾病诊断治疗指南（2019版）', org:'中华医学会泌尿外科学分会', year:2019, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'尿路感染', dept:'泌尿外科 / 肾内科', tag:'',
     summary:'尿频、尿急、尿痛，多为细菌感染，女性更常见。',
     symptoms:{urinary_freq:1, dysuria:1, hematuria:0.6, flank_pain:0.5, fever:0.4, abdominal_pain:0.3},
     core:['dysuria','urinary_freq'],
@@ -1514,7 +1530,7 @@ const CONDITIONS = [
     see:'发热、寒战、腰侧痛（可能为上尿路感染）、血尿，男性或孕期出现症状，应尽快就医。'
   },
   {
-    id:'kidney_stone', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'泌尿系结石', dept:'泌尿外科 / 急诊', tag:'疼痛剧烈',
+    id:'kidney_stone', refs:[{title:'中国泌尿外科和男科疾病诊断治疗指南（2019版）', org:'中华医学会泌尿外科学分会', year:2019, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'泌尿系结石', dept:'泌尿外科 / 急诊', tag:'疼痛剧烈',
     summary:'突发腰侧绞痛，可向会阴部放射，常伴血尿、恶心呕吐。',
     symptoms:{flank_pain:1, hematuria:0.7, nausea:0.5, abdominal_pain:0.5, urinary_freq:0.4, vomiting:0.3},
     core:['flank_pain'],
@@ -1548,7 +1564,7 @@ const CONDITIONS = [
     see:'首次出现、反复发作、伴下腹痛或发热、孕期出现症状，需妇科检查；不要自行长期使用栓剂。'
   },
   {
-    id:'anemia', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'缺铁性贫血', dept:'血液科 / 全科', tag:'',
+    id:'anemia', refs:[{title:'铁缺乏症和缺铁性贫血诊治和预防多学科专家共识', org:'中华医学会血液学分会', year:2018, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'缺铁性贫血', dept:'血液科 / 全科', tag:'',
     summary:'乏力、头晕、面色苍白、活动后心悸气短，可能与缺铁或慢性失血有关。',
     symptoms:{fatigue:1, dizziness:0.8, palpitation:0.7, pallor:0.7, dyspnea:0.5, headache:0.3},
     core:['fatigue','pallor'],
@@ -1559,7 +1575,7 @@ const CONDITIONS = [
     see:'必须先查血常规明确贫血类型；男性或绝经后女性贫血，要排查消化道出血。'
   },
   {
-    id:'eczema', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'湿疹 / 皮炎', dept:'皮肤科', tag:'',
+    id:'eczema', refs:[{title:'中国湿疹诊疗指南（2011年）', org:'中华医学会皮肤性病学分会', year:2011, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'湿疹 / 皮炎', dept:'皮肤科', tag:'',
     summary:'皮肤干燥、红斑、丘疹伴瘙痒，容易反复发作。',
     symptoms:{itch:1, rash:1, dry_skin:0.8, blister:0.3},
     core:['itch','rash'],
@@ -1571,7 +1587,7 @@ const CONDITIONS = [
     see:'皮损渗液、脓疱、发热（可能继发感染），或大面积反复发作影响睡眠。'
   },
   {
-    id:'urticaria', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'荨麻疹', dept:'皮肤科', tag:'',
+    id:'urticaria', refs:[{title:'中国荨麻疹诊疗指南（2014版）', org:'中华医学会皮肤性病学分会', year:2014, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'荨麻疹', dept:'皮肤科', tag:'',
     summary:'突然出现风团、剧烈瘙痒，单个皮损多在 24 小时内消退，可反复成批出现。',
     symptoms:{hives:1, itch:0.9, rash:0.6, dyspnea:0.2},
     core:['hives'],
@@ -1594,7 +1610,7 @@ const CONDITIONS = [
     see:'视力下降、剧烈眼痛、明显畏光、角膜混浊，或佩戴隐形眼镜期间发生，请尽快眼科就诊。'
   },
   {
-    id:'otitis', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'急性中耳炎', dept:'耳鼻喉科', tag:'儿童多见',
+    id:'otitis', refs:[{title:'儿童急性中耳炎诊疗——临床实践指南（2015年制定）', org:'中华医学会耳鼻咽喉头颈外科学分会', year:2015, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'急性中耳炎', dept:'耳鼻喉科', tag:'儿童多见',
     summary:'耳痛、听力下降，常继发于感冒，儿童更常见。',
     symptoms:{ear_pain:1, fever:0.6, hearing_loss:0.5, tinnitus:0.4, headache:0.3},
     core:['ear_pain'],
@@ -1642,7 +1658,7 @@ const CONDITIONS = [
     see:'手臂麻木无力加重、走路不稳、手精细动作变差，需骨科/神经科评估。'
   },
   {
-    id:'gout', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'痛风', dept:'风湿免疫科', tag:'夜间突发',
+    id:'gout', refs:[{title:'中国高尿酸血症与痛风诊疗指南（2019）', org:'中华医学会内分泌学分会', year:2019, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'痛风', dept:'风湿免疫科', tag:'夜间突发',
     summary:'突发单关节（多见于大脚趾）红、肿、热、剧痛，常在夜间或饮酒后发作。',
     symptoms:{joint_pain:1, joint_swelling:1, fever:0.3},
     core:['joint_pain','joint_swelling'],
@@ -1654,7 +1670,7 @@ const CONDITIONS = [
     see:'首次发作需查血尿酸并排除感染性关节炎；发热伴关节红肿需急诊排除化脓性关节炎。'
   },
   {
-    id:'sleep_anxiety', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'失眠 / 焦虑状态', dept:'精神心理科 / 睡眠门诊', tag:'',
+    id:'sleep_anxiety', refs:[{title:'中国失眠症诊断和治疗指南（2017）', org:'中华医学会神经病学分会', year:2017, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'失眠 / 焦虑状态', dept:'精神心理科 / 睡眠门诊', tag:'',
     summary:'入睡困难、易醒或紧张不安，常与压力、作息紊乱和情绪有关。',
     symptoms:{insomnia:1, anxious:0.9, low_mood:0.6, palpitation:0.5, fatigue:0.5, headache:0.3, dizziness:0.2},
     core:['insomnia','anxious'],
@@ -1666,7 +1682,7 @@ const CONDITIONS = [
     see:'持续超过 1 个月影响工作生活，或出现明显情绪低落、兴趣减退，建议精神心理科/睡眠门诊。'
   },
   {
-    id:'hemorrhoids', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'痔疮', dept:'肛肠科', tag:'',
+    id:'hemorrhoids', refs:[{title:'中国痔病诊疗指南（2020）', org:'中华医学会外科学分会', year:2020, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'痔疮', dept:'肛肠科', tag:'',
     summary:'便血（鲜红色）、肛门疼痛或肿物脱出，常与便秘、久坐、久蹲有关。',
     symptoms:{rectal_bleeding:1, anal_pain:0.8, constipation:0.5, itch:0.3},
     core:['rectal_bleeding','anal_pain'],
@@ -1678,7 +1694,7 @@ const CONDITIONS = [
     see:'便血持续或量大、贫血、体重下降、40 岁以上新发便血，需排查结直肠疾病。'
   },
   {
-    id:'sinusitis', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'急性鼻窦炎', dept:'耳鼻喉科', tag:'',
+    id:'sinusitis', refs:[{title:'中国慢性鼻窦炎诊断和治疗指南（2018）', org:'中华医学会耳鼻咽喉头颈外科学分会', year:2018, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'急性鼻窦炎', dept:'耳鼻喉科', tag:'',
     summary:'鼻塞、脓涕超过 10 天，伴面部胀痛或压痛，多为鼻窦的细菌感染。',
     symptoms:{purulent_discharge:1, facial_pain:1, congestion:0.9, headache:0.6, smell_loss:0.5, fever:0.3, toothache:0.2, dry_cough:0.2},
     core:['purulent_discharge','facial_pain'],
@@ -1704,7 +1720,7 @@ const CONDITIONS = [
     see:'溃疡超过 2 周不愈合、反复发作、伴发热或皮疹，需口腔科排查白塞病等其他疾病。'
   },
   {
-    id:'tinea_pedis', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'足癣 / 皮肤真菌感染', dept:'皮肤科', tag:'',
+    id:'tinea_pedis', refs:[{title:'中国手癣和足癣诊疗指南（2017修订版）', org:'中华医学会皮肤性病学分会', year:2017, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'足癣 / 皮肤真菌感染', dept:'皮肤科', tag:'',
     summary:'趾间或足底脱屑、瘙痒、水疱，潮湿闷热环境易发，具有传染性。',
     symptoms:{itch:1, dry_skin:0.8, rash:0.7, blister:0.3},
     core:['itch','dry_skin'],
@@ -1715,7 +1731,7 @@ const CONDITIONS = [
     see:'局部红肿热痛、流脓（可能继发细菌感染），或糖尿病患者出现足部问题，需尽快就诊；规范用药 2 周无改善也应就医。'
   },
   {
-    id:'gastritis', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'急性胃炎 / 消化性溃疡', dept:'消化内科', tag:'',
+    id:'gastritis', refs:[{title:'消化性溃疡诊断与治疗规范（2016年，西安）', org:'中华医学会消化病学分会', year:2016, url:'https://www.cma.org.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'急性胃炎 / 消化性溃疡', dept:'消化内科', tag:'',
     summary:'上腹隐痛或烧灼感，常与进食相关，可能为胃炎或消化性溃疡。',
     symptoms:{epigastric_pain:1, heartburn:0.6, nausea:0.6, bloating:0.6, belching:0.5, poor_appetite:0.5, gi_bleed:0.2},
     core:['epigastric_pain'],
@@ -1727,7 +1743,7 @@ const CONDITIONS = [
     see:'黑便、呕血、体重下降、吞咽困难，或疼痛剧烈、持续加重，需尽快胃镜检查；幽门螺杆菌检测需到医院完成。'
   },
   {
-    id:'hfmd', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'手足口病', dept:'儿科 / 感染科', tag:'儿童多见',
+    id:'hfmd', refs:[{title:'手足口病诊疗指南（2018年版）', org:'国家卫生健康委员会', year:2018, url:'https://www.nhc.gov.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'手足口病', dept:'儿科 / 感染科', tag:'儿童多见',
     summary:'儿童多见，发热伴口腔疱疹和手足皮疹，多数为自限性，少数可发展为重症。',
     symptoms:{hand_foot_rash:1, oral_ulcer:0.9, fever:0.8, sore_throat:0.5, poor_appetite:0.5, fatigue:0.3},
     core:['hand_foot_rash','oral_ulcer'],
@@ -1738,7 +1754,7 @@ const CONDITIONS = [
     see:'持续高热、精神差、嗜睡、抽搐、肢体抖动、呼吸心率明显增快，是重症信号，需立即就医。'
   },
   {
-    id:'heat_illness', source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'中暑', dept:'急诊科', tag:'夏季高发',
+    id:'heat_illness', refs:[{title:'职业性中暑诊断标准（GBZ 41—2019）', org:'国家卫生健康委员会', year:2019, url:'https://www.nhc.gov.cn/'}], source:'《内科学》《外科学》《皮肤性病学》等公开教材与诊疗指南综合整理', reviewer:'明辨康途内容组（待执业医师复核）', updated:'2026-11-22', name:'中暑', dept:'急诊科', tag:'夏季高发',
     summary:'高温高湿环境下出现头晕、乏力、恶心，严重时可出现高热和意识障碍。',
     symptoms:{heat_exposure:1, dizziness:0.9, nausea:0.7, headache:0.6, fatigue:0.6, vomiting:0.4, palpitation:0.4},
     core:['heat_exposure'],
@@ -1764,6 +1780,212 @@ const CONDITIONS = [
 ];
 
 /* 危险信号 */
+const CONDITION_REFS = {
+ "cold": [
+  {
+   "title": "急性上呼吸道感染基层诊疗指南（2018年）",
+   "org": "中华医学会全科医学分会等",
+   "year": 2018,
+   "url": "https://cs.medjournals.cn/article/doi/full/10.3760/cma.j.issn.1671-7368.2019.05.005",
+   "scope": "general"
+  }
+ ],
+ "pharyngitis": [
+  {
+   "title": "儿童A族链球菌咽扁桃体炎临床诊疗专家共识（2025）",
+   "org": "国家儿童感染与过敏性疾病监测中心等",
+   "year": 2025,
+   "url": "https://cs.medjournals.cn/cn/zhekzz/toc/65807",
+   "scope": "children"
+  }
+ ],
+ "flu": [
+  {
+   "title": "流行性感冒诊疗方案（2025年版）",
+   "org": "国家卫生健康委员会办公厅",
+   "year": 2025,
+   "url": "https://www.nhc.gov.cn/ylyjs/zcwj/202501/f8fcecca59a048bebc4a71847ce57594.shtml",
+   "scope": "general"
+  }
+ ],
+ "bronchitis": [
+  {
+   "title": "急性气管-支气管炎基层诊疗指南（2018年）",
+   "org": "中华医学会全科医学分会等",
+   "year": 2018,
+   "url": "https://cmab.yiigle.com/uploads/guide_html/%E6%80%A5%E6%80%A7%E6%B0%94%E7%AE%A1-%E6%94%AF%E6%B0%94%E7%AE%A1%E7%82%8E%E5%9F%BA%E5%B1%82%E8%AF%8A%E7%96%97%E6%8C%87%E5%8D%97%EF%BC%882018%E5%B9%B4%EF%BC%89.html",
+   "scope": "general"
+  }
+ ],
+ "pneumonia": [
+  {
+   "title": "成人社区获得性肺炎基层诊疗指南（2018年）",
+   "org": "中华医学会全科医学分会等",
+   "year": 2018,
+   "url": "https://cs.medjournals.cn/article/doi/full/10.3760/cma.j.issn.1671-7368.2019.02.005",
+   "scope": "general"
+  },
+  {
+   "title": "儿童肺炎支原体肺炎诊疗指南（2025年版）",
+   "org": "国家卫生健康委员会",
+   "year": 2025,
+   "url": "https://www.nhc.gov.cn/yzygj/c100068/202509/19e7145436b049a68d4ba8c2060dfa56/files/%E5%84%BF%E7%AB%A5%E8%82%BA%E7%82%8E%E6%94%AF%E5%8E%9F%E4%BD%93%E8%82%BA%E7%82%8E%E8%AF%8A%E7%96%97%E6%8C%87%E5%8D%97%EF%BC%882025%E5%B9%B4%E7%89%88%EF%BC%89.pdf",
+   "scope": "children"
+  }
+ ],
+ "tb": [
+  {
+   "title": "肺结核基层诊疗指南（2018年）",
+   "org": "中华医学会全科医学分会等",
+   "year": 2018,
+   "url": "https://tb.chinacdc.cn/xxjlg/201912/P020191204651893563356.pdf",
+   "scope": "general"
+  }
+ ],
+ "sinusitis": [
+  {
+   "title": "中国慢性鼻窦炎诊断和治疗指南（2018）",
+   "org": "中华耳鼻咽喉头颈外科杂志编辑委员会鼻科组等",
+   "year": 2018,
+   "url": "https://cmab.yiigle.com/uploads/guide_html/%E4%B8%AD%E5%9B%BD%E6%85%A2%E6%80%A7%E9%BC%BB%E7%AA%A6%E7%82%8E%E8%AF%8A%E6%96%AD%E5%92%8C%E6%B2%BB%E7%96%97%E6%8C%87%E5%8D%97%EF%BC%882018%EF%BC%89.html",
+   "scope": "general"
+  }
+ ],
+ "allergic_rhinitis": [
+  {
+   "title": "儿童变应性鼻炎诊断和治疗指南（2022年，修订版）",
+   "org": "中华耳鼻咽喉头颈外科杂志编辑委员会鼻科组等",
+   "year": 2022,
+   "url": "https://cs.medjournals.cn/article/doi/full/10.3760/cma.j.cn115330-20220303-00092",
+   "scope": "children"
+  }
+ ],
+ "gastroenteritis": [
+  {
+   "title": "成人急性感染性腹泻诊疗专家共识",
+   "org": "中华医学会消化病学分会",
+   "year": 2013,
+   "url": "https://master.yiigle.com/uploads/guide_html/%E6%88%90%E4%BA%BA%E6%80%A5%E6%80%A7%E6%84%9F%E6%9F%93%E6%80%A7%E8%85%B9%E6%B3%BB%E8%AF%8A%E7%96%97%E4%B8%93%E5%AE%B6%E5%85%B1%E8%AF%86.html",
+   "scope": "general"
+  },
+  {
+   "title": "儿童急性感染性腹泻病诊疗规范（2020年版）",
+   "org": "国家卫生健康委员会",
+   "year": 2020,
+   "url": "https://www.nhc.gov.cn/yzygj/c100068/202009/a0720947d2c744b49fc91b32d82293ef.shtml",
+   "scope": "children"
+  }
+ ],
+ "gerd": [
+  {
+   "title": "2020年中国胃食管反流病专家共识",
+   "org": "中华医学会消化病学分会",
+   "year": 2020,
+   "url": "https://seleguide.yiigle.com/uploads/guide_html/2020%E5%B9%B4%E4%B8%AD%E5%9B%BD%E8%83%83%E9%A3%9F%E7%AE%A1%E5%8F%8D%E6%B5%81%E7%97%85%E4%B8%93%E5%AE%B6%E5%85%B1%E8%AF%86.html",
+   "scope": "general"
+  }
+ ],
+ "gastritis": [
+  {
+   "title": "消化性溃疡诊断与治疗共识意见（2022年，上海）",
+   "org": "中华医学会消化病学分会",
+   "year": 2022,
+   "url": "https://csg.cma.org.cn/csg/a/cjmvt4",
+   "scope": "general"
+  }
+ ],
+ "dyspepsia": [
+  {
+   "title": "2022中国功能性消化不良诊治专家共识",
+   "org": "中华医学会消化病学分会胃肠动力学组等",
+   "year": 2022,
+   "url": "https://rs.yiigle.com/cmaid/1472591",
+   "scope": "general"
+  }
+ ],
+ "constipation": [
+  {
+   "title": "中国慢性便秘专家共识意见（2019，广州）",
+   "org": "中华医学会消化病学分会胃肠动力学组等",
+   "year": 2019,
+   "url": "https://cs.medjournals.cn/article/doi/full/10.3760/cma.j.issn.0254-1432.2019.09.001",
+   "scope": "general"
+  }
+ ],
+ "uti": [
+  {
+   "title": "尿路感染诊断与治疗中国专家共识（2015版）——复杂性尿路感染",
+   "org": "中华医学会泌尿外科学分会等",
+   "year": 2015,
+   "url": "https://seleguide.yiigle.com/uploads/guide_html/%E5%B0%BF%E8%B7%AF%E6%84%9F%E6%9F%93%E8%AF%8A%E6%96%AD%E4%B8%8E%E6%B2%BB%E7%96%97%E4%B8%AD%E5%9B%BD%E4%B8%93%E5%AE%B6%E5%85%B1%E8%AF%86(2015%E7%89%88)%E2%80%94%E2%80%94%E5%A4%8D%E6%9D%82%E6%80%A7%E5%B0%BF%E8%B7%AF%E6%84%9F%E6%9F%93.html",
+   "scope": "specific"
+  }
+ ],
+ "kidney_stone": [
+  {
+   "title": "儿童泌尿系结石诊疗中国专家共识",
+   "org": "中华医学会泌尿外科学分会结石学组等",
+   "year": 2021,
+   "url": "https://cua.cma.org.cn/art/2021/7/14/art_3888_40184.html",
+   "scope": "children"
+  }
+ ],
+ "migraine": [
+  {
+   "title": "中国偏头痛诊治指南（2022版）",
+   "org": "中华医学会神经病学分会等",
+   "year": 2022,
+   "url": "https://cs.medjournals.cn/article/doi/full/10.3760/cma.j.cn113694-20230222-00118",
+   "scope": "general"
+  }
+ ],
+ "tension_headache": [
+  {
+   "title": "中国紧张型头痛诊断与治疗指南（中华医学会神经病学分会第一版）",
+   "org": "中华医学会神经病学分会头痛协作组",
+   "year": 2023,
+   "url": "https://cs.medjournals.cn/cn/zhsjkzz/collections/6734",
+   "scope": "general"
+  }
+ ],
+ "conjunctivitis": [
+  {
+   "title": "我国过敏性结膜炎诊断和治疗专家共识（2018年）",
+   "org": "中华医学会眼科学分会等",
+   "year": 2018,
+   "url": "https://seleguide.yiigle.com/uploads/guide_html/%E6%88%91%E5%9B%BD%E8%BF%87%E6%95%8F%E6%80%A7%E7%BB%93%E8%86%9C%E7%82%8E%E8%AF%8A%E6%96%AD%E5%92%8C%E6%B2%BB%E7%96%97%E4%B8%93%E5%AE%B6%E5%85%B1%E8%AF%86%EF%BC%882018%E5%B9%B4%EF%BC%89.html",
+   "scope": "specific"
+  }
+ ],
+ "otitis": [
+  {
+   "title": "儿童分泌性中耳炎诊断和治疗指南（2021）",
+   "org": "中华耳鼻咽喉头颈外科杂志编辑委员会等",
+   "year": 2021,
+   "url": "https://cs.medjournals.cn/article/doi/full/10.3760/cma.j.cn115330-20210511-00264",
+   "scope": "children"
+  }
+ ],
+ "hfmd": [
+  {
+   "title": "手足口病诊疗指南（2018年版）",
+   "org": "国家卫生健康委员会",
+   "year": 2018,
+   "url": "https://www.nhc.gov.cn/wjw/c100175/201805/d290036e18ad41e5baf7d63f2e3e2c33.shtml",
+   "scope": "general"
+  }
+ ],
+ "gout": [
+  {
+   "title": "中国高尿酸血症与痛风诊疗指南(2019)",
+   "org": "中华医学会内分泌学分会",
+   "year": 2019,
+   "url": "https://seleguide.yiigle.com/uploads/guide_html/%E4%B8%AD%E5%9B%BD%E9%AB%98%E5%B0%BF%E9%85%B8%E8%A1%80%E7%97%87%E4%B8%8E%E7%97%9B%E9%A3%8E%E8%AF%8A%E7%96%97%E6%8C%87%E5%8D%97(2019).html",
+   "scope": "general"
+  }
+ ]
+};
+
 const RED_FLAGS = [
   {ids:['chest_pain'], title:'胸痛', msg:'压榨样胸痛、放射至左臂或下颌、伴大汗或气短，可能是心肌梗死，请立即拨打 120。'},
   {ids:['dyspnea'], title:'呼吸困难', msg:'明显气短、呼吸费力、不能平卧或口唇发紫，请立即就医。'},
@@ -1928,6 +2150,69 @@ const QUESTIONS = [
     ]
   }
 ];
+
+/* 自适应追问（纯函数）：命中危险信号不求值；最多 2 个新问题；无匹配时返回空，由原三问兜底 */
+const ADAPTIVE_QUESTIONS = {
+  headache_onset: {
+    id: 'headache_onset',
+    title: '头痛是突然还是逐渐出现？',
+    hint: '突然炸裂样剧痛需要警惕',
+    options: [
+      { label: '突然出现，几分钟内到最痛' },
+      { label: '逐渐加重，几小时到几天' },
+      { label: '说不清' }
+    ]
+  },
+  abd_location: {
+    id: 'abd_location',
+    title: '腹痛主要在哪个位置？',
+    hint: '',
+    options: [
+      { label: '上腹（心口窝）' },
+      { label: '下腹 / 小腹' },
+      { label: '全腹 / 说不清' }
+    ]
+  },
+  cough_phlegm: {
+    id: 'cough_phlegm',
+    title: '咳嗽有痰吗？痰是什么颜色？',
+    hint: '',
+    options: [
+      { label: '干咳，基本无痰' },
+      { label: '白痰' },
+      { label: '黄痰 / 黄绿痰' },
+      { label: '说不清' }
+    ]
+  }
+};
+
+function nextQuestions(symptomIds, answersMap){
+  const ids = symptomIds instanceof Set ? symptomIds : new Set(symptomIds || []);
+  const ans = answersMap || {};
+  if (flagsFor(ids).length) return [];
+
+  const out = [];
+  if (ids.has('headache') && ans.headache_onset === undefined){
+    out.push(ADAPTIVE_QUESTIONS.headache_onset);
+  }
+  if ((ids.has('fever') || ids.has('high_fever') || ids.has('persistent_high_fever')) && ans.fever === undefined){
+    const feverQ = QUESTIONS.find(q => q.id === 'fever');
+    if (feverQ) out.push(feverQ);
+  }
+  if (ids.has('abdominal_pain') && ans.abd_location === undefined){
+    out.push(ADAPTIVE_QUESTIONS.abd_location);
+  }
+  if ((ids.has('dry_cough') || ids.has('sputum') || ids.has('wheeze')) && ans.cough_phlegm === undefined){
+    out.push(ADAPTIVE_QUESTIONS.cough_phlegm);
+  }
+  return out.slice(0, 2);
+}
+
+function activeQuestions(){
+  const extra = nextQuestions(selected, answers);
+  const ids = new Set(extra.map(q => q.id));
+  return extra.concat(QUESTIONS.filter(q => !ids.has(q.id)));
+}
 
 /* =========================================================
    逻辑层（纯函数，便于校验）
@@ -3175,7 +3460,7 @@ function showTriage(){
 
 function renderQuestions(){
   const box = document.getElementById('questions');
-  box.innerHTML = QUESTIONS.map((q, qi) =>
+  box.innerHTML = activeQuestions().map((q, qi) =>
     '<div class="qcard">' +
       '<div class="qtitle">' + (qi + 1) + '. ' + q.title + (q.hint ? '<i>' + q.hint + '</i>' : '') + '</div>' +
       '<div class="qopts">' +
@@ -3197,9 +3482,10 @@ function renderQuestions(){
 }
 
 function updateTriageProgress(){
-  const n = Object.keys(answers).length;
-  document.getElementById('triageProgress').textContent = n + ' / 3';
-  document.getElementById('toResults').disabled = n < 3;
+  const list = activeQuestions();
+  const n = list.filter(q => answers[q.id] !== undefined).length;
+  document.getElementById('triageProgress').textContent = n + ' / ' + list.length;
+  document.getElementById('toResults').disabled = n < list.length;
 }
 
 /* 问卷加权：0–8 分 */
@@ -5232,6 +5518,8 @@ async function showResults(){
 
   const levelLabel = { red: '高风险 · 需急诊', yellow: '中风险 · 需就医', green: '低风险 · 可观察' };
   document.getElementById('urgent').innerHTML = renderUrgent(triage, flags);
+  const analysisBox = document.getElementById('analysisFour');
+  if (analysisBox) analysisBox.innerHTML = renderAnalysisFour(results, flags, triage);
 
   const meta = document.getElementById('printMeta');
   if (meta){
@@ -5378,6 +5666,8 @@ function debugInfoFor(c, selectedSet, negatedSet, ctx){
   };
 }
 
+
+
 function renderCondition(c, i, openFirst){
   const pct = Math.round(c.score * 100);
   const [grade, gradeCls] = gradeOf(c.score);
@@ -5403,6 +5693,14 @@ function renderCondition(c, i, openFirst){
       ' · negPenalty ' + d.negPenalty.toFixed(3) +
       ' · 证据门槛 ' + (d.evidence ? '通过' : '未通过') + '</pre>';
   })() : '';
+  const refs = (Array.isArray(c.refs) && c.refs.length) ? c.refs.filter(r => r && r.title) : (CONDITION_REFS[c.id] || []);
+  const refsLine = refs.length
+    ? '<p class="refs">依据：' + refs.map(r =>
+        '<a href="' + esc(r.url || '') + '" target="_blank" rel="noopener">' + esc(r.title) + '</a>（' +
+        esc(r.org || '') + (r.year ? '，' + r.year : '') +
+        (r.scope === 'children' ? '，适用儿童' : (r.scope === 'specific' ? '，特定亚型' : '')) + '）'
+      ).join('；') + '</p>'
+    : '';
 
   return '' +
   '<details class="cond fade"' + (isOpen ? ' open' : '') + ' style="animation-delay:' + (i * 45) + 'ms">' +
@@ -5429,6 +5727,7 @@ function renderCondition(c, i, openFirst){
       '<p class="meta-src">来源：' + esc(c.source || '未标注') +
         ' · 审核：' + esc(c.reviewer || '待审核') +
         ' · 更新：' + esc(c.updated || '未标注') + '</p>' +
+      refsLine +
       '<div class="mrow"><span class="k">你提到的症状：</span>' + matched + '</div>' +
       '<div class="cols">' +
         '<div class="block"><h4>自我照护</h4><ul>' + care + '</ul></div>' +
@@ -5660,6 +5959,67 @@ async function saveEnvCity(){
 }
 
 /* 急症横幅：所有来自远端/计算结果的字符串统一转义 */
+/* 四段式「分析过程」：仅展示层，数据全部来自现有计算结果 */
+const FOUR_LEVEL = { red: '高风险', yellow: '中风险', green: '低风险' };
+
+function answerLabel(qid){
+  const q = QUESTIONS.find(x => x.id === qid);
+  if (!q) return '未填写';
+  const idx = answers[qid];
+  return (idx !== undefined && q.options[idx]) ? q.options[idx].label : '未填写';
+}
+
+function renderAnalysisFour(results, flags, triage){
+  const list = Array.isArray(results) ? results : [];
+  const flagList = Array.isArray(flags) ? flags : [];
+  const level = (triage && triage.level) || 'green';
+
+  const seen = new Set();
+  list.forEach(r => (r.matched || []).forEach(id => seen.add(id)));
+  const names = Array.from(seen).slice(0, 5).map(id => (SYMPTOMS[id] ? SYMPTOMS[id].label : id));
+  const sectionA = '<section class="af-sec af-hear">' +
+    '<h4>① 我听到的</h4>' +
+    '<p>症状：' + esc(names.join('、') || '未记录') + '</p>' +
+    '<p>病程：' + esc(answerLabel('duration')) +
+      ' ｜ 体温：' + esc(answerLabel('fever')) +
+      ' ｜ 状态：' + esc(answerLabel('activity')) + '</p>' +
+    '</section>';
+
+  const top3 = list.slice(0, 3).map(r =>
+    '<li>' + esc(r.name || '') + ' · 吻合度 ' + Math.round((r.score || 0) * 100) + '%</li>'
+  ).join('');
+  const sectionB = '<section class="af-sec af-dir">' +
+    '<h4>② 可能方向</h4>' +
+    '<ul>' + (top3 || '<li>暂无匹配方向</li>') + '</ul>' +
+    '</section>';
+
+  const firstReason = (triage && Array.isArray(triage.reasons) && triage.reasons.length)
+    ? triage.reasons[0]
+    : ((triage && triage.title) || '');
+  const sectionC = flagList.length
+    ? '<section class="af-sec af-risk red">' +
+        '<h4>③ 风险判断</h4>' +
+        '<p class="af-red">已命中：' + esc(flagList.map(f => f.title).join('；')) + '</p>' +
+      '</section>'
+    : '<section class="af-sec af-risk ' + esc(level) + '">' +
+        '<h4>③ 风险判断</h4>' +
+        '<p>' + esc(FOUR_LEVEL[level] || '需留意') + ' · ' + esc(firstReason) + '</p>' +
+      '</section>';
+
+  const sectionD = '<section class="af-sec af-advice">' +
+    '<h4>④ 建议</h4>' +
+    '<p>' + esc((triage && triage.advice) || '') + '</p>' +
+    '</section>';
+
+  /* 命中危险信号：③ 置顶，①② 折叠 */
+  if (flagList.length){
+    return '<div class="analysis-four alert">' + sectionC +
+      '<details class="af-fold"><summary>① 我听到的 / ② 可能方向</summary>' + sectionA + sectionB + '</details>' +
+      sectionD + '</div>';
+  }
+  return '<div class="analysis-four">' + sectionA + sectionB + sectionC + sectionD + '</div>';
+}
+
 function renderUrgent(triage, flags){
   const levelLabel = { red: '高风险 · 需急诊', yellow: '中风险 · 需就医', green: '低风险 · 可观察' };
   const reasons = Array.isArray(triage.reasons) ? triage.reasons : [];
@@ -5683,7 +6043,7 @@ if (typeof document !== 'undefined'){
   document.addEventListener('DOMContentLoaded', init);
 }
 if (typeof module !== 'undefined' && module.exports){
-  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, mergeRedFlags, scoreConditions, gradeOf, SKIN_SYMPTOMS, analyzeSkinPixels, describeSkinFeatures, skinAdvice, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline, weatherTipsFor, selectSymptomForTip, explainFor, debugInfoFor, timelineEntryFor, mergeTimelineDays, revisitDate, reminderDue, reminderChannel, revisitIsDue, REVISIT_KEY, LOGIN_HINT_KEY, ENV_CITY_KEY, ENV_CACHE_KEY, ENV_CACHE_MS };
+  module.exports = { SYMPTOMS, SYMPTOM_IDS, GROUPS, CONDITIONS, RED_FLAGS, PRESETS, BODY_PARTS, SYMPTOM_ALIASES, normalizeText, parseSymptoms, flagsFor, mergeRedFlags, scoreConditions, gradeOf, SKIN_SYMPTOMS, analyzeSkinPixels, describeSkinFeatures, skinAdvice, PROFILE_RULES, emptyProfile, summarizeProfile, recordVisit, TIMELINE_KEY, TIMELINE_DAYS, dayKey, timelinePoints, timelineSeries, estimateSeverity, recordTimeline, setManualSeverity, analyzeTimeline, weatherTipsFor, selectSymptomForTip, explainFor, debugInfoFor, timelineEntryFor, mergeTimelineDays, renderAnalysisFour, nextQuestions, activeQuestions, revisitDate, reminderDue, reminderChannel, revisitIsDue, REVISIT_KEY, LOGIN_HINT_KEY, ENV_CITY_KEY, ENV_CACHE_KEY, ENV_CACHE_MS };
 }
 </script>
 <script>
