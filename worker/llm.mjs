@@ -17,8 +17,9 @@ export async function callLLM(env, messages, options) {
   const model = (env && env.LLM_MODEL) || DEFAULT_MODEL;
   const timeoutMs = options && Number(options.timeoutMs) > 0 ? Number(options.timeoutMs) : 8000;
   const url = base + '/chat/completions';
+  const jsonMode = !(env && env.LLM_JSON_MODE === 'false');
 
-  async function once() {
+  async function once(useJsonMode) {
     const ctrl = new AbortController();
     const timer = setTimeout(function () { ctrl.abort(); }, timeoutMs);
     try {
@@ -32,12 +33,16 @@ export async function callLLM(env, messages, options) {
           model: model,
           messages: messages,
           temperature: 0,
-          response_format: { type: 'json_object' }
+          ...(useJsonMode ? { response_format: { type: 'json_object' } } : {})
         }),
         signal: ctrl.signal
       });
       if (res.status === 401) return { ok: false, error: 'http_401' };
-      if (!res.ok) return { ok: false, error: 'http_' + res.status };
+      if (!res.ok) {
+        const body = await res.text().catch(function () { return ''; });
+        const hint = /response_format|json_object|Unsupported/i.test(body) ? 'json_mode_unsupported' : '';
+        return { ok: false, error: 'http_' + res.status, hint: hint };
+      }
       const data = await res.json();
       return { ok: true, data: data };
     } catch (e) {
@@ -47,9 +52,11 @@ export async function callLLM(env, messages, options) {
     }
   }
 
-  let r = await once();
-  if (!r.ok && r.error !== 'http_401' && r.error !== 'no_key') {
-    r = await once();
+  let r = await once(jsonMode);
+  if (!r.ok && r.hint === 'json_mode_unsupported') {
+    r = await once(false);
+  } else if (!r.ok && r.error !== 'http_401' && r.error !== 'no_key') {
+    r = await once(jsonMode);
   }
   return r;
 }
