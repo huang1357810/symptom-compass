@@ -70,9 +70,9 @@ export async function extractSymptoms(env, text) {
     } catch (e) { /* 缓存损坏忽略 */ }
   }
 
-  lastError = '';
+  lastError = ''; extractSymptoms.lastError = '';
   const r = await callLLM(env, buildMessages(clean));
-  if (!r.ok) { lastError = 'llm:' + r.error; return null; }
+  if (!r.ok) { lastError = 'llm:' + r.error; extractSymptoms.lastError = lastError; return null; }
 
   let content = '';
   try {
@@ -81,10 +81,10 @@ export async function extractSymptoms(env, text) {
   } catch (e) { return null; }
 
   content = stripFence(content);
-  if (!content) { lastError = 'empty_content'; return null; }
+  if (!content) { lastError = 'empty_content'; extractSymptoms.lastError = lastError; return null; }
   let obj = null;
-  try { obj = JSON.parse(content); } catch (e) { lastError = 'bad_json'; return null; }
-  if (!obj || !Array.isArray(obj.symptoms)) { lastError = 'no_symptoms_field'; return null; }
+  try { obj = JSON.parse(content); } catch (e) { lastError = 'bad_json'; extractSymptoms.lastError = lastError; return null; }
+  if (!obj || !Array.isArray(obj.symptoms)) { lastError = 'no_symptoms_field'; extractSymptoms.lastError = lastError; return null; }
 
   const out = { symptoms: pickWhitelist(obj.symptoms), negated: pickWhitelist(obj.negated) };
   if (env && env.FEEDBACK_KV) {

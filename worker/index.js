@@ -17,7 +17,7 @@ import {
   timelineGet, timelineAppend, timelineClear,
   getCookie, sessionCookie, clearCookie, jsonNoStore
 } from './auth.mjs';
-import { extractSymptoms, lastLlmError } from './nlu-llm.mjs';
+import { extractSymptoms } from './nlu-llm.mjs';
 import evalsSeed from './evals-seed.json';
 
 const MAX_TEXT = 300;
@@ -646,7 +646,7 @@ async function handleNlu(request, env) {
     hasKey: typeof env.LLM_API_KEY === 'string' && env.LLM_API_KEY.length > 0,
     hasKv: !!env.FEEDBACK_KV,
     model: env.LLM_MODEL || null,
-    llmError: lastLlmError() || null,
+    llmError: extractSymptoms.lastError || null,
     base: env.LLM_BASE_URL ? String(env.LLM_BASE_URL).replace(/^https?:\/\//, '').split('/')[0] : null
   };
 
