@@ -15,6 +15,13 @@
   // 旧版明文 ADMIN_KEY 已轮换，如仍在使用请立即更换。
   // 不改这一项，每次部署会把 Workers 日志/指标关掉。
   "observability": { "enabled": true },
+  // 非敏感变量写在这里，避免 Dashboard 手动添加后被 Git 部署覆盖。
+  // LLM_API_KEY 不放这里，用 wrangler secret put LLM_API_KEY 配置。
+  "vars": {
+    "LLM_BASE_URL": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "LLM_MODEL": "qwen-plus",
+    "LLM_NLU_ENABLED": "true"
+  },
   "kv_namespaces": [
     { "binding": "FEEDBACK_KV", "id": "1de22f39cfe24e09979c5bc44ad3c288" }
   ]
