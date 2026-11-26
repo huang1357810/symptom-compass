@@ -8,6 +8,9 @@
 import { callLLM } from './llm.mjs';
 import { SYMPTOM_IDS } from './symptom-ids.mjs';
 
+let lastError = '';
+export function lastLlmError() { return lastError; }
+
 const MAX_SYMPTOMS = 8;
 const ALLOWED = new Set(SYMPTOM_IDS);
 
@@ -44,6 +47,14 @@ export function pickWhitelist(list) {
   return out.slice(0, MAX_SYMPTOMS);
 }
 
+function stripFence(raw) {
+  let t = String(raw == null ? '' : raw).trim();
+  t = t.replace(/^\x60\x60\x60(?:json)?\s*/i, '').replace(/\x60\x60\x60\s*$/, '').trim();
+  if (t.charAt(0) === '{') return t;
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  return (a !== -1 && b > a) ? t.slice(a, b + 1) : t;
+}
+
 export async function extractSymptoms(env, text) {
   const clean = normalizeText(text);
   if (!clean) return null;
@@ -59,8 +70,9 @@ export async function extractSymptoms(env, text) {
     } catch (e) { /* 缓存损坏忽略 */ }
   }
 
+  lastError = '';
   const r = await callLLM(env, buildMessages(clean));
-  if (!r.ok) return null;
+  if (!r.ok) { lastError = 'llm:' + r.error; return null; }
 
   let content = '';
   try {
@@ -68,9 +80,11 @@ export async function extractSymptoms(env, text) {
       ? String(r.data.choices[0].message.content || '') : '';
   } catch (e) { return null; }
 
+  content = stripFence(content);
+  if (!content) { lastError = 'empty_content'; return null; }
   let obj = null;
-  try { obj = JSON.parse(content); } catch (e) { return null; }
-  if (!obj || !Array.isArray(obj.symptoms)) return null;
+  try { obj = JSON.parse(content); } catch (e) { lastError = 'bad_json'; return null; }
+  if (!obj || !Array.isArray(obj.symptoms)) { lastError = 'no_symptoms_field'; return null; }
 
   const out = { symptoms: pickWhitelist(obj.symptoms), negated: pickWhitelist(obj.negated) };
   if (env && env.FEEDBACK_KV) {
