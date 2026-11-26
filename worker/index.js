@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 明辨康途 · Cloudflare Worker
  *
  * 职责：
@@ -639,17 +639,27 @@ async function handleNlu(request, env) {
   const text = String((body && body.text) || '').slice(0, 200);
   if (!text.trim()) return jsonNoStore({ ok: false, error: 'empty' }, 400);
 
+  /* 诊断字段：只暴露布尔与配置项，不泄露密钥内容 */
+  const diag = {
+    enabled: env.LLM_NLU_ENABLED === 'true',
+    enabledRaw: typeof env.LLM_NLU_ENABLED === 'string' ? env.LLM_NLU_ENABLED : typeof env.LLM_NLU_ENABLED,
+    hasKey: typeof env.LLM_API_KEY === 'string' && env.LLM_API_KEY.length > 0,
+    hasKv: !!env.FEEDBACK_KV,
+    model: env.LLM_MODEL || null,
+    base: env.LLM_BASE_URL ? String(env.LLM_BASE_URL).replace(/^https?:\/\//, '').split('/')[0] : null
+  };
+
   /* 灰度关闭或 KV 缺失：直接走本地（前端用 parseSymptoms 解析） */
   if (env.LLM_NLU_ENABLED !== 'true' || !env.FEEDBACK_KV) {
-    return jsonNoStore({ ok: true, symptoms: [], negated: [], source: 'local' });
+    return jsonNoStore({ ok: true, symptoms: [], negated: [], source: 'local', diag });
   }
 
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
   if (await nluRateLimited(env, ip)) return jsonNoStore({ ok: false, error: 'too_many' }, 429);
 
   const r = await extractSymptoms(env, text);
-  if (!r) return jsonNoStore({ ok: true, symptoms: [], negated: [], source: 'local' });
-  return jsonNoStore({ ok: true, symptoms: r.symptoms, negated: r.negated, source: 'llm' });
+  if (!r) return jsonNoStore({ ok: true, symptoms: [], negated: [], source: 'local', diag });
+  return jsonNoStore({ ok: true, symptoms: r.symptoms, negated: r.negated, source: 'llm', diag });
 }
 
 /* ---------------- 账号时间轴（需登录） ---------------- */
